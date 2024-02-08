@@ -58,8 +58,6 @@ pub enum Action {
     Reserve(CardId),
     ReserveDeck(u8),
     Purchase(CardId),
-
-    /// Only available in the player 
     Discard(Vec<Color>),
 
     AttractNoble(NobleId),
