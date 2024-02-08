@@ -89,12 +89,18 @@ impl Game {
     }
 
 
-    fn deal(&mut self, tier : usize) {
-        if self.decks[tier].len() == 0 { return }
-        self.dealt_cards.push(self.decks[tier].drain(0..1).map(|card| card.id()).collect());
+    /// Deals a card to a certain tier and return the id
+    /// Deals no card if the deck for that tier is exhausted
+    fn deal_to(&mut self, tier : usize) -> Option<CardId> {
+        if self.decks[tier].len() == 0 { return None}
+        let new_card = self.decks[tier].pop().unwrap();
+        self.dealt_cards[tier].push(new_card.id() );
+        Some(new_card.id())
     }
 
-    fn remove_card(&mut self, card_id : CardId) {
+    /// Removes a faceup card from the board
+    /// and return the tier it was removed from
+    fn remove_card(&mut self, card_id : CardId) -> usize {
         let mut remove_index = (5,5);
         for (tier, tiers) in self.dealt_cards.iter().enumerate() {
             for (index, id) in tiers.iter().enumerate() {
@@ -106,7 +112,7 @@ impl Game {
 
         let (i,j) = remove_index;
         self.dealt_cards[i].remove(j);
-        self.deal(i);
+        i 
     }
 
     pub fn take_action(&mut self, action: Action) {
@@ -119,6 +125,8 @@ impl Game {
                 debug_assert!(self.tokens[color] >= 4);
                 debug_assert!(!matches!(color, Color::Gold));
 
+                // TODO: this is a little weird but we can change later
+                // right now it's using debug asserts to check preconditions
                 self.tokens -= Tokens::one(color);
                 self.tokens -= Tokens::one(color);
 
@@ -162,11 +170,14 @@ impl Game {
                 }
 
             },
+
             Reserve(card_id) => {
                 // Preconditions
                 // -> Card with id:card_id is on the board
                 debug_assert!(self.dealt_cards.iter().flatten().any(|id| card_id == *id));
 
+                let tier = self.remove_card(card_id);
+                self.deal_to(tier);
 
                 // See if the player gets an wild/gold gem
                 let gets_gold = self.tokens[Color::Gold] > 0;
@@ -178,10 +189,34 @@ impl Game {
                     self.tokens -= Tokens::one(Color::Gold);
                 }
 
-                self.remove_card(card_id);
 
-                todo!()
+                if player.gems().total() > 10 {
+                    Phase::PlayerTokenCapExceeded
+                } else {
+                    Phase::NobleAction 
+                }
             },
+
+            ReserveHidden(tier) => {
+                let new_card_id = self.deal_to(tier).expect("Cannot reserve from empty deck");
+                self.remove_card(new_card_id);
+
+                let gets_gold = self.tokens[Color::Gold] > 0;
+                let player = &mut self.players[self.current_player];
+
+                if gets_gold {
+                    player.add_gems(Tokens::one(Color::Gold));
+                    self.tokens -= Tokens::one(Color::Gold);
+                }
+
+                player.reserve_card(new_card_id);
+
+                if player.gems().total() > 10 {
+                    Phase::PlayerTokenCapExceeded
+                } else {
+                    Phase::NobleAction 
+                }
+            }
 
 
             _ => {unimplemented!()}
@@ -203,8 +238,8 @@ pub enum Action {
     TakeDouble(Color),
     TakeDistinct(HashSet<Color>),
     Reserve(CardId),
-    ReserveHidden(CardId),
-    Purchase(CardId),
+    ReserveHidden(usize),
+    Purchase((CardId, Tokens)),
 
     Discard(Vec<Color>),
 
