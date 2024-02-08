@@ -104,11 +104,11 @@ impl Noble {
     }
     pub fn is_attracted(&self , developments: &Tokens) -> bool {
         let can_attract =
-            (developments.black  > self.requirements.black) &&
-            (developments.blue  > self.requirements.blue) &&
-            (developments.green > self.requirements.green) &&
-            (developments.red   > self.requirements.red) &&
-            (developments.white > self.requirements.white);
+            (developments.black  >= self.requirements.black) &&
+            (developments.blue  >= self.requirements.blue) &&
+            (developments.green >= self.requirements.green) &&
+            (developments.red   >= self.requirements.red) &&
+            (developments.white >= self.requirements.white);
 
         can_attract
     }
