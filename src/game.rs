@@ -7,14 +7,20 @@ use crate::color::Color;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 
+use self::Action::*;
+
+use std::collections::HashSet;
+
 
 #[derive(Debug, Clone)]
 pub struct Game {
     players : Vec<Player>,
     tokens : Tokens,
     decks : Vec<Vec<Card>>,
-    current_player : u8,
+    current_player : usize,
     nobles : Vec<Noble>,
+    dealt_cards: Vec<Vec<CardId>>,
+    current_phase : Phase,
 }
 
 impl Game {
@@ -35,16 +41,156 @@ impl Game {
         nobles.shuffle(&mut thread_rng());
         nobles.truncate(players as usize + 1);
 
+        let mut dealt_cards  = Vec::<Vec<CardId>>::new();
+
+        decks[0].shuffle(&mut thread_rng());
+        decks[1].shuffle(&mut thread_rng());
+        decks[2].shuffle(&mut thread_rng());
+
+        // Deal 4 cards to start
+        dealt_cards.push(decks[0].drain(0..4).map(|card| card.id()).collect());
+        dealt_cards.push(decks[1].drain(0..4).map(|card| card.id()).collect());
+        dealt_cards.push(decks[2].drain(0..4).map(|card| card.id()).collect());
+
         Game {
             players: (0..players).map(|_| Player::new()).collect(),
             tokens: Tokens::start(players),
             decks,
             current_player: 0,
             nobles,
+            current_phase: Phase::PlayerStart,
+            dealt_cards,
         }
+    }
+
+    fn is_phase_correct_for(&self, action : Action) -> bool {
+        match self.current_phase {
+            Phase::PlayerStart => match action {
+                TakeDouble(_) => true,
+                TakeDistinct(_) => true,
+                Reserve(_) => true,
+                ReserveHidden(_) => true,
+                Purchase(_) => true,
+                _ => false,
+            },
+            Phase::PlayerTokenCapExceeded => match action {
+                Discard(_) => true,
+                _ => false,
+            },
+            Phase::NobleAction => match action {
+                AttractNoble(_) => true,
+                _ => false,
+            },
+            Phase::PlayerActionEnd => match action {
+                Continue => true,
+                _ => false,
+            },
+        }
+    }
+
+
+    fn deal(&mut self, tier : usize) {
+        if self.decks[tier].len() == 0 { return }
+        self.dealt_cards.push(self.decks[tier].drain(0..1).map(|card| card.id()).collect());
+    }
+
+    fn remove_card(&mut self, card_id : CardId) {
+        let mut remove_index = (5,5);
+        for (tier, tiers) in self.dealt_cards.iter().enumerate() {
+            for (index, id) in tiers.iter().enumerate() {
+                if *id == card_id {
+                    remove_index  = (tier, index);
+                }
+            }
+        }
+
+        let (i,j) = remove_index;
+        self.dealt_cards[i].remove(j);
+        self.deal(i);
+    }
+
+    pub fn take_action(&mut self, action: Action) {
+        debug_assert!(self.is_phase_correct_for(action.clone()));
+        let next_phase = match action {
+            TakeDouble(color) => {
+                // Preconditions: 
+                // -> Must be from a pile that has >= 4
+                // -> Cannot take a wild token with this action
+                debug_assert!(self.tokens[color] >= 4);
+                debug_assert!(!matches!(color, Color::Gold));
+
+                self.tokens -= Tokens::one(color);
+                self.tokens -= Tokens::one(color);
+
+                let player = &mut self.players[self.current_player];
+                player.add_gems(Tokens::one(color));
+                player.add_gems(Tokens::one(color));
+
+                if player.gems().total() > 10 {
+                    Phase::PlayerTokenCapExceeded
+                } else {
+                    Phase::NobleAction 
+                }
+            },
+            TakeDistinct(colors) => {
+                // Preconditions
+                // -> Can take 1,2, or 3 distinct colors
+                debug_assert!(colors.len() <= 3 && colors.len() > 0);
+                // -> Which all exist on the board
+                debug_assert!(colors.iter().all(|c| self.tokens[*c] >= 1));
+                // -> And you can only choose 2 or 1 tokens if all other
+                // piles are depleted (See Splendor FAQ)
+                debug_assert!(if colors.len() < 3 {
+                    self.tokens.piles() == colors.len()
+                }else {
+                    true
+                });
+                // -> Cannot take a wild token with this action
+                debug_assert!(colors.iter().all(|c| !matches!(c, Color::Gold)));
+
+                let player = &mut self.players[self.current_player];
+                player.add_gems(Tokens::from_set(&colors));
+
+                for color in colors {
+                    self.tokens -= Tokens::one(color);
+                }
+
+                if player.gems().total() > 10 {
+                    Phase::PlayerTokenCapExceeded
+                } else {
+                    Phase::NobleAction 
+                }
+
+            },
+            Reserve(card_id) => {
+                // Preconditions
+                // -> Card with id:card_id is on the board
+                debug_assert!(self.dealt_cards.iter().flatten().any(|id| card_id == *id));
+
+
+                // See if the player gets an wild/gold gem
+                let gets_gold = self.tokens[Color::Gold] > 0;
+                let player = &mut self.players[self.current_player];
+                player.reserve_card(card_id);
+
+                if gets_gold {
+                    player.add_gems(Tokens::one(Color::Gold));
+                    self.tokens -= Tokens::one(Color::Gold);
+                }
+
+                self.remove_card(card_id);
+
+                todo!()
+            },
+
+
+            _ => {unimplemented!()}
+        };
+        self.current_phase = next_phase;
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum Phase {
     PlayerStart, // Take some player action
     PlayerTokenCapExceeded, // [Optional] Player has > 10 tokens
@@ -52,12 +198,14 @@ pub enum Phase {
     PlayerActionEnd,  // Finish the turn and see if the round should continue
 }
 
+#[derive(Debug, Clone)]
 pub enum Action {
     TakeDouble(Color),
-    TakeDistinct(Vec<Color>),
+    TakeDistinct(HashSet<Color>),
     Reserve(CardId),
-    ReserveDeck(u8),
+    ReserveHidden(CardId),
     Purchase(CardId),
+
     Discard(Vec<Color>),
 
     AttractNoble(NobleId),

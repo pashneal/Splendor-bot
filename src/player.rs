@@ -49,9 +49,9 @@ impl Player{
         self.reserved.retain(|&x| x != card.id());
     }
 
-    pub fn reserve_card(&mut self, card : Card) {
+    pub fn reserve_card(&mut self, card_id : CardId) {
         debug_assert!(self.reserved.len() < 3);
-        self.reserved.push(card.id());
+        self.reserved.push(card_id);
     }
 
 }

@@ -1,4 +1,5 @@
 use crate::color::Color;
+use std::collections::HashSet;
 use std::cmp::{max, min}; use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -12,6 +13,13 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    pub fn from_set(set: &HashSet<Color>) -> Tokens {
+        let mut tokens = Tokens::empty();
+        for color in set {
+            tokens[*color] += 1;
+        }
+        tokens
+    }
 
     pub fn total(&self) -> u32 {
         self.black as u32
@@ -90,6 +98,25 @@ impl Tokens {
         tokens
     }
 
+    pub fn piles(&self) -> usize {
+        let mut count = 0;
+        if self.black > 0{
+            count += 1;
+        }
+        if self.blue > 0{
+            count += 1
+        }
+        if self.green > 0{
+            count += 1
+        }
+        if self.red > 0{
+            count += 1
+        }
+        if self.white > 0{
+            count += 1
+        }
+        count
+    }
     pub fn can_buy(&self, other: &Tokens) -> bool {
         unimplemented!()
     }
@@ -111,7 +138,8 @@ impl Index<Color> for Tokens {
 }
 
 impl IndexMut<Color> for Tokens {
-    fn index_mut<'a>(&'a mut self, color: Color) -> &'a mut i8 {
+ 
+    fn index_mut<'a>(&'a mut self, color: Color) -> &'a mut  i8 {
         match color {
             Color::Black => &mut self.black,
             Color::Blue => &mut self.blue,
@@ -131,6 +159,7 @@ impl AddAssign for Tokens {
         self.red += other.red;
         self.white += other.white;
         self.gold += other.gold;
+        debug_assert!(self.legal());
     }
 }
 
@@ -142,6 +171,7 @@ impl SubAssign for Tokens {
         self.red -= other.red;
         self.white -= other.white;
         self.gold -= other.gold;
+        debug_assert!(self.legal());
     }
 }
 
@@ -157,6 +187,7 @@ impl Add for Tokens {
             white: self.white + other.white,
             gold: self.gold + other.gold,
         };
+        debug_assert!(self.legal());
         tokens
     }
 }
@@ -173,6 +204,7 @@ impl Sub for Tokens {
             white: self.white - other.white,
             gold: self.gold - other.gold,
         };
+        debug_assert!(self.legal());
         tokens
     }
 }
