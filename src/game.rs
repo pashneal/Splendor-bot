@@ -25,6 +25,12 @@ pub struct Game {
     card_lookup: Arc<Vec<Card>>,
 }
 
+// Note: I don't really know where to write this but the thought just occurred to me
+// when doing MCTS, we have to be careful about how blind reserves appear to other players
+// as that information has to be randomized every time.
+// The reason being is that agents in a real game would not have perfect information
+// about what was reserved, but can in fact make eliminations instead
+
 impl Game {
     pub fn new(players: u8, card_lookup: Arc<Vec<Card>>) -> Game {
         let mut decks = Vec::new();
@@ -101,9 +107,20 @@ impl Game {
         Some(new_card.id())
     }
 
+    fn has_card(&self, card_id: CardId) -> bool {
+        for tier in &self.dealt_cards {
+            if tier.contains(&card_id) {
+                return true;
+            }
+        }
+        false
+    }
+
     /// Removes a faceup card from the board
     /// and return the tier it was removed from
     fn remove_card(&mut self, card_id: CardId) -> usize {
+        debug_assert!(self.has_card(card_id));
+
         let mut remove_index = (5, 5);
         for (tier, tiers) in self.dealt_cards.iter().enumerate() {
             for (index, id) in tiers.iter().enumerate() {
@@ -212,7 +229,7 @@ impl Game {
                     self.tokens -= Tokens::one(Color::Gold);
                 }
 
-                player.reserve_card(new_card_id);
+                player.blind_reserve_card(new_card_id);
 
                 if player.gems().total() > 10 {
                     Phase::PlayerTokenCapExceeded
@@ -221,8 +238,25 @@ impl Game {
                 }
             }
 
-            Purchase((card_id, tokens)) => {
+            Purchase((card_id, payment)) => {
                 let card = self.card_lookup[card_id as usize];
+                let player = &self.players[self.current_player];
+                // Preconditions:
+                // -> The tokens being used is one of the legal ways to purchase this card
+                debug_assert!({
+                    let payment_options = player.payment_to_afford(&card);
+                    let payment_options = payment_options.unwrap_or(HashSet::new());
+                    payment_options.iter().any(|&option| option == payment)
+                });
+                // -> Must have been on the board or in the player's reserved cards
+                debug_assert!(self.has_card(card_id) || player.has_reserved_card(card_id));
+
+                let player = &mut self.players[self.current_player];
+                player.purchase_card(&card, &payment);
+                if self.has_card(card_id) {
+                    let tier = self.remove_card(card_id);
+                    self.deal_to(tier);
+                }
 
                 Phase::NobleAction
             }
