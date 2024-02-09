@@ -66,6 +66,9 @@ impl Player {
         self.points
     }
 
+    pub fn add_points(&self, points:u8){
+        self.points += points;
+    }
     /// Return the number of reserved cards in total
     pub fn num_reserved(&self) -> usize {
         self.reserved.len()
@@ -100,6 +103,7 @@ impl Player {
     pub fn remove_gems(&mut self, gems: Tokens) {
         self.gems -= gems;
     }
+
     pub fn add_gems(&mut self, gems: Tokens) {
         self.gems += gems;
     }

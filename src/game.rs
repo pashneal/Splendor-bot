@@ -276,6 +276,21 @@ impl Game {
                 Phase::NobleAction
             }
 
+            AttractNoble(noble_id) => { 
+
+                // Preconditions:
+                // -> The player has enough development cards to attract the noble
+                let player = &self.players[self.current_player];
+                let noble_index = self.nobles.iter().position(|n| n.id() == noble_id).unwrap();
+                let noble = &self.nobles[noble_index];
+                debug_assert!(noble.is_attracted_to(player.developments()));
+
+                player.add_points(noble.points());
+                self.nobles.remove(noble_index);
+
+                Phase::PlayerActionEnd
+            }
+
             _ => unimplemented!(),
         };
         self.current_phase = next_phase;

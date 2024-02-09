@@ -141,7 +141,7 @@ impl Noble {
             requirements,
         }
     }
-    pub fn is_attracted(&self, developments: &Tokens) -> bool {
+    pub fn is_attracted_to(&self, developments: &Tokens) -> bool {
         let can_attract = (developments.black >= self.requirements.black)
             && (developments.blue >= self.requirements.blue)
             && (developments.green >= self.requirements.green)
@@ -149,5 +149,11 @@ impl Noble {
             && (developments.white >= self.requirements.white);
 
         can_attract
+    }
+    pub fn id(&self) -> NobleId {
+        self.id
+    }
+    pub fn points(&self) -> u8 {
+        self.points
     }
 }
