@@ -97,6 +97,9 @@ impl Player {
         &self.developments
     }
 
+    pub fn remove_gems(&mut self, gems: Tokens) {
+        self.gems -= gems;
+    }
     pub fn add_gems(&mut self, gems: Tokens) {
         self.gems += gems;
     }

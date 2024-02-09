@@ -14,6 +14,14 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    pub fn from_vec(vec: &Vec<Color>) -> Tokens {
+        let mut tokens = Tokens::empty();
+        for &color in vec {
+            tokens[color] += 1;
+        }
+        tokens
+    }
+
     pub fn from_set(set: &HashSet<Color>) -> Tokens {
         let mut tokens = Tokens::empty();
         for color in set {

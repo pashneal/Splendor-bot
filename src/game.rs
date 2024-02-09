@@ -261,9 +261,22 @@ impl Game {
                 Phase::NobleAction
             }
 
-            _ => {
-                unimplemented!()
+            Discard(discards) => {
+                // Preconditions:
+                // -> Must have greater than 10 tokens 
+                // -> Must discard enough tokens to be == 10
+                // -> Must be discarding tokens already present in the player's gems
+                let player = &mut self.players[self.current_player];
+                debug_assert!(player.gems().total() > 10);
+                debug_assert!(player.gems().total() as usize - discards.len() == 10);
+                debug_assert!((*player.gems() - Tokens::from_vec(&discards)).legal());
+
+                player.remove_gems(Tokens::from_vec(&discards));
+
+                Phase::NobleAction
             }
+
+            _ => unimplemented!(),
         };
         self.current_phase = next_phase;
     }
