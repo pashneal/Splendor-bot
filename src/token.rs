@@ -1,6 +1,6 @@
 use crate::color::Color;
-use std::collections::HashSet;
 use std::cmp::{max, min};
+use std::collections::HashSet;
 use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
@@ -52,8 +52,7 @@ impl Tokens {
     }
 
     pub fn start(players: u8) -> Tokens {
-
-        match players{
+        match players {
             2 => Tokens {
                 black: 4,
                 blue: 4,
@@ -80,7 +79,6 @@ impl Tokens {
             },
             _ => panic!("Invalid number of players"),
         }
-
     }
 
     pub fn max(&self, other: &Tokens) -> Tokens {
@@ -102,19 +100,19 @@ impl Tokens {
 
     pub fn piles(&self) -> usize {
         let mut count = 0;
-        if self.black > 0{
+        if self.black > 0 {
             count += 1;
         }
-        if self.blue > 0{
+        if self.blue > 0 {
             count += 1
         }
-        if self.green > 0{
+        if self.green > 0 {
             count += 1
         }
-        if self.red > 0{
+        if self.red > 0 {
             count += 1
         }
-        if self.white > 0{
+        if self.white > 0 {
             count += 1
         }
         count
@@ -140,8 +138,7 @@ impl Index<Color> for Tokens {
 }
 
 impl IndexMut<Color> for Tokens {
- 
-    fn index_mut<'a>(&'a mut self, color: Color) -> &'a mut  i8 {
+    fn index_mut<'a>(&'a mut self, color: Color) -> &'a mut i8 {
         match color {
             Color::Black => &mut self.black,
             Color::Blue => &mut self.blue,

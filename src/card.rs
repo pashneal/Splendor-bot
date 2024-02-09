@@ -1,6 +1,6 @@
 use crate::color::Color;
 use crate::token::Tokens;
-use std::ops::{ Index, IndexMut};
+use std::ops::{Index, IndexMut};
 
 #[derive(PartialEq, Copy, Clone, Debug, Default)]
 pub struct Cost {
@@ -13,21 +13,20 @@ pub struct Cost {
 
 impl Index<Color> for Cost {
     type Output = i8;
- 
-    fn index<'a>(&'a  self, color: Color) -> &'a i8 {
+
+    fn index<'a>(&'a self, color: Color) -> &'a i8 {
         match color {
-            Color::Black => & self.black,
-            Color::Blue => & self.blue,
-            Color::Green => & self.green,
-            Color::Red => & self.red,
-            Color::White => & self.white,
+            Color::Black => &self.black,
+            Color::Blue => &self.blue,
+            Color::Green => &self.green,
+            Color::Red => &self.red,
+            Color::White => &self.white,
             _ => panic!("Invalid color in Cost object"),
         }
     }
 }
 impl IndexMut<Color> for Cost {
- 
-    fn index_mut<'a>(&'a mut self, color: Color) -> &'a mut  i8 {
+    fn index_mut<'a>(&'a mut self, color: Color) -> &'a mut i8 {
         match color {
             Color::Black => &mut self.black,
             Color::Blue => &mut self.blue,
@@ -40,12 +39,12 @@ impl IndexMut<Color> for Cost {
 }
 
 impl Cost {
-    pub fn discounted_with(&self, token : &Tokens) -> Cost {
-        Cost { 
+    pub fn discounted_with(&self, token: &Tokens) -> Cost {
+        Cost {
             black: 0.max(self.black - token.black),
-            blue:  0.max(self.blue - token.blue),
-            green: 0.max(self.green - token.green), 
-            red:   0.max(self.red - token.red),
+            blue: 0.max(self.blue - token.blue),
+            green: 0.max(self.green - token.green),
+            red: 0.max(self.red - token.red),
             white: 0.max(self.white - token.white),
         }
     }
@@ -71,8 +70,6 @@ pub struct Card {
     id: CardId,
     tier: u8,
 }
-
-
 
 impl Card {
     pub fn cost(&self) -> Cost {

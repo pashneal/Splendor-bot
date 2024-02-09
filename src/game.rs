@@ -1,11 +1,11 @@
-use crate::player::Player;
-use crate::nobles::*;
-use crate::card::{CardId, Card};
-use crate::token::Tokens;
+use crate::card::{Card, CardId};
 use crate::color::Color;
+use crate::nobles::*;
+use crate::player::Player;
+use crate::token::Tokens;
 
-use rand::thread_rng;
 use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 use self::Action::*;
 
@@ -15,18 +15,18 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Game {
-    players : Vec<Player>,
-    tokens : Tokens,
-    decks : Vec<Vec<Card>>,
-    current_player : usize,
-    nobles : Vec<Noble>,
+    players: Vec<Player>,
+    tokens: Tokens,
+    decks: Vec<Vec<Card>>,
+    current_player: usize,
+    nobles: Vec<Noble>,
     dealt_cards: Vec<Vec<CardId>>,
-    current_phase : Phase,
-    card_lookup : Arc<Vec<Card>>,
+    current_phase: Phase,
+    card_lookup: Arc<Vec<Card>>,
 }
 
 impl Game {
-    pub fn new(players: u8, card_lookup : Arc<Vec<Card>>) -> Game {
+    pub fn new(players: u8, card_lookup: Arc<Vec<Card>>) -> Game {
         let mut decks = Vec::new();
         for tier in 1..=3 {
             let mut deck = Vec::new();
@@ -36,14 +36,13 @@ impl Game {
                 }
             }
             decks.push(deck);
-
         }
 
         let mut nobles = Noble::all();
         nobles.shuffle(&mut thread_rng());
         nobles.truncate(players as usize + 1);
 
-        let mut dealt_cards  = Vec::<Vec<CardId>>::new();
+        let mut dealt_cards = Vec::<Vec<CardId>>::new();
 
         decks[0].shuffle(&mut thread_rng());
         decks[1].shuffle(&mut thread_rng());
@@ -66,7 +65,7 @@ impl Game {
         }
     }
 
-    fn is_phase_correct_for(&self, action : Action) -> bool {
+    fn is_phase_correct_for(&self, action: Action) -> bool {
         match self.current_phase {
             Phase::PlayerStart => match action {
                 TakeDouble(_) => true,
@@ -91,40 +90,40 @@ impl Game {
         }
     }
 
-
     /// Deals a card to a certain tier and return the id
     /// Deals no card if the deck for that tier is exhausted
-    fn deal_to(&mut self, tier : usize) -> Option<CardId> {
-        if self.decks[tier].len() == 0 { return None}
+    fn deal_to(&mut self, tier: usize) -> Option<CardId> {
+        if self.decks[tier].len() == 0 {
+            return None;
+        }
         let new_card = self.decks[tier].pop().unwrap();
-        self.dealt_cards[tier].push(new_card.id() );
+        self.dealt_cards[tier].push(new_card.id());
         Some(new_card.id())
     }
 
     /// Removes a faceup card from the board
     /// and return the tier it was removed from
-    fn remove_card(&mut self, card_id : CardId) -> usize {
-        let mut remove_index = (5,5);
+    fn remove_card(&mut self, card_id: CardId) -> usize {
+        let mut remove_index = (5, 5);
         for (tier, tiers) in self.dealt_cards.iter().enumerate() {
             for (index, id) in tiers.iter().enumerate() {
                 if *id == card_id {
-                    remove_index  = (tier, index);
+                    remove_index = (tier, index);
                 }
             }
         }
 
-        let (i,j) = remove_index;
+        let (i, j) = remove_index;
         self.dealt_cards[i].remove(j);
-        i 
+        i
     }
 
     pub fn take_action(&mut self, action: Action) {
         debug_assert!(self.is_phase_correct_for(action.clone()));
 
         let next_phase = match action {
-
             TakeDouble(color) => {
-                // Preconditions: 
+                // Preconditions:
                 // -> Must be from a pile that has >= 4
                 // -> Cannot take a wild token with this action
                 debug_assert!(self.tokens[color] >= 4);
@@ -142,9 +141,9 @@ impl Game {
                 if player.gems().total() > 10 {
                     Phase::PlayerTokenCapExceeded
                 } else {
-                    Phase::NobleAction 
+                    Phase::NobleAction
                 }
-            },
+            }
 
             TakeDistinct(colors) => {
                 // Preconditions
@@ -156,7 +155,7 @@ impl Game {
                 // piles are depleted (See Splendor FAQ)
                 debug_assert!(if colors.len() < 3 {
                     self.tokens.piles() == colors.len()
-                }else {
+                } else {
                     true
                 });
                 // -> Cannot take a wild token with this action
@@ -172,10 +171,9 @@ impl Game {
                 if player.gems().total() > 10 {
                     Phase::PlayerTokenCapExceeded
                 } else {
-                    Phase::NobleAction 
+                    Phase::NobleAction
                 }
-
-            },
+            }
 
             Reserve(card_id) => {
                 // Preconditions
@@ -195,13 +193,12 @@ impl Game {
                     self.tokens -= Tokens::one(Color::Gold);
                 }
 
-
                 if player.gems().total() > 10 {
                     Phase::PlayerTokenCapExceeded
                 } else {
-                    Phase::NobleAction 
+                    Phase::NobleAction
                 }
-            },
+            }
 
             ReserveHidden(tier) => {
                 let new_card_id = self.deal_to(tier).expect("Cannot reserve from empty deck");
@@ -220,19 +217,19 @@ impl Game {
                 if player.gems().total() > 10 {
                     Phase::PlayerTokenCapExceeded
                 } else {
-                    Phase::NobleAction 
+                    Phase::NobleAction
                 }
-            },
+            }
 
             Purchase((card_id, tokens)) => {
-                
                 let card = self.card_lookup[card_id as usize];
-
 
                 Phase::NobleAction
             }
 
-            _ => {unimplemented!()}
+            _ => {
+                unimplemented!()
+            }
         };
         self.current_phase = next_phase;
     }
@@ -240,10 +237,10 @@ impl Game {
 
 #[derive(Debug, Clone)]
 pub enum Phase {
-    PlayerStart, // Take some player action
+    PlayerStart,            // Take some player action
     PlayerTokenCapExceeded, // [Optional] Player has > 10 tokens
-    NobleAction, // See if any nobles get attracted (multiple may be attracted)
-    PlayerActionEnd,  // Finish the turn and see if the round should continue
+    NobleAction,            // See if any nobles get attracted (multiple may be attracted)
+    PlayerActionEnd,        // Finish the turn and see if the round should continue
 }
 
 #[derive(Debug, Clone)]

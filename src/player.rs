@@ -5,24 +5,22 @@ use std::collections::HashSet;
 
 use cached::proc_macro::cached;
 
-
-
 #[derive(Debug, Clone)]
-pub struct Player{
-    points : u8,
-    reserved : Vec<CardId>,
-    gems : Tokens,
-    developments : Tokens,
+pub struct Player {
+    points: u8,
+    reserved: Vec<CardId>,
+    gems: Tokens,
+    developments: Tokens,
 }
 
 #[cached]
-fn token_match(cost : Tokens, gems : Tokens, running_payment: Tokens) -> HashSet<Tokens> {
+fn token_match(cost: Tokens, gems: Tokens, running_payment: Tokens) -> HashSet<Tokens> {
     if cost.total() == 0 {
         return HashSet::from_iter(vec![running_payment]);
-    } 
+    }
     if gems.total() == 0 {
         return HashSet::new();
-    } 
+    }
     // Take one token that satisfies the cost or a wild token and recurse
     let mut result = Vec::new();
     for color in Color::all() {
@@ -31,12 +29,20 @@ fn token_match(cost : Tokens, gems : Tokens, running_payment: Tokens) -> HashSet
 
             if gems[color] > 0 {
                 let new_gems = gems - Tokens::one(color);
-                result.extend(token_match(new_cost, new_gems, running_payment + Tokens::one(color)));
+                result.extend(token_match(
+                    new_cost,
+                    new_gems,
+                    running_payment + Tokens::one(color),
+                ));
             }
 
             if gems[Color::Gold] > 0 {
                 let new_gems = gems - Tokens::one(Color::Gold);
-                result.extend(token_match(new_cost, new_gems, running_payment + Tokens::one(Color::Gold)));
+                result.extend(token_match(
+                    new_cost,
+                    new_gems,
+                    running_payment + Tokens::one(Color::Gold),
+                ));
             }
         }
     }
@@ -44,42 +50,41 @@ fn token_match(cost : Tokens, gems : Tokens, running_payment: Tokens) -> HashSet
     HashSet::from_iter(result)
 }
 
-impl Player{
-    pub fn new() -> Player{
-        Player{
-            points : 0,
-            reserved : Vec::new(),
-            gems : Tokens::empty(),
-            developments : Tokens::empty(),
+impl Player {
+    pub fn new() -> Player {
+        Player {
+            points: 0,
+            reserved: Vec::new(),
+            gems: Tokens::empty(),
+            developments: Tokens::empty(),
         }
     }
 
-    pub fn points(&self) -> u8{
+    pub fn points(&self) -> u8 {
         self.points
     }
 
-    pub fn reserved(&self) -> &Vec<u8>{
+    pub fn reserved(&self) -> &Vec<u8> {
         &self.reserved
     }
-    
-    pub fn gems(&self) -> &Tokens{
+
+    pub fn gems(&self) -> &Tokens {
         &self.gems
     }
 
-    fn add_development(&mut self, color : Color){
+    fn add_development(&mut self, color: Color) {
         self.developments += Tokens::one(color);
     }
 
-
-    pub fn developments(&self) -> &Tokens{
+    pub fn developments(&self) -> &Tokens {
         &self.developments
     }
 
-    pub fn add_gems(&mut self, gems : Tokens) {
+    pub fn add_gems(&mut self, gems: Tokens) {
         self.gems += gems;
     }
 
-    pub fn purchase_card(&mut self, card : &Card, payment: &Tokens) {
+    pub fn purchase_card(&mut self, card: &Card, payment: &Tokens) {
         debug_assert!(payment.legal());
         self.gems -= *payment;
         debug_assert!(self.gems.legal());
@@ -88,20 +93,19 @@ impl Player{
         self.reserved.retain(|&x| x != card.id());
     }
 
-    pub fn reserve_card(&mut self, card_id : CardId) {
+    pub fn reserve_card(&mut self, card_id: CardId) {
         debug_assert!(self.reserved.len() < 3);
         self.reserved.push(card_id);
     }
 
-
-    /// Returns the token spread that a player needs to afford 
+    /// Returns the token spread that a player needs to afford
     /// a given card.
-    pub fn payment_to_afford(&self, card : Card) -> Option<HashSet<Tokens>> {
+    pub fn payment_to_afford(&self, card: Card) -> Option<HashSet<Tokens>> {
         let cost = card.cost();
         let cost = cost.discounted_with(&self.developments).to_tokens();
         let mut total_deficit = 0;
         for color in Color::all() {
-            let deficit =cost[color] - self.gems[color];
+            let deficit = cost[color] - self.gems[color];
             if deficit > 0 {
                 total_deficit += deficit;
             }
@@ -123,7 +127,6 @@ impl Player{
         return Some(payments);
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -173,8 +176,13 @@ mod tests {
         let payment = player.payment_to_afford(card).unwrap();
         assert_eq!(payment.len(), 1);
         assert_eq!(
-            *payment.into_iter().take(1).collect::<Vec<_>>().first().unwrap(),
-            Tokens{
+            *payment
+                .into_iter()
+                .take(1)
+                .collect::<Vec<_>>()
+                .first()
+                .unwrap(),
+            Tokens {
                 red: 0,
                 green: 0,
                 blue: 0,
@@ -183,7 +191,6 @@ mod tests {
                 gold: 0,
             }
         );
-
     }
     #[test]
     fn test_payment_specific_0_wild_discount_less() {
@@ -196,8 +203,13 @@ mod tests {
         let payment = player.payment_to_afford(card).unwrap();
         assert_eq!(payment.len(), 1);
         assert_eq!(
-            *payment.into_iter().take(1).collect::<Vec<_>>().first().unwrap(),
-            Tokens{
+            *payment
+                .into_iter()
+                .take(1)
+                .collect::<Vec<_>>()
+                .first()
+                .unwrap(),
+            Tokens {
                 red: 0,
                 green: 2,
                 blue: 0,
@@ -206,7 +218,6 @@ mod tests {
                 gold: 0,
             }
         );
-
     }
     #[test]
     fn test_payment_specific_1_wild_discount_less() {
@@ -220,8 +231,13 @@ mod tests {
         let payment = player.payment_to_afford(card).unwrap();
         assert_eq!(payment.len(), 1, "payment not unique: {:?}", payment);
         assert_eq!(
-            *payment.into_iter().take(1).collect::<Vec<_>>().first().unwrap(),
-            Tokens{
+            *payment
+                .into_iter()
+                .take(1)
+                .collect::<Vec<_>>()
+                .first()
+                .unwrap(),
+            Tokens {
                 red: 0,
                 green: 1,
                 blue: 0,
@@ -245,9 +261,10 @@ mod tests {
         let payment = player.payment_to_afford(card).unwrap();
         println!("payment {:?}", payment);
         assert_eq!(payment.len(), 3);
+
         let set = payment;
         let target = vec![
-            Tokens{
+            Tokens {
                 red: 1,
                 green: 1,
                 blue: 0,
@@ -255,7 +272,7 @@ mod tests {
                 black: 0,
                 gold: 1,
             },
-            Tokens{
+            Tokens {
                 red: 0,
                 green: 2,
                 blue: 0,
@@ -263,7 +280,7 @@ mod tests {
                 black: 0,
                 gold: 1,
             },
-            Tokens{
+            Tokens {
                 red: 1,
                 green: 2,
                 blue: 0,
@@ -274,7 +291,6 @@ mod tests {
         ];
         let target = target.into_iter().collect::<std::collections::HashSet<_>>();
         assert_eq!(set, target);
-
     }
     #[test]
     fn test_payment_specific_2_wild_discount_more() {
@@ -297,8 +313,13 @@ mod tests {
         let payment = player.payment_to_afford(card).unwrap();
         assert_eq!(payment.len(), 1);
         assert_eq!(
-            *payment.into_iter().take(1).collect::<Vec<_>>().first().unwrap(),
-            Tokens{
+            *payment
+                .into_iter()
+                .take(1)
+                .collect::<Vec<_>>()
+                .first()
+                .unwrap(),
+            Tokens {
                 red: 0,
                 green: 0,
                 blue: 0,
@@ -308,6 +329,7 @@ mod tests {
             }
         )
     }
+
     #[test]
     fn test_payment_specific_2_wild() {
         let mut player = Player::new();
@@ -323,8 +345,13 @@ mod tests {
         let payment = player.payment_to_afford(card).unwrap();
         assert_eq!(payment.len(), 1);
         assert_eq!(
-            *payment.into_iter().take(1).collect::<Vec<_>>().first().unwrap(),
-            Tokens{
+            *payment
+                .into_iter()
+                .take(1)
+                .collect::<Vec<_>>()
+                .first()
+                .unwrap(),
+            Tokens {
                 red: 0,
                 green: 1,
                 blue: 0,
@@ -334,6 +361,7 @@ mod tests {
             }
         )
     }
+
     #[test]
     fn test_payment_ambiguous_3_wild() {
         let mut player = Player::new();
@@ -343,7 +371,6 @@ mod tests {
         player.add_gems(Tokens::one(Color::Gold));
         player.add_gems(Tokens::one(Color::Gold));
         player.add_gems(Tokens::one(Color::Gold));
-
 
         let card = Card::all()[13];
 
