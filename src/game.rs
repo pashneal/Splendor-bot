@@ -11,6 +11,7 @@ use self::Action::*;
 
 use std::collections::HashSet;
 
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -21,10 +22,11 @@ pub struct Game {
     nobles : Vec<Noble>,
     dealt_cards: Vec<Vec<CardId>>,
     current_phase : Phase,
+    card_lookup : Arc<Vec<Card>>,
 }
 
 impl Game {
-    pub fn new(players: u8) -> Game {
+    pub fn new(players: u8, card_lookup : Arc<Vec<Card>>) -> Game {
         let mut decks = Vec::new();
         for tier in 1..=3 {
             let mut deck = Vec::new();
@@ -60,6 +62,7 @@ impl Game {
             nobles,
             current_phase: Phase::PlayerStart,
             dealt_cards,
+            card_lookup,
         }
     }
 
@@ -117,7 +120,9 @@ impl Game {
 
     pub fn take_action(&mut self, action: Action) {
         debug_assert!(self.is_phase_correct_for(action.clone()));
+
         let next_phase = match action {
+
             TakeDouble(color) => {
                 // Preconditions: 
                 // -> Must be from a pile that has >= 4
@@ -140,6 +145,7 @@ impl Game {
                     Phase::NobleAction 
                 }
             },
+
             TakeDistinct(colors) => {
                 // Preconditions
                 // -> Can take 1,2, or 3 distinct colors
@@ -216,8 +222,15 @@ impl Game {
                 } else {
                     Phase::NobleAction 
                 }
-            }
+            },
 
+            Purchase((card_id, tokens)) => {
+                
+                let card = self.card_lookup[card_id as usize];
+
+
+                Phase::NobleAction
+            }
 
             _ => {unimplemented!()}
         };

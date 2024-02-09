@@ -1,5 +1,6 @@
 use crate::color::Color;
 use crate::token::Tokens;
+use std::ops::{ Index, IndexMut};
 
 #[derive(PartialEq, Copy, Clone, Debug, Default)]
 pub struct Cost {
@@ -10,6 +11,34 @@ pub struct Cost {
     white: i8,
 }
 
+impl Index<Color> for Cost {
+    type Output = i8;
+ 
+    fn index<'a>(&'a  self, color: Color) -> &'a i8 {
+        match color {
+            Color::Black => & self.black,
+            Color::Blue => & self.blue,
+            Color::Green => & self.green,
+            Color::Red => & self.red,
+            Color::White => & self.white,
+            _ => panic!("Invalid color in Cost object"),
+        }
+    }
+}
+impl IndexMut<Color> for Cost {
+ 
+    fn index_mut<'a>(&'a mut self, color: Color) -> &'a mut  i8 {
+        match color {
+            Color::Black => &mut self.black,
+            Color::Blue => &mut self.blue,
+            Color::Green => &mut self.green,
+            Color::Red => &mut self.red,
+            Color::White => &mut self.white,
+            _ => panic!("Invalid color in Cost object"),
+        }
+    }
+}
+
 impl Cost {
     pub fn discounted_with(&self, token : &Tokens) -> Cost {
         Cost { 
@@ -18,6 +47,16 @@ impl Cost {
             green: 0.max(self.green - token.green), 
             red:   0.max(self.red - token.red),
             white: 0.max(self.white - token.white),
+        }
+    }
+    pub fn to_tokens(&self) -> Tokens {
+        Tokens {
+            black: self.black,
+            blue: self.blue,
+            green: self.green,
+            red: self.red,
+            white: self.white,
+            gold: 0,
         }
     }
 }

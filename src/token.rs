@@ -1,8 +1,9 @@
 use crate::color::Color;
 use std::collections::HashSet;
-use std::cmp::{max, min}; use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
+use std::cmp::{max, min};
+use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 pub struct Tokens {
     pub black: i8,
     pub blue: i8,
@@ -22,6 +23,7 @@ impl Tokens {
     }
 
     pub fn total(&self) -> u32 {
+        debug_assert!(self.legal(), "Illegal token state: {:?}", self);
         self.black as u32
             + self.blue as u32
             + self.green as u32
