@@ -109,7 +109,7 @@ impl Game {
             },
 
             Phase::PlayerTokenCapExceeded => {
-                let mut running = self.tokens.clone();
+                let mut running = Tokens::empty();
                 let mut gems = self.tokens.clone();
                 let player = &self.players[self.current_player];
                 let discard_num = player.gems().total() - 10;
