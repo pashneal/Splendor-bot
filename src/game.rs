@@ -664,6 +664,11 @@ pub mod test {
     }
 
     #[test]
+    pub fn test_init_legal_round_specific_board_state() {
+        // TODO: Model a specific randomized board state and 
+        // test the legal actions still work with 3 players
+    }
+    #[test]
     pub fn test_init_legal_round() {
         let card_lookup = Arc::new(Card::all());
         let mut game = Game::new(4, card_lookup);
