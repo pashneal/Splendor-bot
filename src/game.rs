@@ -664,6 +664,10 @@ pub mod test {
     }
 
     #[test]
+    pub fn test_init_winners() {
+        // TODO: Model several endgames
+    }
+    #[test]
     pub fn test_init_legal_round_specific_board_state() {
         // TODO: Model a specific randomized board state and 
         // test the legal actions still work with 3 players
