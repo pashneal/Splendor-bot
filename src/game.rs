@@ -25,11 +25,6 @@ pub struct Game {
     card_lookup: Arc<Vec<Card>>,
 }
 
-// Note: I don't really know where to write this but the thought just occurred to me
-// when doing MCTS, we have to be careful about how blind reserves appear to other players
-// as that information has to be randomized every time.
-// The reason being is that agents in a real game would not have perfect information
-// about what was reserved, but can in fact make eliminations instead
 
 impl Game {
     pub fn new(players: u8, card_lookup: Arc<Vec<Card>>) -> Game {
@@ -68,6 +63,34 @@ impl Game {
             current_phase: Phase::PlayerStart,
             dealt_cards,
             card_lookup,
+        }
+    }
+
+    fn get_legal_actions(&self) -> Option<Vec<Action>> {
+        match self.current_phase {
+            Phase::NobleAction => {
+                let mut available_nobles = Vec::new();
+                let player = &self.players[self.current_player];
+                for noble in &self.nobles {
+                    if noble.is_attracted_to(player.developments()) {
+                        available_nobles.push(noble);
+                    }
+                }
+                let nobles = available_nobles.into_iter().map(|n| AttractNoble(n.id())).collect();
+                Some(nobles)
+
+            },
+            Phase::PlayerActionEnd => {
+                Some(vec![Continue])
+            },
+
+            Phase::PlayerTokenCapExceeded => {
+                todo!()
+            },
+
+            Phase::PlayerStart => {
+                todo!()
+            },
         }
     }
 
@@ -135,6 +158,14 @@ impl Game {
         i
     }
 
+    /// Takes an action and updates the game state accordingly
+    /// Preconditions:
+    ///     the action is a legal action for the current phase as dictated
+    ///     by the game state and the rules of the game of Splendor
+    ///
+    /// Note: this function makes judicious use of debug_assert! to check many
+    /// preconditions. I'm experimenting with this style of error checking
+    /// alongside TDD to see if developer productivity is improved 
     pub fn take_action(&mut self, action: Action) {
         debug_assert!(self.is_phase_correct_for(action.clone()));
 
@@ -244,15 +275,16 @@ impl Game {
                 // Preconditions:
                 // -> The tokens being used is one of the legal ways to purchase this card
                 debug_assert!({
-                    let payment_options = player.payment_to_afford(&card);
-                    let payment_options = payment_options.unwrap_or(HashSet::new());
-                    payment_options.iter().any(|&option| option == payment)
+                    let payment_options = player.payment_options_for(&card);
+                    let payments = payment_options.unwrap_or(HashSet::new());
+                    payments.iter().any(|&p| p == payment)
                 });
                 // -> Must have been on the board or in the player's reserved cards
                 debug_assert!(self.has_card(card_id) || player.has_reserved_card(card_id));
 
                 let player = &mut self.players[self.current_player];
                 player.purchase_card(&card, &payment);
+
                 if self.has_card(card_id) {
                     let tier = self.remove_card(card_id);
                     self.deal_to(tier);
@@ -280,7 +312,7 @@ impl Game {
 
                 // Preconditions:
                 // -> The player has enough development cards to attract the noble
-                let player = &self.players[self.current_player];
+                let player = &mut self.players[self.current_player];
                 let noble_index = self.nobles.iter().position(|n| n.id() == noble_id).unwrap();
                 let noble = &self.nobles[noble_index];
                 debug_assert!(noble.is_attracted_to(player.developments()));
@@ -291,7 +323,10 @@ impl Game {
                 Phase::PlayerActionEnd
             }
 
-            _ => unimplemented!(),
+            Continue => {
+                self.current_player = (self.current_player + 1) % self.players.len();
+                Phase::PlayerStart
+            }
         };
         self.current_phase = next_phase;
     }

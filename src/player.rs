@@ -66,7 +66,7 @@ impl Player {
         self.points
     }
 
-    pub fn add_points(&self, points:u8){
+    pub fn add_points(&mut self, points:u8){
         self.points += points;
     }
     /// Return the number of reserved cards in total
@@ -135,7 +135,7 @@ impl Player {
 
     /// Returns the token spread that a player needs to afford
     /// a given card.
-    pub fn payment_to_afford(&self, card: &Card) -> Option<HashSet<Tokens>> {
+    pub fn payment_options_for(&self, card: &Card) -> Option<HashSet<Tokens>> {
         let cost = card.cost();
         let cost = cost.discounted_with(&self.developments).to_tokens();
         let mut total_deficit = 0;
@@ -159,7 +159,7 @@ impl Player {
         if payments.len() == 0 {
             return None;
         }
-        return Some(payments);
+        Some(payments)
     }
 }
 
@@ -186,7 +186,7 @@ mod tests {
         player.add_gems(Tokens::one(Color::Black));
 
         let card = Card::all()[4];
-        let payment = player.payment_to_afford(&card);
+        let payment = player.payment_options_for(&card);
         assert_eq!(payment, None);
     }
 
@@ -197,7 +197,7 @@ mod tests {
         player.add_gems(Tokens::one(Color::Green));
 
         let card = Card::all()[4];
-        let payment = player.payment_to_afford(&card);
+        let payment = player.payment_options_for(&card);
         assert_eq!(payment, None);
     }
     #[test]
@@ -208,7 +208,7 @@ mod tests {
         player.add_development(Color::Green);
 
         let card = Card::all()[4];
-        let payment = player.payment_to_afford(&card).unwrap();
+        let payment = player.payment_options_for(&card).unwrap();
         assert_eq!(payment.len(), 1);
         assert_eq!(
             *payment
@@ -235,7 +235,7 @@ mod tests {
         player.add_gems(Tokens::one(Color::Green));
 
         let card = Card::all()[4];
-        let payment = player.payment_to_afford(&card).unwrap();
+        let payment = player.payment_options_for(&card).unwrap();
         assert_eq!(payment.len(), 1);
         assert_eq!(
             *payment
@@ -263,7 +263,7 @@ mod tests {
         player.add_gems(Tokens::one(Color::Green));
 
         let card = Card::all()[4];
-        let payment = player.payment_to_afford(&card).unwrap();
+        let payment = player.payment_options_for(&card).unwrap();
         assert_eq!(payment.len(), 1, "payment not unique: {:?}", payment);
         assert_eq!(
             *payment
@@ -293,7 +293,7 @@ mod tests {
         player.add_gems(Tokens::one(Color::Green));
 
         let card = Card::all()[4];
-        let payment = player.payment_to_afford(&card).unwrap();
+        let payment = player.payment_options_for(&card).unwrap();
         println!("payment {:?}", payment);
         assert_eq!(payment.len(), 3);
 
@@ -345,7 +345,7 @@ mod tests {
         player.add_development(Color::Green);
 
         let card = Card::all()[6];
-        let payment = player.payment_to_afford(&card).unwrap();
+        let payment = player.payment_options_for(&card).unwrap();
         assert_eq!(payment.len(), 1);
         assert_eq!(
             *payment
@@ -377,7 +377,7 @@ mod tests {
         player.add_gems(Tokens::one(Color::Green));
 
         let card = Card::all()[6];
-        let payment = player.payment_to_afford(&card).unwrap();
+        let payment = player.payment_options_for(&card).unwrap();
         assert_eq!(payment.len(), 1);
         assert_eq!(
             *payment
@@ -409,7 +409,7 @@ mod tests {
 
         let card = Card::all()[13];
 
-        let payment = player.payment_to_afford(&card).unwrap();
+        let payment = player.payment_options_for(&card).unwrap();
 
         //             = 0 ways to pay with 0 wilds
         // gg.b        = 1 way to pay with 1 wild
