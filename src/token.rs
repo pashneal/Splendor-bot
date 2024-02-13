@@ -14,6 +14,25 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    pub fn to_set(&self) -> HashSet<Color> {
+        let mut set = HashSet::new();
+        if self.black > 0 {
+            set.insert(Color::Black);
+        }
+        if self.blue > 0 {
+            set.insert(Color::Blue);
+        }
+        if self.green > 0 {
+            set.insert(Color::Green);
+        }
+        if self.red > 0 {
+            set.insert(Color::Red);
+        }
+        if self.white > 0 {
+            set.insert(Color::White);
+        }
+        set
+    }
     pub fn from_vec(vec: &Vec<Color>) -> Tokens {
         let mut tokens = Tokens::empty();
         for &color in vec {
@@ -106,7 +125,7 @@ impl Tokens {
         tokens
     }
 
-    pub fn piles(&self) -> usize {
+    pub fn distinct(&self) -> usize {
         let mut count = 0;
         if self.black > 0 {
             count += 1;

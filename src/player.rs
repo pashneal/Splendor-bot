@@ -151,11 +151,7 @@ impl Player {
             return None;
         }
         // Card is free!
-        println!("total_deficit {}", total_deficit);
-        println!("cost {:?}", cost);
-        println!("gems {:?}", self.gems);
         let payments = token_match(cost, self.gems, Tokens::empty());
-        println!("payments {:?}", payments);
         if payments.len() == 0 {
             return None;
         }
@@ -294,7 +290,6 @@ mod tests {
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
-        println!("payment {:?}", payment);
         assert_eq!(payment.len(), 3);
 
         let set = payment;
@@ -327,6 +322,7 @@ mod tests {
         let target = target.into_iter().collect::<std::collections::HashSet<_>>();
         assert_eq!(set, target);
     }
+
     #[test]
     fn test_payment_specific_2_wild_discount_more() {
         let mut player = Player::new();
