@@ -34,7 +34,7 @@ pub fn choose_distinct_tokens( gems: &mut Tokens, running : &mut Tokens, num_cho
         return total_choices;
     }
     // Pick one to discard and recurse
-    for color in Color::all() {
+    for color in Color::all_expect_gold() {
         if gems[color] > 0 {
             if running[color] > 0 {
                 continue;
@@ -164,7 +164,7 @@ impl Game {
                 // If num reserved cards < 3:
                 // -> Can reserve a card from board
                 // -> Can reserve a card from decks that are not empty
-                if player.all_reserved().len() < 3 {
+                if player.num_reserved() < 3 {
                     for tier in 0..3 {
                         if self.decks[tier].len() > 0 {
                             actions.push(ReserveHidden(tier));
@@ -206,7 +206,7 @@ impl Game {
 
                 // If there are 4 tokens of the same color:
                 // -> Can take the two tokens of that color
-                for color in Color::all() {
+                for color in Color::all_expect_gold() {
                     if self.tokens[color] >= 4 {
                         actions.push(TakeDouble(color));
                     }
@@ -542,6 +542,27 @@ pub mod test {
     }
 
     #[test]
+    pub fn test_choose_3_distinct_tokens() {
+        let mut gems  = Tokens::start(2);
+        let mut running = Tokens::empty();
+        let choices = choose_distinct_tokens(&mut gems , &mut running, 3);
+        assert_eq!(
+            choices,
+            HashSet::from_iter(vec![
+                Tokens::from_vec(&vec![Color::Red, Color::Blue, Color::Green]),
+                Tokens::from_vec(&vec![Color::Red, Color::Blue, Color::White]),
+                Tokens::from_vec(&vec![Color::Red, Color::Blue, Color::Black]),
+                Tokens::from_vec(&vec![Color::Red, Color::Green, Color::White]),
+                Tokens::from_vec(&vec![Color::Red, Color::Green, Color::Black]),
+                Tokens::from_vec(&vec![Color::Red, Color::White, Color::Black]),
+                Tokens::from_vec(&vec![Color::Blue, Color::Green, Color::White]),
+                Tokens::from_vec(&vec![Color::Blue, Color::Green, Color::Black]),
+                Tokens::from_vec(&vec![Color::Blue, Color::White, Color::Black]),
+                Tokens::from_vec(&vec![Color::Green, Color::White, Color::Black]),
+            ])
+        );
+    }
+    #[test]
     pub fn test_choose_distinct_tokens() {
         let mut gems  = Tokens::from_vec(&vec![Color::Red, 
                                     Color::Red, 
@@ -565,5 +586,20 @@ pub mod test {
                 Tokens::from_vec(&vec![Color::Red, Color::Green]),
             ])
         );
+    }
+
+    #[test]
+    pub fn test_init_legal_actions() {
+        let card_lookup = Arc::new(Card::all());
+        let game = Game::new(2, card_lookup);
+        let actions = game.get_legal_actions().unwrap();
+        // 3 hiddens decks to choose from (ReserveHidden)
+        // 12 cards to choose from (Reserve)
+        // 5 colors to choose from (TakeDouble)
+        // 5 choose 3 = 10 colors to choose from (TakeDistinct)
+        // 0 cards able to be purchased
+        // sum = 30
+        println!("{:#?}", actions);
+        assert_eq!(actions.len(), 30);
     }
 }
