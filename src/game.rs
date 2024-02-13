@@ -665,7 +665,7 @@ pub mod test {
 
     #[test]
     pub fn test_init_winners() {
-        // TODO: Model several endgames
+        // TODO: Model several endgames including ties
     }
     #[test]
     pub fn test_init_legal_round_specific_board_state() {
