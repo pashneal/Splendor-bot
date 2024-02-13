@@ -81,6 +81,28 @@ pub fn choose_tokens(gems: &mut Tokens, running: &mut Tokens, num_chosen: u32) -
 }
 
 impl Game {
+
+    fn with_nobles(&mut self, nobles : Vec<NobleId>){
+        let noble_lookup = Noble::all();
+        self.nobles = nobles.iter().map(|id| noble_lookup[*id as usize].clone()).collect(); 
+    }
+
+    fn with_initial_cards(&mut self, initial_cards: Vec<Vec<Card>>){
+       // Undeal the initial cards 
+       self.decks[0].extend(self.dealt_cards[0].drain(..).map(|id| self.card_lookup[id as usize]));
+       self.decks[1].extend(self.dealt_cards[1].drain(..).map(|id| self.card_lookup[id as usize]));
+       self.decks[2].extend(self.dealt_cards[2].drain(..).map(|id| self.card_lookup[id as usize]));
+       // Filter out the initial cards from the decks
+       self.decks[0].retain(|card| !initial_cards[0].contains(card));
+       self.decks[1].retain(|card| !initial_cards[1].contains(card));
+       self.decks[2].retain(|card| !initial_cards[2].contains(card));
+
+
+       self.dealt_cards[0] = initial_cards[0].iter().map(|card| card.id()).collect();
+       self.dealt_cards[1] = initial_cards[1].iter().map(|card| card.id()).collect();
+       self.dealt_cards[2] = initial_cards[2].iter().map(|card| card.id()).collect();
+    }
+
     pub fn new(players: u8, card_lookup: Arc<Vec<Card>>) -> Game {
         let mut decks = Vec::new();
         for tier in 1..=3 {
@@ -484,7 +506,10 @@ impl Game {
 
         // Preconditions:
         // -> The game is over
+        // -> Someone has at least >= 15 points
         debug_assert!(self.get_legal_actions().is_none());
+        debug_assert!(self.players.iter().any(|p| p.points() >= 15));
+
 
         let mut max_points = 0;
         let mut min_developments = u32::MAX;
@@ -527,7 +552,7 @@ impl Game {
 }
 
 #[derive(Debug, Clone)]
-pub enum Phase {
+enum Phase {
     PlayerStart,            // Take some player action
     PlayerTokenCapExceeded, // [Optional] Player has > 10 tokens
     NobleAction,            // See if any nobles get attracted (multiple may be attracted)
@@ -554,7 +579,10 @@ pub enum Action {
 #[cfg(test)]
 pub mod test {
     pub use super::*;
+    use super::Action::*;
+    use super::Color::*;
     #[test]
+
     pub fn test_choose_tokens_1() {
         let mut gems = Tokens::from_vec(&vec![
             Color::Red,
@@ -681,11 +709,64 @@ pub mod test {
     pub fn test_init_winners() {
         // TODO: Model several endgames including ties
     }
+
     #[test]
-    pub fn test_init_legal_round_specific_board_state() {
-        // TODO: Model a specific randomized board state and
-        // test the legal actions still work with 3 players
+    pub fn test_init_legal_rounds_specific_board_state() {
+        let mut game = Game::new(3, Arc::new(Card::all()));
+        let cards = Card::all();
+        game.with_nobles(vec![2, 3, 0, 9]);  
+        game.with_initial_cards(vec![
+            vec![cards[31], cards[10], cards[8], cards[17]],
+            vec![cards[43], cards[66], cards[47], cards[67]],
+            vec![cards[89], cards[80], cards[86], cards[74]],
+        ]);
+        game.take_action(TakeDouble(Color::Black));
+        game.take_action(Continue);
+
+        let actions = game.get_legal_actions().unwrap();
+        assert_eq!(actions.len() , 29);
+        assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
+
+        game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(Continue);
+
+        let actions = game.get_legal_actions().unwrap();
+        assert_eq!(actions.len() , 29);
+        assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
+
+        game.take_action(TakeDouble(Color::White));
+        game.take_action(Continue);
+
+        let actions = game.get_legal_actions().unwrap();
+        assert_eq!(actions.len() , 28);
+
+        game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(Continue);
+
+        let actions = game.get_legal_actions().unwrap();
+        assert_eq!(actions.len() , 26);
+
+        game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(Continue);
+
+        let actions = game.get_legal_actions().unwrap();
+        assert_eq!(actions.len() , 30 - 4 - 6);
+
+        game.take_action(TakeDouble(Color::Blue));
+        game.take_action(Continue);
+
+        let actions = game.get_legal_actions().unwrap();
+        assert_eq!(actions.len() , 30 - 5 - 6 + 1);
+
+        game.take_action(Purchase((8, Tokens::from_vec(&vec![Color::White, Color::Green, Color::Red, Color::Black]))));
+        game.take_action(Continue); 
+
+        let actions = game.get_legal_actions().unwrap();
+        assert!((actions.len() == 30 - 4 + 1) || (actions.len() == 30 - 4 + 2));
+
+
     }
+
     #[test]
     pub fn test_init_legal_round() {
         let card_lookup = Arc::new(Card::all());
