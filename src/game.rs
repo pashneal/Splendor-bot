@@ -199,8 +199,10 @@ impl Game {
                     take_max
                 );
 
-                for choice in choices {
-                    actions.push(TakeDistinct(choice.to_set()));
+                if take_max > 0 {
+                    for choice in choices {
+                        actions.push(TakeDistinct(choice.to_set()));
+                    }
                 }
 
 
@@ -325,6 +327,7 @@ impl Game {
             TakeDistinct(colors) => {
                 // Preconditions
                 // -> Can take 1,2, or 3 distinct colors
+                println!("Taking distinct colors: {:?}", colors);
                 debug_assert!(colors.len() <= 3 && colors.len() > 0);
                 // -> Which all exist on the board
                 debug_assert!(colors.iter().all(|c| self.tokens[*c] >= 1));
@@ -414,6 +417,9 @@ impl Game {
                 let player = &mut self.players[self.current_player];
                 player.purchase_card(&card, &payment);
 
+                // Put the payment back on the board
+                self.tokens += payment;
+
                 if self.has_card(card_id) {
                     let tier = self.remove_card(card_id);
                     self.deal_to(tier);
@@ -459,6 +465,56 @@ impl Game {
         };
         self.current_phase = next_phase;
     }
+
+    /// Given a terminal game state, determine the winner
+    pub fn get_winner(&self) -> Option<usize> {
+        // The winner of a splendor game is the player with the most points
+        // and fewest development cards in the event of a point tie
+        // Note: there is no indication of what to do in the event of a cards + point tie
+        // TODO: return None instead of whatever we do now
+        
+        // Preconditions:
+        // -> The game is over
+        debug_assert!(self.get_legal_actions().is_none());
+
+        let mut max_points = 0;
+        let mut min_developments = u32::MAX;
+        let mut winner = None;
+        for (i, player) in self.players.iter().enumerate() {
+            if player.points() > max_points {
+                max_points = player.points();
+                min_developments = player.developments().total();
+                winner = Some(i);
+            } else if player.points() == max_points {
+                if player.developments().total() < min_developments as u32 {
+                    min_developments = player.developments().total();
+                    winner = Some(i);
+                }
+            }
+        }
+
+        winner
+
+    }
+
+
+    pub fn rollout(&mut self) -> Option<usize> {
+        loop {
+            let actions = self.get_legal_actions();
+            // If there are no legal actions, the game is over
+            // and we should break out of the loop
+            if actions.is_none() {
+                break;
+            }
+
+            let actions = actions.unwrap();
+
+            let action = actions.choose(&mut thread_rng()).expect("List should not be empty");
+            self.take_action(action.clone());
+        }
+
+        self.get_winner()
+    } 
 }
 
 #[derive(Debug, Clone)]
@@ -629,5 +685,13 @@ pub mod test {
         game.take_action(Action::Continue);
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 30);
+    }
+    #[test]
+    pub fn test_randomized_rollout() {
+        let card_lookup = Arc::new(Card::all());
+        for _ in 0..100 {
+            let mut game = Game::new(4, card_lookup.clone());
+            game.rollout();
+        }
     }
 }
