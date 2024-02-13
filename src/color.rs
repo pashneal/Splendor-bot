@@ -10,7 +10,13 @@ pub enum Color {
 
 impl Color {
     pub fn all_expect_gold() -> Vec<Color> {
-        vec![Color::Black, Color::Blue, Color::Green, Color::Red, Color::White]
+        vec![
+            Color::Black,
+            Color::Blue,
+            Color::Green,
+            Color::Red,
+            Color::White,
+        ]
     }
     pub fn all() -> Vec<Color> {
         vec![

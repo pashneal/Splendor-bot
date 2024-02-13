@@ -66,7 +66,7 @@ impl Player {
         self.points
     }
 
-    pub fn add_points(&mut self, points:u8){
+    pub fn add_points(&mut self, points: u8) {
         self.points += points;
     }
     /// Return the number of reserved cards in total

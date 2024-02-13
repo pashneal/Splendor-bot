@@ -26,8 +26,11 @@ pub struct Game {
     card_lookup: Arc<Vec<Card>>,
 }
 
-
-pub fn choose_distinct_tokens( gems: &mut Tokens, running : &mut Tokens, num_chosen: u32) -> HashSet<Tokens> {
+pub fn choose_distinct_tokens(
+    gems: &mut Tokens,
+    running: &mut Tokens,
+    num_chosen: u32,
+) -> HashSet<Tokens> {
     let mut total_choices = HashSet::new();
     if num_chosen == 0 {
         total_choices.insert(running.clone());
@@ -50,11 +53,11 @@ pub fn choose_distinct_tokens( gems: &mut Tokens, running : &mut Tokens, num_cho
             gems[color] += 1;
         }
     }
-    
+
     total_choices
 }
 
-pub fn choose_tokens( gems: &mut Tokens, running : &mut Tokens, num_chosen: u32) -> HashSet<Tokens> {
+pub fn choose_tokens(gems: &mut Tokens, running: &mut Tokens, num_chosen: u32) -> HashSet<Tokens> {
     let mut total_choices = HashSet::new();
     if num_chosen == 0 {
         total_choices.insert(running.clone());
@@ -73,7 +76,7 @@ pub fn choose_tokens( gems: &mut Tokens, running : &mut Tokens, num_chosen: u32)
             gems[color] += 1;
         }
     }
-    
+
     total_choices
 }
 
@@ -127,24 +130,28 @@ impl Game {
                         available_nobles.push(noble);
                     }
                 }
-                let nobles : Vec<Action> = available_nobles.into_iter().map(|n| AttractNoble(n.id())).collect();
+                let nobles: Vec<Action> = available_nobles
+                    .into_iter()
+                    .map(|n| AttractNoble(n.id()))
+                    .collect();
                 if nobles.len() == 0 {
                     Some(vec![Continue])
                 } else {
                     Some(nobles)
                 }
-
-            },
+            }
             Phase::PlayerActionEnd => {
-                // There are no legal actions remaining if 
+                // There are no legal actions remaining if
                 // there's a player with >= 15 points and we are on the last player's
-                // turn 
-                if  self.current_player == self.players.len() - 1 && self.players.iter().any(|p| p.points() >= 15) {
+                // turn
+                if self.current_player == self.players.len() - 1
+                    && self.players.iter().any(|p| p.points() >= 15)
+                {
                     None
                 } else {
                     Some(vec![Continue])
                 }
-            },
+            }
 
             Phase::PlayerTokenCapExceeded => {
                 let mut running = Tokens::empty();
@@ -155,7 +162,7 @@ impl Game {
                 let choices = choose_tokens(&mut gems, &mut running, discard_num);
                 let discard_actions = choices.iter().map(|d| Discard(*d)).collect();
                 Some(discard_actions)
-            },
+            }
 
             Phase::PlayerStart => {
                 let mut actions = Vec::<Action>::new();
@@ -174,11 +181,16 @@ impl Game {
                         });
                     }
                 }
-                
+
                 // If has prerequisites:
                 // -> Can purchase a card from board
-                // -> Can purchase a card from hand 
-                for card_index in self.dealt_cards.iter().flatten().chain(player.all_reserved().iter()) {
+                // -> Can purchase a card from hand
+                for card_index in self
+                    .dealt_cards
+                    .iter()
+                    .flatten()
+                    .chain(player.all_reserved().iter())
+                {
                     let card = &self.card_lookup[*card_index as usize];
                     if let Some(payments) = player.payment_options_for(&card) {
                         for payment in payments {
@@ -194,9 +206,9 @@ impl Game {
                 let distinct_tokens = self.tokens.distinct();
                 let take_max = distinct_tokens.min(3) as u32;
                 let choices = choose_distinct_tokens(
-                    &mut self.tokens.clone(), 
-                    &mut Tokens::empty(), 
-                    take_max
+                    &mut self.tokens.clone(),
+                    &mut Tokens::empty(),
+                    take_max,
                 );
 
                 if take_max > 0 {
@@ -204,7 +216,6 @@ impl Game {
                         actions.push(TakeDistinct(choice.to_set()));
                     }
                 }
-
 
                 // If there are 4 tokens of the same color:
                 // -> Can take the two tokens of that color
@@ -214,13 +225,12 @@ impl Game {
                     }
                 }
 
-                
                 if actions.len() == 0 {
                     None
                 } else {
                     Some(actions)
                 }
-            },
+            }
         }
     }
 
@@ -296,7 +306,7 @@ impl Game {
     ///
     /// Note: this function makes judicious use of debug_assert! to check many
     /// preconditions. I'm experimenting with this style of error checking
-    /// alongside TDD to see if developer productivity is improved 
+    /// alongside TDD to see if developer productivity is improved
     pub fn take_action(&mut self, action: Action) {
         debug_assert!(self.is_phase_correct_for(action.clone()));
 
@@ -430,7 +440,7 @@ impl Game {
 
             Discard(discards) => {
                 // Preconditions:
-                // -> Must have greater than 10 tokens 
+                // -> Must have greater than 10 tokens
                 // -> Must discard enough tokens to be == 10
                 // -> Must be discarding tokens already present in the player's gems
                 let player = &mut self.players[self.current_player];
@@ -443,8 +453,7 @@ impl Game {
                 Phase::NobleAction
             }
 
-            AttractNoble(noble_id) => { 
-
+            AttractNoble(noble_id) => {
                 // Preconditions:
                 // -> The player has enough development cards to attract the noble
                 let player = &mut self.players[self.current_player];
@@ -472,7 +481,7 @@ impl Game {
         // and fewest development cards in the event of a point tie
         // Note: there is no indication of what to do in the event of a cards + point tie
         // TODO: return None instead of whatever we do now
-        
+
         // Preconditions:
         // -> The game is over
         debug_assert!(self.get_legal_actions().is_none());
@@ -494,9 +503,7 @@ impl Game {
         }
 
         winner
-
     }
-
 
     pub fn rollout(&mut self) -> Option<usize> {
         loop {
@@ -509,12 +516,14 @@ impl Game {
 
             let actions = actions.unwrap();
 
-            let action = actions.choose(&mut thread_rng()).expect("List should not be empty");
+            let action = actions
+                .choose(&mut thread_rng())
+                .expect("List should not be empty");
             self.take_action(action.clone());
         }
 
         self.get_winner()
-    } 
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -542,25 +551,26 @@ pub enum Action {
     Continue,
 }
 
-
 #[cfg(test)]
 pub mod test {
     pub use super::*;
     #[test]
     pub fn test_choose_tokens_1() {
-        let mut gems  = Tokens::from_vec(&vec![Color::Red, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Green]);
+        let mut gems = Tokens::from_vec(&vec![
+            Color::Red,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Green,
+        ]);
         let mut running = Tokens::empty();
-        let choices = choose_tokens(&mut gems , &mut running, 1);
+        let choices = choose_tokens(&mut gems, &mut running, 1);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
@@ -573,20 +583,22 @@ pub mod test {
 
     #[test]
     pub fn test_choose_tokens_2() {
-        let mut gems  = Tokens::from_vec(&vec![Color::Red, 
-                                    Color::Red, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Green]);
+        let mut gems = Tokens::from_vec(&vec![
+            Color::Red,
+            Color::Red,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Green,
+        ]);
         let mut running = Tokens::empty();
-        let choices = choose_tokens(&mut gems , &mut running, 2);
+        let choices = choose_tokens(&mut gems, &mut running, 2);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
@@ -601,9 +613,9 @@ pub mod test {
 
     #[test]
     pub fn test_choose_3_distinct_tokens() {
-        let mut gems  = Tokens::start(2);
+        let mut gems = Tokens::start(2);
         let mut running = Tokens::empty();
-        let choices = choose_distinct_tokens(&mut gems , &mut running, 3);
+        let choices = choose_distinct_tokens(&mut gems, &mut running, 3);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
@@ -623,20 +635,22 @@ pub mod test {
 
     #[test]
     pub fn test_choose_distinct_tokens() {
-        let mut gems  = Tokens::from_vec(&vec![Color::Red, 
-                                    Color::Red, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Blue, 
-                                    Color::Green]);
+        let mut gems = Tokens::from_vec(&vec![
+            Color::Red,
+            Color::Red,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Blue,
+            Color::Green,
+        ]);
         let mut running = Tokens::empty();
-        let choices = choose_distinct_tokens(&mut gems , &mut running, 2);
+        let choices = choose_distinct_tokens(&mut gems, &mut running, 2);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
@@ -669,7 +683,7 @@ pub mod test {
     }
     #[test]
     pub fn test_init_legal_round_specific_board_state() {
-        // TODO: Model a specific randomized board state and 
+        // TODO: Model a specific randomized board state and
         // test the legal actions still work with 3 players
     }
     #[test]
@@ -695,6 +709,7 @@ pub mod test {
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 30);
     }
+
     #[test]
     pub fn test_randomized_rollout() {
         let card_lookup = Arc::new(Card::all());
