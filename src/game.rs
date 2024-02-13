@@ -117,7 +117,7 @@ impl Game {
         }
     }
 
-    fn get_legal_actions(&self) -> Option<Vec<Action>> {
+    pub fn get_legal_actions(&self) -> Option<Vec<Action>> {
         match self.current_phase {
             Phase::NobleAction => {
                 let mut available_nobles = Vec::new();
@@ -129,7 +129,7 @@ impl Game {
                 }
                 let nobles : Vec<Action> = available_nobles.into_iter().map(|n| AttractNoble(n.id())).collect();
                 if nobles.len() == 0 {
-                    None
+                    Some(vec![Continue])
                 } else {
                     Some(nobles)
                 }
@@ -238,6 +238,7 @@ impl Game {
             },
             Phase::NobleAction => match action {
                 AttractNoble(_) => true,
+                Continue => true,
                 _ => false,
             },
             Phase::PlayerActionEnd => match action {
@@ -468,7 +469,7 @@ pub enum Phase {
     PlayerActionEnd,        // Finish the turn and see if the round should continue
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
     TakeDouble(Color),
     TakeDistinct(HashSet<Color>),
@@ -481,6 +482,7 @@ pub enum Action {
     AttractNoble(NobleId),
 
     /// Marker for passing the turn to the next player
+    /// Unavailable if the game is over
     Continue,
 }
 
@@ -562,6 +564,7 @@ pub mod test {
             ])
         );
     }
+
     #[test]
     pub fn test_choose_distinct_tokens() {
         let mut gems  = Tokens::from_vec(&vec![Color::Red, 
@@ -593,6 +596,7 @@ pub mod test {
         let card_lookup = Arc::new(Card::all());
         let game = Game::new(2, card_lookup);
         let actions = game.get_legal_actions().unwrap();
+
         // 3 hiddens decks to choose from (ReserveHidden)
         // 12 cards to choose from (Reserve)
         // 5 colors to choose from (TakeDouble)
@@ -600,6 +604,30 @@ pub mod test {
         // 0 cards able to be purchased
         // sum = 30
         println!("{:#?}", actions);
+        assert_eq!(actions.len(), 30);
+    }
+
+    #[test]
+    pub fn test_init_legal_round() {
+        let card_lookup = Arc::new(Card::all());
+        let mut game = Game::new(4, card_lookup);
+        let actions = game.get_legal_actions().unwrap();
+
+        // 3 hiddens decks to choose from (ReserveHidden)
+        // 12 cards to choose from (Reserve)
+        // 5 colors to choose from (TakeDouble)
+        // 5 choose 3 = 10 colors to choose from (TakeDistinct)
+        // 0 cards able to be purchased
+        // sum = 30
+
+        println!("{:#?}", actions);
+        assert_eq!(actions.len(), 30);
+        game.take_action(Action::ReserveHidden(0));
+        let actions = game.get_legal_actions().unwrap();
+        assert_eq!(Action::Continue, actions[0].clone());
+
+        game.take_action(Action::Continue);
+        let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 30);
     }
 }
