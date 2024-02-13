@@ -113,8 +113,8 @@ impl Game {
                 let mut gems = self.tokens.clone();
                 let player = &self.players[self.current_player];
                 let discard_num = player.gems().total() - 10;
-                let discards = choose_tokens(&mut gems, &mut running, discard_num);
-                let discard_actions = discards.iter().map(|d| Discard(*d)).collect();
+                let choices = choose_tokens(&mut gems, &mut running, discard_num);
+                let discard_actions = choices.iter().map(|d| Discard(*d)).collect();
                 Some(discard_actions)
             },
 
