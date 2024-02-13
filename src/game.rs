@@ -10,8 +10,9 @@ use rand::thread_rng;
 use self::Action::*;
 
 use std::collections::HashSet;
-
 use std::sync::Arc;
+
+use cached::proc_macro::cached;
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -25,6 +26,29 @@ pub struct Game {
     card_lookup: Arc<Vec<Card>>,
 }
 
+
+pub fn choose_tokens( gems: &mut Tokens, running : &mut Tokens, num_chosen: u32) -> HashSet<Tokens> {
+    let mut total_choices = HashSet::new();
+    if num_chosen == 0 {
+        total_choices.insert(running.clone());
+        return total_choices;
+    }
+    // Pick one to discard and recurse
+    for color in Color::all() {
+        if gems[color] > 0 {
+            gems[color] -= 1;
+            running[color] += 1;
+
+            let choices = choose_tokens(gems, running, num_chosen - 1);
+            total_choices.extend(choices);
+
+            running[color] -= 1;
+            gems[color] += 1;
+        }
+    }
+    
+    total_choices
+}
 
 impl Game {
     pub fn new(players: u8, card_lookup: Arc<Vec<Card>>) -> Game {
@@ -85,7 +109,12 @@ impl Game {
             },
 
             Phase::PlayerTokenCapExceeded => {
-                todo!()
+                let mut running = self.tokens.clone();
+                let mut gems = self.tokens.clone();
+                let player = &self.players[self.current_player];
+                let discard_num = player.gems().total() - 10;
+                let discards = choose_tokens(&mut gems, &mut running, discard_num);
+                Some(discards.iter().map(|d| Discard(d.clone())).collect())
             },
 
             Phase::PlayerStart => {
@@ -300,10 +329,10 @@ impl Game {
                 // -> Must be discarding tokens already present in the player's gems
                 let player = &mut self.players[self.current_player];
                 debug_assert!(player.gems().total() > 10);
-                debug_assert!(player.gems().total() as usize - discards.len() == 10);
-                debug_assert!((*player.gems() - Tokens::from_vec(&discards)).legal());
+                debug_assert!(player.gems().total() - discards.total() == 10);
+                debug_assert!((*player.gems() - discards).legal());
 
-                player.remove_gems(Tokens::from_vec(&discards));
+                player.remove_gems(discards);
 
                 Phase::NobleAction
             }
@@ -348,10 +377,68 @@ pub enum Action {
     ReserveHidden(usize),
     Purchase((CardId, Tokens)),
 
-    Discard(Vec<Color>),
+    Discard(Tokens),
 
     AttractNoble(NobleId),
 
     /// Marker for passing the turn to the next player
     Continue,
+}
+
+
+#[cfg(test)]
+pub mod test {
+    pub use super::*;
+    #[test]
+    pub fn test_choose_tokens_1() {
+        let mut gems  = Tokens::from_vec(&vec![Color::Red, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Green]);
+        let mut running = Tokens::empty();
+        let choices = choose_tokens(&mut gems , &mut running, 1);
+        assert_eq!(
+            choices,
+            HashSet::from_iter(vec![
+                Tokens::from_vec(&vec![Color::Red]),
+                Tokens::from_vec(&vec![Color::Blue]),
+                Tokens::from_vec(&vec![Color::Green]),
+            ])
+        );
+    }
+
+    #[test]
+    pub fn test_choose_tokens_2() {
+        let mut gems  = Tokens::from_vec(&vec![Color::Red, 
+                                    Color::Red, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Blue, 
+                                    Color::Green]);
+        let mut running = Tokens::empty();
+        let choices = choose_tokens(&mut gems , &mut running, 2);
+        assert_eq!(
+            choices,
+            HashSet::from_iter(vec![
+                Tokens::from_vec(&vec![Color::Red, Color::Red]),
+                Tokens::from_vec(&vec![Color::Blue, Color::Blue]),
+                Tokens::from_vec(&vec![Color::Green, Color::Blue]),
+                Tokens::from_vec(&vec![Color::Red, Color::Blue]),
+                Tokens::from_vec(&vec![Color::Red, Color::Green]),
+            ])
+        );
+    }
 }
