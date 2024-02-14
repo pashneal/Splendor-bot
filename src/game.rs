@@ -335,7 +335,6 @@ impl Game {
     /// preconditions. I'm experimenting with this style of error checking
     /// alongside TDD to see if developer productivity is improved
     pub fn take_action(&mut self, action: Action) {
-        println!("Taking action: {:?}", action);
         debug_assert!(self.is_phase_correct_for(action.clone()));
 
         let next_phase = match action {
@@ -476,6 +475,7 @@ impl Game {
                 debug_assert!((*player.gems() - discards).legal());
 
                 player.remove_gems(discards);
+                self.tokens += discards;
 
                 Phase::NobleAction
             }
@@ -516,6 +516,9 @@ impl Game {
             }
 
         };
+
+        debug_assert!(Tokens::start(self.players.len() as u8) == self.tokens +
+                     self.players.iter().map(|p| p.gems()).fold(Tokens::empty(), |a, b| a + *b), "Tokens should be conserved");
         self.current_phase = next_phase;
     }
 
@@ -729,7 +732,6 @@ pub mod test {
         // 5 choose 3 = 10 colors to choose from (TakeDistinct)
         // 0 cards able to be purchased
         // sum = 30
-        println!("{:#?}", actions);
         assert_eq!(actions.len(), 30);
     }
 
@@ -815,7 +817,6 @@ pub mod test {
         // 0 cards able to be purchased
         // sum = 30
 
-        println!("{:#?}", actions);
         assert_eq!(actions.len(), 30);
         game.take_action(Action::ReserveHidden(0));
         game.take_action(Pass);
@@ -830,7 +831,7 @@ pub mod test {
     #[test]
     pub fn test_randomized_rollout() {
         let card_lookup = Arc::new(Card::all());
-        for _ in 0..1 {
+        for _ in 0..200 {
             let mut game = Game::new(4, card_lookup.clone());
             game.rollout();
         }
