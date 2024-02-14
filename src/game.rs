@@ -14,7 +14,7 @@ use std::sync::Arc;
 
 use cached::proc_macro::cached;
 
-use log::{debug, info, trace, error};
+use log::{debug, error, info, trace};
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -83,26 +83,39 @@ pub fn choose_tokens(gems: &mut Tokens, running: &mut Tokens, num_chosen: u32) -
 }
 
 impl Game {
-
-    fn with_nobles(&mut self, nobles : Vec<NobleId>){
+    fn with_nobles(&mut self, nobles: Vec<NobleId>) {
         let noble_lookup = Noble::all();
-        self.nobles = nobles.iter().map(|id| noble_lookup[*id as usize].clone()).collect(); 
+        self.nobles = nobles
+            .iter()
+            .map(|id| noble_lookup[*id as usize].clone())
+            .collect();
     }
 
-    fn with_initial_cards(&mut self, initial_cards: Vec<Vec<Card>>){
-       // Undeal the initial cards 
-       self.decks[0].extend(self.dealt_cards[0].drain(..).map(|id| self.card_lookup[id as usize]));
-       self.decks[1].extend(self.dealt_cards[1].drain(..).map(|id| self.card_lookup[id as usize]));
-       self.decks[2].extend(self.dealt_cards[2].drain(..).map(|id| self.card_lookup[id as usize]));
-       // Filter out the initial cards from the decks
-       self.decks[0].retain(|card| !initial_cards[0].contains(card));
-       self.decks[1].retain(|card| !initial_cards[1].contains(card));
-       self.decks[2].retain(|card| !initial_cards[2].contains(card));
+    fn with_initial_cards(&mut self, initial_cards: Vec<Vec<Card>>) {
+        // Undeal the initial cards
+        self.decks[0].extend(
+            self.dealt_cards[0]
+                .drain(..)
+                .map(|id| self.card_lookup[id as usize]),
+        );
+        self.decks[1].extend(
+            self.dealt_cards[1]
+                .drain(..)
+                .map(|id| self.card_lookup[id as usize]),
+        );
+        self.decks[2].extend(
+            self.dealt_cards[2]
+                .drain(..)
+                .map(|id| self.card_lookup[id as usize]),
+        );
+        // Filter out the initial cards from the decks
+        self.decks[0].retain(|card| !initial_cards[0].contains(card));
+        self.decks[1].retain(|card| !initial_cards[1].contains(card));
+        self.decks[2].retain(|card| !initial_cards[2].contains(card));
 
-
-       self.dealt_cards[0] = initial_cards[0].iter().map(|card| card.id()).collect();
-       self.dealt_cards[1] = initial_cards[1].iter().map(|card| card.id()).collect();
-       self.dealt_cards[2] = initial_cards[2].iter().map(|card| card.id()).collect();
+        self.dealt_cards[0] = initial_cards[0].iter().map(|card| card.id()).collect();
+        self.dealt_cards[1] = initial_cards[1].iter().map(|card| card.id()).collect();
+        self.dealt_cards[2] = initial_cards[2].iter().map(|card| card.id()).collect();
     }
 
     pub fn new(players: u8, card_lookup: Arc<Vec<Card>>) -> Game {
@@ -249,7 +262,7 @@ impl Game {
                     }
                 }
 
-                // In the event of no legal actions, passing is the only 
+                // In the event of no legal actions, passing is the only
                 // legal action
                 if actions.len() == 0 {
                     Some(vec![Pass])
@@ -511,14 +524,21 @@ impl Game {
                 match self.current_phase {
                     Phase::PlayerStart => Phase::NobleAction,
                     Phase::NobleAction => Phase::PlayerActionEnd,
-                    _ => panic!("Cannot pass in this phase")
+                    _ => panic!("Cannot pass in this phase"),
                 }
             }
-
         };
 
-        debug_assert!(Tokens::start(self.players.len() as u8) == self.tokens +
-                     self.players.iter().map(|p| p.gems()).fold(Tokens::empty(), |a, b| a + *b), "Tokens should be conserved");
+        debug_assert!(
+            Tokens::start(self.players.len() as u8)
+                == self.tokens
+                    + self
+                        .players
+                        .iter()
+                        .map(|p| p.gems())
+                        .fold(Tokens::empty(), |a, b| a + *b),
+            "Tokens should be conserved"
+        );
         self.current_phase = next_phase;
     }
 
@@ -534,7 +554,6 @@ impl Game {
         // -> Someone has at least >= 15 points
         debug_assert!(self.get_legal_actions().is_none());
         debug_assert!(self.players.iter().any(|p| p.points() >= 15));
-
 
         let mut max_points = 0;
         let mut min_developments = u32::MAX;
@@ -554,7 +573,6 @@ impl Game {
 
         winner
     }
-
 
     pub fn rollout(&mut self) -> Option<usize> {
         loop {
@@ -597,10 +615,9 @@ pub enum Action {
 
     AttractNoble(NobleId),
 
-    /// Marker for the rare case when a player is unable to take 
+    /// Marker for the rare case when a player is unable to take
     /// an action, but the game isn't yet over
     Pass,
-
 
     /// Marker for passing the turn to the next player
     /// Unavailable if the game is over
@@ -609,9 +626,9 @@ pub enum Action {
 
 #[cfg(test)]
 pub mod test {
-    pub use super::*;
     use super::Action::*;
     use super::Color::*;
+    pub use super::*;
     #[test]
 
     pub fn test_choose_tokens_1() {
@@ -744,7 +761,7 @@ pub mod test {
     pub fn test_init_legal_rounds_specific_board_state() {
         let mut game = Game::new(3, Arc::new(Card::all()));
         let cards = Card::all();
-        game.with_nobles(vec![2, 3, 0, 9]);  
+        game.with_nobles(vec![2, 3, 0, 9]);
         game.with_initial_cards(vec![
             vec![cards[31], cards[10], cards[8], cards[17]],
             vec![cards[43], cards[66], cards[47], cards[67]],
@@ -755,15 +772,19 @@ pub mod test {
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
-        assert_eq!(actions.len() , 29);
+        assert_eq!(actions.len(), 29);
         assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
 
-        game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(TakeDistinct(HashSet::from_iter(vec![
+            Color::White,
+            Color::Green,
+            Color::Red,
+        ])));
         game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
-        assert_eq!(actions.len() , 29);
+        assert_eq!(actions.len(), 29);
         assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
 
         game.take_action(TakeDouble(Color::White));
@@ -771,37 +792,46 @@ pub mod test {
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
-        assert_eq!(actions.len() , 28);
+        assert_eq!(actions.len(), 28);
 
-        game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(TakeDistinct(HashSet::from_iter(vec![
+            Color::White,
+            Color::Green,
+            Color::Red,
+        ])));
         game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
-        assert_eq!(actions.len() , 26);
+        assert_eq!(actions.len(), 26);
 
-        game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(TakeDistinct(HashSet::from_iter(vec![
+            Color::White,
+            Color::Green,
+            Color::Red,
+        ])));
         game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
-        assert_eq!(actions.len() , 30 - 4 - 6);
+        assert_eq!(actions.len(), 30 - 4 - 6);
 
         game.take_action(TakeDouble(Color::Blue));
         game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
-        assert_eq!(actions.len() , 30 - 5 - 6 + 1);
+        assert_eq!(actions.len(), 30 - 5 - 6 + 1);
 
-        game.take_action(Purchase((8, Tokens::from_vec(&vec![Color::White, Color::Green, Color::Red, Color::Black]))));
+        game.take_action(Purchase((
+            8,
+            Tokens::from_vec(&vec![Color::White, Color::Green, Color::Red, Color::Black]),
+        )));
         game.take_action(Pass);
-        game.take_action(Continue); 
+        game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert!((actions.len() == 30 - 4 + 1) || (actions.len() == 30 - 4 + 2));
-
-
     }
 
     #[test]
