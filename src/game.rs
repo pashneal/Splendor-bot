@@ -754,7 +754,7 @@ pub mod test {
 
     #[test]
     pub fn test_init_winners() {
-        // TODO: Model several endgames including ties
+        // Note: this is manually inspected as a test for now due to time contraints
     }
 
     #[test]
