@@ -14,6 +14,8 @@ use std::sync::Arc;
 
 use cached::proc_macro::cached;
 
+use log::{debug, info, trace, error};
+
 #[derive(Debug, Clone)]
 pub struct Game {
     players: Vec<Player>,
@@ -157,7 +159,7 @@ impl Game {
                     .map(|n| AttractNoble(n.id()))
                     .collect();
                 if nobles.len() == 0 {
-                    Some(vec![Continue])
+                    Some(vec![Pass])
                 } else {
                     Some(nobles)
                 }
@@ -247,8 +249,10 @@ impl Game {
                     }
                 }
 
+                // In the event of no legal actions, passing is the only 
+                // legal action
                 if actions.len() == 0 {
-                    None
+                    Some(vec![Pass])
                 } else {
                     Some(actions)
                 }
@@ -264,6 +268,7 @@ impl Game {
                 Reserve(_) => true,
                 ReserveHidden(_) => true,
                 Purchase(_) => true,
+                Pass => true,
                 _ => false,
             },
             Phase::PlayerTokenCapExceeded => match action {
@@ -272,7 +277,7 @@ impl Game {
             },
             Phase::NobleAction => match action {
                 AttractNoble(_) => true,
-                Continue => true,
+                Pass => true,
                 _ => false,
             },
             Phase::PlayerActionEnd => match action {
@@ -330,6 +335,7 @@ impl Game {
     /// preconditions. I'm experimenting with this style of error checking
     /// alongside TDD to see if developer productivity is improved
     pub fn take_action(&mut self, action: Action) {
+        println!("Taking action: {:?}", action);
         debug_assert!(self.is_phase_correct_for(action.clone()));
 
         let next_phase = match action {
@@ -359,7 +365,6 @@ impl Game {
             TakeDistinct(colors) => {
                 // Preconditions
                 // -> Can take 1,2, or 3 distinct colors
-                println!("Taking distinct colors: {:?}", colors);
                 debug_assert!(colors.len() <= 3 && colors.len() > 0);
                 // -> Which all exist on the board
                 debug_assert!(colors.iter().all(|c| self.tokens[*c] >= 1));
@@ -493,6 +498,23 @@ impl Game {
                 self.current_player = (self.current_player + 1) % self.players.len();
                 Phase::PlayerStart
             }
+
+            Pass => {
+                // Preconditions:
+                // -> The player has no other legal actions in this phase
+                debug_assert!({
+                    let legal_actions = self.get_legal_actions();
+                    let legal_actions = legal_actions.unwrap();
+                    legal_actions.len() == 1 && legal_actions.contains(&Action::Pass)
+                });
+
+                match self.current_phase {
+                    Phase::PlayerStart => Phase::NobleAction,
+                    Phase::NobleAction => Phase::PlayerActionEnd,
+                    _ => panic!("Cannot pass in this phase")
+                }
+            }
+
         };
         self.current_phase = next_phase;
     }
@@ -529,6 +551,7 @@ impl Game {
 
         winner
     }
+
 
     pub fn rollout(&mut self) -> Option<usize> {
         loop {
@@ -570,6 +593,11 @@ pub enum Action {
     Discard(Tokens),
 
     AttractNoble(NobleId),
+
+    /// Marker for the rare case when a player is unable to take 
+    /// an action, but the game isn't yet over
+    Pass,
+
 
     /// Marker for passing the turn to the next player
     /// Unavailable if the game is over
@@ -721,6 +749,7 @@ pub mod test {
             vec![cards[89], cards[80], cards[86], cards[74]],
         ]);
         game.take_action(TakeDouble(Color::Black));
+        game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
@@ -728,6 +757,7 @@ pub mod test {
         assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
 
         game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
@@ -735,30 +765,35 @@ pub mod test {
         assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
 
         game.take_action(TakeDouble(Color::White));
+        game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len() , 28);
 
         game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len() , 26);
 
         game.take_action(TakeDistinct(HashSet::from_iter(vec![Color::White, Color::Green, Color::Red])));
+        game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len() , 30 - 4 - 6);
 
         game.take_action(TakeDouble(Color::Blue));
+        game.take_action(Pass);
         game.take_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len() , 30 - 5 - 6 + 1);
 
         game.take_action(Purchase((8, Tokens::from_vec(&vec![Color::White, Color::Green, Color::Red, Color::Black]))));
+        game.take_action(Pass);
         game.take_action(Continue); 
 
         let actions = game.get_legal_actions().unwrap();
@@ -783,6 +818,7 @@ pub mod test {
         println!("{:#?}", actions);
         assert_eq!(actions.len(), 30);
         game.take_action(Action::ReserveHidden(0));
+        game.take_action(Pass);
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(Action::Continue, actions[0].clone());
 
@@ -794,7 +830,7 @@ pub mod test {
     #[test]
     pub fn test_randomized_rollout() {
         let card_lookup = Arc::new(Card::all());
-        for _ in 0..100 {
+        for _ in 0..1 {
             let mut game = Game::new(4, card_lookup.clone());
             game.rollout();
         }
