@@ -7,7 +7,7 @@ use crate::token::Tokens;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use self::Action::*;
+use super::{* , Action::*};
 
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -26,63 +26,13 @@ pub struct Game {
     dealt_cards: Vec<Vec<CardId>>,
     current_phase: Phase,
     card_lookup: Arc<Vec<Card>>,
+    history: GameHistory,
+    deadlock_count: u8,
 }
 
-pub fn choose_distinct_tokens(
-    gems: &mut Tokens,
-    running: &mut Tokens,
-    num_chosen: u32,
-) -> HashSet<Tokens> {
-    let mut total_choices = HashSet::new();
-    if num_chosen == 0 {
-        total_choices.insert(running.clone());
-        return total_choices;
-    }
-    // Pick one to discard and recurse
-    for color in Color::all_expect_gold() {
-        if gems[color] > 0 {
-            if running[color] > 0 {
-                continue;
-            }
-
-            gems[color] -= 1;
-            running[color] += 1;
-
-            let choices = choose_distinct_tokens(gems, running, num_chosen - 1);
-            total_choices.extend(choices);
-
-            running[color] -= 1;
-            gems[color] += 1;
-        }
-    }
-
-    total_choices
-}
-
-pub fn choose_tokens(gems: &mut Tokens, running: &mut Tokens, num_chosen: u32) -> HashSet<Tokens> {
-    let mut total_choices = HashSet::new();
-    if num_chosen == 0 {
-        total_choices.insert(running.clone());
-        return total_choices;
-    }
-    // Pick one to discard and recurse
-    for color in Color::all() {
-        if gems[color] > 0 {
-            gems[color] -= 1;
-            running[color] += 1;
-
-            let choices = choose_tokens(gems, running, num_chosen - 1);
-            total_choices.extend(choices);
-
-            running[color] -= 1;
-            gems[color] += 1;
-        }
-    }
-
-    total_choices
-}
 
 impl Game {
+
     fn with_nobles(&mut self, nobles: Vec<NobleId>) {
         let noble_lookup = Noble::all();
         self.nobles = nobles
@@ -154,10 +104,16 @@ impl Game {
             current_phase: Phase::PlayerStart,
             dealt_cards,
             card_lookup,
+            history: GameHistory::new(),
+            deadlock_count : 0,
         }
     }
 
     pub fn get_legal_actions(&self) -> Option<Vec<Action>> {
+        if self.deadlock_count == 2 * self.players.len() as u8 {
+            return None;
+        }
+
         match self.current_phase {
             Phase::NobleAction => {
                 let mut available_nobles = Vec::new();
@@ -339,6 +295,13 @@ impl Game {
         i
     }
 
+    fn advance_history_with(&mut self, history :  GameHistory) {
+        for (p, a) in history {
+            self.history.add(p, a.clone());
+            self.take_action(a);
+        }
+    }
+
     /// Takes an action and updates the game state accordingly
     /// Preconditions:
     ///     the action is a legal action for the current phase as dictated
@@ -349,6 +312,16 @@ impl Game {
     /// alongside TDD to see if developer productivity is improved
     pub fn take_action(&mut self, action: Action) {
         debug_assert!(self.is_phase_correct_for(action.clone()));
+
+        // If there are Passes in a row, the game is over (deadlocked)
+        match action {
+            Pass => { self.deadlock_count += 1; }
+            Continue => {}
+            _ => { self.deadlock_count = 0; }
+        }
+
+
+        self.history.add(self.current_player, action.clone());
 
         let next_phase = match action {
             TakeDouble(color) => {
@@ -482,6 +455,7 @@ impl Game {
                 // -> Must have greater than 10 tokens
                 // -> Must discard enough tokens to be == 10
                 // -> Must be discarding tokens already present in the player's gems
+                // deadlock_count : 0,
                 let player = &mut self.players[self.current_player];
                 debug_assert!(player.gems().total() > 10);
                 debug_assert!(player.gems().total() - discards.total() == 10);
@@ -521,6 +495,7 @@ impl Game {
                     legal_actions.len() == 1 && legal_actions.contains(&Action::Pass)
                 });
 
+
                 match self.current_phase {
                     Phase::PlayerStart => Phase::NobleAction,
                     Phase::NobleAction => Phase::PlayerActionEnd,
@@ -553,9 +528,10 @@ impl Game {
         // -> The game is over
         // -> Someone has at least >= 15 points
         debug_assert!(self.get_legal_actions().is_none());
-        debug_assert!(self.players.iter().any(|p| p.points() >= 15));
+        debug_assert!(self.players.iter().any(|p| p.points() >= 15) ||
+                      self.deadlock_count >= (2 * self.players.len() as u8));
 
-        let mut max_points = 0;
+        let mut max_points = 15;
         let mut min_developments = u32::MAX;
         let mut winner = None;
         for (i, player) in self.players.iter().enumerate() {
@@ -595,38 +571,9 @@ impl Game {
     }
 }
 
-#[derive(Debug, Clone)]
-enum Phase {
-    PlayerStart,            // Take some player action
-    PlayerTokenCapExceeded, // [Optional] Player has > 10 tokens
-    NobleAction,            // See if any nobles get attracted (multiple may be attracted)
-    PlayerActionEnd,        // Finish the turn and see if the round should continue
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Action {
-    TakeDouble(Color),
-    TakeDistinct(HashSet<Color>),
-    Reserve(CardId),
-    ReserveHidden(usize),
-    Purchase((CardId, Tokens)),
-
-    Discard(Tokens),
-
-    AttractNoble(NobleId),
-
-    /// Marker for the rare case when a player is unable to take
-    /// an action, but the game isn't yet over
-    Pass,
-
-    /// Marker for passing the turn to the next player
-    /// Unavailable if the game is over
-    Continue,
-}
 
 #[cfg(test)]
 pub mod test {
-    use super::Action::*;
     use super::Color::*;
     pub use super::*;
     #[test]

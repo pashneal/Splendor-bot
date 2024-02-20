@@ -1,6 +1,7 @@
 mod card;
 mod color;
-mod game;
+mod game_logic;
+mod arena;
 mod nobles;
 mod player;
 mod token;
@@ -13,5 +14,5 @@ fn main() {
 
     println!("Hello, world!");
     let card_lookup: Arc<Vec<Card>> = Arc::new(card::Card::all());
-    println!("Game: {:#?}", game::Game::new(2, card_lookup));
+    println!("Game: {:#?}", game_logic::game::Game::new(2, card_lookup));
 }
