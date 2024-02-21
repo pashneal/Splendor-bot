@@ -32,7 +32,6 @@ pub struct Game {
 
 
 impl Game {
-
     fn with_nobles(&mut self, nobles: Vec<NobleId>) {
         let noble_lookup = Noble::all();
         self.nobles = nobles
@@ -66,6 +65,34 @@ impl Game {
         self.dealt_cards[0] = initial_cards[0].iter().map(|card| card.id()).collect();
         self.dealt_cards[1] = initial_cards[1].iter().map(|card| card.id()).collect();
         self.dealt_cards[2] = initial_cards[2].iter().map(|card| card.id()).collect();
+    }
+
+    pub fn deck_counts(&self) -> [usize; 3] {
+        self.decks.iter().map(|deck| deck.len()).collect::<Vec<_>>().try_into().expect("Deck size is != 3")
+    }
+
+    pub fn cards(&self) -> Vec<Card> {
+        self.decks.iter().flatten().cloned().collect()
+    }
+
+    pub fn tokens(&self) -> &Tokens {
+        &self.tokens
+    }
+
+    pub fn nobles(&self) -> &Vec<Noble> {
+        &self.nobles
+    }
+
+    pub fn players(&self) -> &Vec<Player> {
+        &self.players
+    }
+
+    pub fn current_player(&self) -> Player {
+        self.players[self.current_player].clone()
+    }
+
+    pub fn history(&self) -> GameHistory {
+        self.history.clone()
     }
 
     pub fn new(players: u8, card_lookup: Arc<Vec<Card>>) -> Game {
@@ -313,7 +340,7 @@ impl Game {
     pub fn take_action(&mut self, action: Action) {
         debug_assert!(self.is_phase_correct_for(action.clone()));
 
-        // If there are Passes in a row, the game is over (deadlocked)
+        // If there are enough passes in a row, the game is over (deadlocked)
         match action {
             Pass => { self.deadlock_count += 1; }
             Continue => {}
@@ -455,7 +482,6 @@ impl Game {
                 // -> Must have greater than 10 tokens
                 // -> Must discard enough tokens to be == 10
                 // -> Must be discarding tokens already present in the player's gems
-                // deadlock_count : 0,
                 let player = &mut self.players[self.current_player];
                 debug_assert!(player.gems().total() > 10);
                 debug_assert!(player.gems().total() - discards.total() == 10);
@@ -526,7 +552,7 @@ impl Game {
 
         // Preconditions:
         // -> The game is over
-        // -> Someone has at least >= 15 points
+        // -> Someone has at least >= 15 points or the game is deadlocked
         debug_assert!(self.get_legal_actions().is_none());
         debug_assert!(self.players.iter().any(|p| p.points() >= 15) ||
                       self.deadlock_count >= (2 * self.players.len() as u8));

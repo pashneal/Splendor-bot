@@ -7,9 +7,11 @@ use crate::token::Tokens;
 
 pub mod game;
 pub mod history;
+pub mod board;
 
 pub use self::game::*;
 pub use self::history::*;
+pub use self::board::*;
 
 #[derive(Debug, Clone)]
 enum Phase {

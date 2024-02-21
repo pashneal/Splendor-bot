@@ -1,6 +1,6 @@
+mod game_logic;
 mod card;
 mod color;
-mod game_logic;
 mod arena;
 mod nobles;
 mod player;

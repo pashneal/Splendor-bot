@@ -6,6 +6,13 @@ use std::collections::HashSet;
 use cached::proc_macro::cached;
 
 #[derive(Debug, Clone)]
+pub struct PlayerPublicInfo {
+    points : u8,
+    num_reserved: usize,
+    developments: Tokens,
+}
+
+#[derive(Debug, Clone)]
 pub struct Player {
     points: u8,
     reserved: Vec<CardId>,
@@ -59,6 +66,14 @@ impl Player {
             gems: Tokens::empty(),
             developments: Tokens::empty(),
             blind_reserved: Vec::new(),
+        }
+    }
+
+    pub fn to_public(&self) -> PlayerPublicInfo {
+        PlayerPublicInfo {
+            points: self.points,
+            num_reserved: self.reserved.len(),
+            developments: self.developments,
         }
     }
 

@@ -2,8 +2,9 @@ use crate::color::Color;
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash, Serialize, Deserialize)]
 pub struct Tokens {
     pub black: i8,
     pub blue: i8,
