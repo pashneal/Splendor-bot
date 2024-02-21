@@ -1,17 +1,18 @@
-use std::collections::HashSet;
 use crate::card::CardId;
 use crate::color::Color;
 use crate::nobles::*;
 use crate::player::Player;
 use crate::token::Tokens;
+use std::collections::HashSet;
+use serde::{Serialize, Deserialize};
 
+pub mod board;
 pub mod game;
 pub mod history;
-pub mod board;
 
+pub use self::board::*;
 pub use self::game::*;
 pub use self::history::*;
-pub use self::board::*;
 
 #[derive(Debug, Clone)]
 enum Phase {
@@ -21,7 +22,7 @@ enum Phase {
     PlayerActionEnd,        // Finish the turn and see if the round should continue
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Action {
     TakeDouble(Color),
     TakeDistinct(HashSet<Color>),

@@ -1,13 +1,16 @@
 use super::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameHistory {
     history: Vec<(usize, Action)>,
 }
 
 impl GameHistory {
     pub fn new() -> Self {
-        GameHistory { history: Vec::new() }
+        GameHistory {
+            history: Vec::new(),
+        }
     }
 
     pub fn from(history: Vec<(usize, Action)>) -> Self {
@@ -31,10 +34,9 @@ impl GameHistory {
         GameHistory::from(new_history)
     }
 
-    pub fn add(&mut self, player_num : usize, action: Action) {
+    pub fn add(&mut self, player_num: usize, action: Action) {
         self.history.push((player_num, action));
     }
-
 }
 
 impl IntoIterator for GameHistory {

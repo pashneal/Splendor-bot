@@ -2,17 +2,18 @@ use crate::card::*;
 use crate::color::*;
 use crate::token::Tokens;
 use std::collections::HashSet;
+use serde::{Serialize, Deserialize};
 
 use cached::proc_macro::cached;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayerPublicInfo {
-    points : u8,
+    points: u8,
     num_reserved: usize,
     developments: Tokens,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
     points: u8,
     reserved: Vec<CardId>,

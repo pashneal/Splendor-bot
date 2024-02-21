@@ -7,7 +7,7 @@ use crate::token::Tokens;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use super::{* , Action::*};
+use super::{Action::*, *};
 
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -29,7 +29,6 @@ pub struct Game {
     history: GameHistory,
     deadlock_count: u8,
 }
-
 
 impl Game {
     fn with_nobles(&mut self, nobles: Vec<NobleId>) {
@@ -68,7 +67,12 @@ impl Game {
     }
 
     pub fn deck_counts(&self) -> [usize; 3] {
-        self.decks.iter().map(|deck| deck.len()).collect::<Vec<_>>().try_into().expect("Deck size is != 3")
+        self.decks
+            .iter()
+            .map(|deck| deck.len())
+            .collect::<Vec<_>>()
+            .try_into()
+            .expect("Deck size is != 3")
     }
 
     pub fn cards(&self) -> Vec<Card> {
@@ -132,7 +136,7 @@ impl Game {
             dealt_cards,
             card_lookup,
             history: GameHistory::new(),
-            deadlock_count : 0,
+            deadlock_count: 0,
         }
     }
 
@@ -322,7 +326,7 @@ impl Game {
         i
     }
 
-    fn advance_history_with(&mut self, history :  GameHistory) {
+    fn advance_history_with(&mut self, history: GameHistory) {
         for (p, a) in history {
             self.history.add(p, a.clone());
             self.take_action(a);
@@ -342,11 +346,14 @@ impl Game {
 
         // If there are enough passes in a row, the game is over (deadlocked)
         match action {
-            Pass => { self.deadlock_count += 1; }
+            Pass => {
+                self.deadlock_count += 1;
+            }
             Continue => {}
-            _ => { self.deadlock_count = 0; }
+            _ => {
+                self.deadlock_count = 0;
+            }
         }
-
 
         self.history.add(self.current_player, action.clone());
 
@@ -521,7 +528,6 @@ impl Game {
                     legal_actions.len() == 1 && legal_actions.contains(&Action::Pass)
                 });
 
-
                 match self.current_phase {
                     Phase::PlayerStart => Phase::NobleAction,
                     Phase::NobleAction => Phase::PlayerActionEnd,
@@ -554,8 +560,10 @@ impl Game {
         // -> The game is over
         // -> Someone has at least >= 15 points or the game is deadlocked
         debug_assert!(self.get_legal_actions().is_none());
-        debug_assert!(self.players.iter().any(|p| p.points() >= 15) ||
-                      self.deadlock_count >= (2 * self.players.len() as u8));
+        debug_assert!(
+            self.players.iter().any(|p| p.points() >= 15)
+                || self.deadlock_count >= (2 * self.players.len() as u8)
+        );
 
         let mut max_points = 15;
         let mut min_developments = u32::MAX;
@@ -596,7 +604,6 @@ impl Game {
         self.get_winner()
     }
 }
-
 
 #[cfg(test)]
 pub mod test {
