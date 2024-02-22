@@ -94,6 +94,9 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
     let my_id = CLIENT_ID.fetch_add(1, Ordering::Relaxed);
     clients.write().await.insert(my_id , client_tx);
 
+    let init_clients = clients.clone();
+    let init_arena = arena.clone();
+
     // Convert messages from the client into a stream of actions
     tokio::spawn( async move {
         while let Some(action_text) = client_rx.next().await {
@@ -110,6 +113,7 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
             }
             let action = action.unwrap();
 
+            // Make sure user is authorized to make this action at this time
             if !validate_action(&action, my_id, arena.clone()).await {
                 eprintln!("invalid action! {:?}", action);
                 break;
@@ -119,11 +123,24 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
             arena.game.play_action(action);
         }
         println!("{} disconnected", my_id);
-        user_disconnected(my_id, &clients, arena.clone()).await;
+        user_disconnected(my_id, clients, arena).await;
     });
 
+    user_initialized(my_id, init_clients, init_arena).await;
 }
 
-async fn user_disconnected(my_id: usize, clients: &Clients, arena: ArenaLock) {
+async fn user_initialized(my_id: usize, clients: Clients, arena: ArenaLock) {
+    let arena = arena.read().await;
+    let client_info = arena.client_info();
+    let msg = Message::text(serde_json::to_string(&client_info).unwrap());
+
+    if let Some(tx) = clients.write().await.get_mut(&my_id) {
+        tx.send(msg).await.unwrap();
+    } else {
+        panic!("no tx for client with id {}", my_id);
+    }
+}
+
+async fn user_disconnected(my_id: usize, clients: Clients, arena: ArenaLock) {
 }
 
