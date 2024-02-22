@@ -90,6 +90,9 @@ impl Game {
     pub fn players(&self) -> &Vec<Player> {
         &self.players
     }
+    pub fn current_player_num(&self) -> usize {
+        self.current_player
+    }
 
     pub fn current_player(&self) -> Player {
         self.players[self.current_player].clone()
@@ -329,7 +332,7 @@ impl Game {
     fn advance_history_with(&mut self, history: GameHistory) {
         for (p, a) in history {
             self.history.add(p, a.clone());
-            self.take_action(a);
+            self.play_action(a);
         }
     }
 
@@ -341,7 +344,7 @@ impl Game {
     /// Note: this function makes judicious use of debug_assert! to check many
     /// preconditions. I'm experimenting with this style of error checking
     /// alongside TDD to see if developer productivity is improved
-    pub fn take_action(&mut self, action: Action) {
+    pub fn play_action(&mut self, action: Action) {
         debug_assert!(self.is_phase_correct_for(action.clone()));
 
         // If there are enough passes in a row, the game is over (deadlocked)
@@ -598,7 +601,7 @@ impl Game {
             let action = actions
                 .choose(&mut thread_rng())
                 .expect("List should not be empty");
-            self.take_action(action.clone());
+            self.play_action(action.clone());
         }
 
         self.get_winner()
@@ -747,68 +750,68 @@ pub mod test {
             vec![cards[43], cards[66], cards[47], cards[67]],
             vec![cards[89], cards[80], cards[86], cards[74]],
         ]);
-        game.take_action(TakeDouble(Color::Black));
-        game.take_action(Pass);
-        game.take_action(Continue);
+        game.play_action(TakeDouble(Color::Black));
+        game.play_action(Pass);
+        game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 29);
         assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
 
-        game.take_action(TakeDistinct(HashSet::from_iter(vec![
+        game.play_action(TakeDistinct(HashSet::from_iter(vec![
             Color::White,
             Color::Green,
             Color::Red,
         ])));
-        game.take_action(Pass);
-        game.take_action(Continue);
+        game.play_action(Pass);
+        game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 29);
         assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
 
-        game.take_action(TakeDouble(Color::White));
-        game.take_action(Pass);
-        game.take_action(Continue);
+        game.play_action(TakeDouble(Color::White));
+        game.play_action(Pass);
+        game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 28);
 
-        game.take_action(TakeDistinct(HashSet::from_iter(vec![
+        game.play_action(TakeDistinct(HashSet::from_iter(vec![
             Color::White,
             Color::Green,
             Color::Red,
         ])));
-        game.take_action(Pass);
-        game.take_action(Continue);
+        game.play_action(Pass);
+        game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 26);
 
-        game.take_action(TakeDistinct(HashSet::from_iter(vec![
+        game.play_action(TakeDistinct(HashSet::from_iter(vec![
             Color::White,
             Color::Green,
             Color::Red,
         ])));
-        game.take_action(Pass);
-        game.take_action(Continue);
+        game.play_action(Pass);
+        game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 30 - 4 - 6);
 
-        game.take_action(TakeDouble(Color::Blue));
-        game.take_action(Pass);
-        game.take_action(Continue);
+        game.play_action(TakeDouble(Color::Blue));
+        game.play_action(Pass);
+        game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 30 - 5 - 6 + 1);
 
-        game.take_action(Purchase((
+        game.play_action(Purchase((
             8,
             Tokens::from_vec(&vec![Color::White, Color::Green, Color::Red, Color::Black]),
         )));
-        game.take_action(Pass);
-        game.take_action(Continue);
+        game.play_action(Pass);
+        game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert!((actions.len() == 30 - 4 + 1) || (actions.len() == 30 - 4 + 2));
@@ -828,12 +831,12 @@ pub mod test {
         // sum = 30
 
         assert_eq!(actions.len(), 30);
-        game.take_action(Action::ReserveHidden(0));
-        game.take_action(Pass);
+        game.play_action(Action::ReserveHidden(0));
+        game.play_action(Pass);
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(Action::Continue, actions[0].clone());
 
-        game.take_action(Action::Continue);
+        game.play_action(Action::Continue);
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 30);
     }
