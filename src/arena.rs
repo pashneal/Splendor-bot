@@ -1,6 +1,7 @@
 use crate::game_logic::*;
 use crate::player::*;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 /// A module for running games across multiple clients. Can be fed binaries
 /// and run them in a tournament style. The protocol for communication is
@@ -8,6 +9,7 @@ use serde::{Deserialize, Serialize};
 pub struct Arena {
     pub game: Game,
     pub clients: Vec<String>,
+    pub timeout: Duration, 
 }
 
 /// A struct given to each client that contains all public information and private
@@ -38,6 +40,7 @@ impl Arena {
         }
     }
 }
+
 
 // Need an arena where multiple clients can compete
 //     - Clients are binaries
