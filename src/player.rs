@@ -10,7 +10,8 @@ use cached::proc_macro::cached;
 pub struct PlayerPublicInfo {
     points: u8,
     num_reserved: usize,
-    developments: Tokens,
+    developments: Cost,
+    gems: Tokens,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,7 +75,8 @@ impl Player {
         PlayerPublicInfo {
             points: self.points,
             num_reserved: self.reserved.len(),
-            developments: self.developments,
+            developments: Cost::from_tokens(&self.developments),
+            gems: self.gems.clone(),
         }
     }
 
@@ -85,6 +87,7 @@ impl Player {
     pub fn add_points(&mut self, points: u8) {
         self.points += points;
     }
+
     /// Return the number of reserved cards in total
     pub fn num_reserved(&self) -> usize {
         self.reserved.len()

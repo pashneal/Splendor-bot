@@ -1,8 +1,9 @@
 use crate::color::Color;
 use crate::token::Tokens;
 use std::ops::{Index, IndexMut};
+use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Copy, Clone, Debug, Default)]
+#[derive(PartialEq, Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Cost {
     black: i8,
     blue: i8,
@@ -56,6 +57,16 @@ impl Cost {
             red: self.red,
             white: self.white,
             gold: 0,
+        }
+    }
+    pub fn from_tokens(tokens: &Tokens) -> Cost {
+        debug_assert!(tokens.gold == 0, "Cannot convert tokens to cost with gold");
+        Cost {
+            black: tokens.black,
+            blue: tokens.blue,
+            green: tokens.green,
+            red: tokens.red,
+            white: tokens.white,
         }
     }
 }

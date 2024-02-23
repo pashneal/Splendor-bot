@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameHistory {
-    history: Vec<(usize, Action)>,
+    pub history: Vec<(usize, Action)>,
 }
 
 impl GameHistory {

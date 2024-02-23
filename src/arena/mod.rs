@@ -20,11 +20,12 @@ pub struct Arena {
 /// information known only to that client.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClientInfo {
-    board: Board,
-    history: GameHistory,
-    players: Vec<PlayerPublicInfo>,
-    current_player: Player,
-    legal_actions: Vec<Action>,
+    pub board: Board,
+    pub history: GameHistory,
+    pub players: Vec<PlayerPublicInfo>,
+    pub current_player: Player,
+    pub current_player_num: usize,
+    pub legal_actions: Vec<Action>,
 }
 
 impl Arena {
@@ -39,6 +40,9 @@ impl Arena {
             timeout,
         }
     }
+    pub fn is_game_over(&self) -> bool {
+        self.game.game_over()
+    }
     pub fn client_info(&self) -> ClientInfo {
         let players = self.game.players().iter().map(|p| p.to_public()).collect();
         let legal_actions = self
@@ -51,11 +55,15 @@ impl Arena {
             history: self.game.history(),
             players,
             current_player: self.game.current_player(),
+            current_player_num: self.game.current_player_num(),
             legal_actions,
         }
     }
 }
 
+
+pub struct GameResults {
+}
 
 // Need an arena where multiple clients can compete
 //     - Clients are binaries

@@ -75,8 +75,8 @@ impl Game {
             .expect("Deck size is != 3")
     }
 
-    pub fn cards(&self) -> Vec<Card> {
-        self.decks.iter().flatten().cloned().collect()
+    pub fn cards(&self) -> Vec<Vec<CardId>> {
+        self.dealt_cards.clone()
     }
 
     pub fn tokens(&self) -> &Tokens {
@@ -369,7 +369,8 @@ impl Game {
                 debug_assert!(!matches!(color, Color::Gold));
 
                 // TODO: this is a little weird but we can change later
-                // right now it's using debug asserts to check preconditions
+                // right now it's using debug asserts on the 
+                // Sub operations to check preconditions
                 self.tokens -= Tokens::one(color);
                 self.tokens -= Tokens::one(color);
 
@@ -550,6 +551,10 @@ impl Game {
             "Tokens should be conserved"
         );
         self.current_phase = next_phase;
+    }
+
+    pub fn game_over(&self) -> bool {
+        self.get_legal_actions().is_none()
     }
 
     /// Given a terminal game state, determine the winner

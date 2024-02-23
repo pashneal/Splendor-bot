@@ -12,14 +12,16 @@ use warp::ws::{Message, WebSocket};
 use derive_more::{Display, Error};
 use warp::Filter;
 
+use log::{debug, error, info, trace};
+
 type Clients = Arc<RwLock<HashMap<usize, SplitSink<WebSocket, Message>>>>;
 type ArenaLock = Arc<RwLock<Arena>>;
 
 type StdError = Box<dyn std::error::Error>;
 
+const TIMEOUT : Duration = Duration::from_secs(4);
+
 static CLIENT_ID : AtomicUsize = AtomicUsize::new(0);
-
-
 
 impl Arena {
     pub async fn launch(port : u16) {
@@ -79,12 +81,11 @@ async fn validate_action( action: &Action, player_id : usize , arena : ArenaLock
     }
 
     // -> Is the correct player's turn
-    if (arena.read().await.game.current_player_num() != player_id) {
+    if arena.read().await.game.current_player_num() != player_id {
         return false;
     }
 
     // -> Is not timed out TODO
-
     true
 }
 
@@ -98,49 +99,99 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
     let init_arena = arena.clone();
 
     // Convert messages from the client into a stream of actions
+    // So we play them in the game as soon as they come in
     tokio::spawn( async move {
         while let Some(action_text) = client_rx.next().await {
+            trace!("Received message: {:?}", action_text);
             if let Err(e) = action_text {
-                eprintln!("error reading message: {}", e);
+                error!("error reading message: {}", e);
                 break;
             }
             let action = action_text.unwrap();
 
             let action  = parse_action(&action);
             if let Err(e) = action {
-                eprintln!("error parsing action! {:?}", e);
+                error!("error parsing action! {:?}", e);
                 break;
             }
             let action = action.unwrap();
 
             // Make sure user is authorized to make this action at this time
             if !validate_action(&action, my_id, arena.clone()).await {
-                eprintln!("invalid action! {:?}", action);
+                error!("invalid action! {:?}", action);
                 break;
             }
 
-            let mut arena = arena.write().await;
-            arena.game.play_action(action);
+            trace!("{} played {:?}", my_id, action);
+            arena.write().await.game.play_action(action);
+            action_played(clients.clone(), arena.clone()).await;
         }
-        println!("{} disconnected", my_id);
+        info!("{} disconnected", my_id);
         user_disconnected(my_id, clients, arena).await;
     });
 
-    user_initialized(my_id, init_clients, init_arena).await;
-}
 
-async fn user_initialized(my_id: usize, clients: Clients, arena: ArenaLock) {
-    let arena = arena.read().await;
-    let client_info = arena.client_info();
-    let msg = Message::text(serde_json::to_string(&client_info).unwrap());
 
-    if let Some(tx) = clients.write().await.get_mut(&my_id) {
-        tx.send(msg).await.unwrap();
-    } else {
-        panic!("no tx for client with id {}", my_id);
+    let num_players = init_arena.read().await.game.players().len();
+    user_initialized(my_id, init_clients.clone(), init_arena.clone()).await;
+
+    // All users are connected, start the game
+    if my_id == num_players - 1 {
+        game_initialized(init_clients, init_arena).await;
     }
 }
 
-async fn user_disconnected(my_id: usize, clients: Clients, arena: ArenaLock) {
+async fn game_initialized(clients: Clients, arena: ArenaLock) {
+    info!("All users locked and loaded! Game starting!");
+    action_played(clients, arena).await;
 }
 
+async fn user_initialized(my_id: usize, clients: Clients, arena: ArenaLock) {
+    info!("{} connected", my_id);
+}
+
+async fn user_disconnected(my_id: usize, clients: Clients, arena: ArenaLock) {
+    clients.write().await.remove(&my_id);
+}
+
+async fn action_played(clients: Clients, arena: ArenaLock) {
+
+    // Auto play for any given player if there is only 1 legal action
+    loop {
+
+        // If the game is over, don't do anything else 
+        if arena.read().await.is_game_over() {
+            info!("Game over!");
+            info!("Winner: {:?}", arena.read().await.game.get_winner());
+            return 
+        }
+
+        let actions = arena.read().await.game.get_legal_actions().expect("No legal actions!");
+        if actions.len() != 1 {
+            break;
+        }
+        let action = actions[0].clone();
+        trace!("Auto played action: {:?}", action);
+        arena.write().await.game.play_action(action);
+    }
+
+    trace!("Sending game state to clients...");
+    // Determine which client to send the next game state to 
+    let client_info = arena.read().await.client_info();
+    let player_num = client_info.current_player_num;
+
+    // Wait up to TIMEOUT for the player to come online and make a move
+    if let None = clients.read().await.get(&player_num) {
+        tokio::time::sleep(TIMEOUT).await;
+    }
+
+    trace!("Sending game state to player {}", player_num);
+    if let Some(tx) = clients.write().await.get_mut(&player_num) {
+        let info = Message::text(serde_json::to_string(&client_info).unwrap());
+        tx.send(info).await.unwrap();
+        trace!("Sent game state!");
+    } else {
+        panic!("no tx for client with id {}", player_num);
+    }
+
+}

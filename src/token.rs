@@ -34,6 +34,7 @@ impl Tokens {
         }
         set
     }
+
     pub fn from_vec(vec: &Vec<Color>) -> Tokens {
         let mut tokens = Tokens::empty();
         for &color in vec {
