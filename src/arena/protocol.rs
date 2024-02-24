@@ -45,14 +45,23 @@ impl Arena {
                 ws.on_upgrade(move |socket| user_connected(socket, clients, arena))
             });
 
-        let routes = game;
+        let log = warp::path("log")
+            .and(warp::ws())
+            .map(|ws: warp::ws::Ws| {
+                ws.on_upgrade(move |socket| log_stream_connected(socket))
+            });
+
+        let routes = game.or(log);
 
         tokio::spawn( async move {
-            // Wait 1 second for server setup then attempt to connect each individual binary
-            tokio::time::sleep(Duration::from_secs(1)).await;
+            // TODO: use a handshake protocol instead of timing
             for binary in init_binaries {
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                // Launches without stdout or stderr, we rely on the logs for that
                 match std::process::Command::new(binary.clone())
                     .arg(format!("--port={}", port))
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
                     .spawn() {
                         Ok(_) => info!("Launched binary {}", binary),
                         Err(e) => error!("Failed to launch binary {}: {}", binary, e),
@@ -69,17 +78,23 @@ impl Arena {
 pub enum ParseError {
     #[display(fmt = "Unknown")]
     Unknown,
-    #[display(fmt = "Cannot convert action to string")]
+    #[display(fmt = "Cannot convert client message to string")]
     CannotConvertToString,
-    #[display(fmt = "Cannot convert action string to action")]
-    CannotConvertToAction,
+    #[display(fmt = "Cannot convert string to client message")]
+    CannotConvertToClientMessage,
 
 }
 
-fn parse_action(action_text: &Message) -> Result<Action, ParseError> {
-    let action_str = action_text.to_str().map_err(|_| ParseError::CannotConvertToString)?;
-    let action: Action= serde_json::from_str(action_str).map_err(|_| ParseError::CannotConvertToAction)?;
-    Ok(action)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ClientMessage {
+    Action(Action),
+    Log(String),
+}
+
+fn parse_message(message_text: &Message) -> Result<ClientMessage, ParseError> {
+    let message_str = message_text.to_str().map_err(|_| ParseError::CannotConvertToString)?;
+    let client_msg: ClientMessage= serde_json::from_str(message_str).map_err(|_| ParseError::CannotConvertToClientMessage)?;
+    Ok(client_msg)
 }
 
 async fn validate_action( action: &Action, player_id : usize , arena : ArenaLock) -> bool {
@@ -102,6 +117,41 @@ async fn validate_action( action: &Action, player_id : usize , arena : ArenaLock
     true
 }
 
+async fn log_stream_connected( socket : WebSocket) {
+    // TODO: This makes an assumption that 
+    // the client that last connected is the one that is logging
+    // This may not be a good assumption
+    let id  = CLIENT_ID.load(Ordering::Relaxed) - 1;
+
+    let (_tx, mut rx) = socket.split();
+    while let Some(msg) = rx.next().await {
+        trace!("Received message: {:?}", msg);
+        if let Err(e) = msg {
+            error!("error reading message: {}", e);
+            break;
+        }
+        let msg = msg.unwrap();
+
+        let client_msg  = parse_message(&msg);
+        if let Err(e) = client_msg {
+            error!("error parsing message! {:?}", e);
+            break;
+        }
+        match client_msg.unwrap() {
+            ClientMessage::Action(action) => {
+                error!("Actions sent to the wrong endpoint! {:?}", action);
+                break;
+            }
+            ClientMessage::Log(log) => {
+                trace!("[Player {}]: {}", id, log);
+                println!("[Player {}]: {}", id, log);
+                println!();
+            }
+        }
+    }
+
+}
+
 /// Setup a new client to play the game 
 async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
     let (client_tx, mut client_rx) = ws.split();
@@ -114,30 +164,34 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
     // Convert messages from the client into a stream of actions
     // So we play them in the game as soon as they come in
     tokio::spawn( async move {
-        while let Some(action_text) = client_rx.next().await {
-            trace!("Received message: {:?}", action_text);
-            if let Err(e) = action_text {
+        while let Some(msg) = client_rx.next().await {
+            trace!("Received message: {:?}", msg);
+            if let Err(e) = msg {
                 error!("error reading message: {}", e);
                 break;
             }
-            let action = action_text.unwrap();
+            let msg = msg.unwrap();
 
-            let action  = parse_action(&action);
-            if let Err(e) = action {
-                error!("error parsing action! {:?}", e);
+            let client_msg  = parse_message(&msg);
+            if let Err(e) = client_msg {
+                error!("error parsing message from json string! {:?}", e);
                 break;
             }
-            let action = action.unwrap();
-
-            // Make sure user is authorized to make this action at this time
-            if !validate_action(&action, my_id, arena.clone()).await {
-                error!("invalid action! {:?}", action);
-                break;
-            }
-
-            trace!("{} played {:?}", my_id, action);
-            arena.write().await.game.play_action(action);
-            action_played(clients.clone(), arena.clone()).await;
+            match client_msg.unwrap() {
+                ClientMessage::Action(action) => {
+                    if !validate_action(&action, my_id, arena.clone()).await {
+                        error!("invalid action! {:?}", action);
+                        break;
+                    }
+                    trace!("{} played {:?}", my_id, action);
+                    arena.write().await.game.play_action(action);
+                    action_played(clients.clone(), arena.clone()).await;
+                }
+                ClientMessage::Log(log) => {
+                    error!("Logs sent to the wrong endpoint! {:?}", log);
+                    break;
+                }
+            }  
         }
         info!("{} disconnected", my_id);
         user_disconnected(my_id, clients, arena).await;

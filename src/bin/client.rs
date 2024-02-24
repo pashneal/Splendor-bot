@@ -1,9 +1,12 @@
 use splendor_tourney::*;
 use std::sync::Arc;
-use tungstenite::{connect, Message};
+use tungstenite::{connect, Message, stream::MaybeTlsStream};
 use url::Url;
 use rand::{thread_rng, seq::SliceRandom};
 use clap::Parser;
+
+type WebSocket = tungstenite::WebSocket<MaybeTlsStream<std::net::TcpStream>>;
+
 
 
 /// Your bot struct, which will live for the duration of the game
@@ -16,10 +19,11 @@ pub struct Bot {
 /// Initialize your bot here!
 /// feel free to change around the items in your Bot struct
 /// This is called *once* at the start of a new game
-pub fn initialize(bot: &mut Bot) {
+pub fn initialize(bot: &mut Bot, log: &mut Log) {
     bot.message = "Hello world".to_string();
+    // Send a message from this bot to the server for debugging!
+    log.send("Hello from a new bot!");
 }
-
 /// The main bread and butter of your bot!
 ///
 /// This is called whenever the game needs to take an action from your bot,
@@ -32,7 +36,7 @@ pub fn initialize(bot: &mut Bot) {
 ///
 /// If you have <= 1 legal action, the server will decide for you
 /// and skip this function. This includes attracting a single noble.
-pub fn take_action(bot: &mut Bot, info: ClientInfo) -> Action {
+pub fn take_action(bot: &mut Bot, info: ClientInfo, log : &mut Log) -> Action {
     let legal_actions = info.legal_actions;
 
     // Just choose a random action (this bot is not very smart)
@@ -40,7 +44,10 @@ pub fn take_action(bot: &mut Bot, info: ClientInfo) -> Action {
     let action = legal_actions.choose(&mut rng).unwrap();
 
     let message = format!("I chose to {:?}! Take that!", action);
-    println!("{}", message);
+    // Note: nothing will print to the console, 
+    println!("This does not print out!!");
+    // use the log instead so that the server prints it for you
+    log.send(&message);
 
     action.clone()
 }
@@ -61,6 +68,26 @@ pub struct Args {
 
 }
 
+pub struct Log {
+    socket : WebSocket,
+}
+impl Log {
+    pub fn new(port: u16) -> Self {
+        let url = format!("ws://localhost:{}/log", port);
+        let url = Url::parse(&url).unwrap();
+        let (socket, _) = connect(url).expect("Can't connect to the game server");
+        Self {
+            socket,
+        }
+    }
+
+    pub fn send(&mut self, message: &str) {
+        let message = ClientMessage::Log(message.to_string());
+        let message = serde_json::to_string(&message).expect("Error converting message to string");
+        self.socket.send(Message::Text(message)).expect("Error writing message");
+    }
+}
+
 fn main() {
     env_logger::init();
 
@@ -69,20 +96,26 @@ fn main() {
 
     let url = format!("ws://localhost:{}/game", port);
     let url = Url::parse(&url).unwrap();
-    let (mut socket, _) = connect(url).expect("Can't connect to the game server");
+    let (mut game_socket, _) = connect(url).expect("Can't connect to the game server");
+
+    // Give the server a chance to start up
+    std::thread::sleep(std::time::Duration::from_millis(100));
+
+    let mut log = Log::new(port);
 
     let mut bot = Bot::default();
-    initialize(&mut bot);
+    initialize(&mut bot, &mut log);
     println!("Connected to the game server...");
 
     loop {
-        let msg = socket.read().expect("Error reading message");
+        let msg = game_socket.read().expect("Error reading message");
         let msg = msg.to_text().expect("Error converting message to text");
         let info: ClientInfo = serde_json::from_str(msg).expect("Error parsing message");
-        let action = take_action(&mut bot, info);
+        let action = take_action(&mut bot, info, &mut log);
+        let msg = ClientMessage::Action(action);
 
-        let action_str = serde_json::to_string(&action).expect("Error converting action to string");
-        socket.send(Message::Text(action_str)).expect("Error sending message");
+        let msg_str = serde_json::to_string(&msg).expect("Error converting action to string");
+        game_socket.send(Message::Text(msg_str)).expect("Error sending message");
 
     }
 }

@@ -33,8 +33,7 @@ impl Arena {
         let card_lookup = Arc::new(Card::all());
         let game = Game::new(players, card_lookup);
         let clients = binaries;
-        let timeout = Duration::from_secs(10);
-        Arena {
+        let timeout = Duration::from_secs(10); Arena {
             game,
             clients,
             timeout,
@@ -78,4 +77,3 @@ pub struct GameResults {
 //     Python parsing (high)
 //      - iterate on design?
 //     Sandboxing?
-//     server log? (medium)
