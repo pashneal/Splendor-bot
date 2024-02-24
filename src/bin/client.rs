@@ -3,6 +3,7 @@ use std::sync::Arc;
 use tungstenite::{connect, Message};
 use url::Url;
 use rand::{thread_rng, seq::SliceRandom};
+use clap::Parser;
 
 
 /// Your bot struct, which will live for the duration of the game
@@ -45,17 +46,30 @@ pub fn take_action(bot: &mut Bot, info: ClientInfo) -> Action {
 }
 
 
-/// TODO: Actually call this from the server when the game is over
 /// This is called at the end of the game, and you can use it to clean up
+/// TODO: Actually call this from the server when the game is over
 pub fn game_over(bot: &mut Bot, info: ClientInfo, results: GameResults) {
     todo!()
+}
+
+
+#[derive(Parser, Debug)]
+pub struct Args {
+    /// The port to connect to
+    #[arg(short, long)]
+    port: u16,
+
 }
 
 fn main() {
     env_logger::init();
 
-    let (mut socket, _) =
-        connect(Url::parse("ws://localhost:3030/game").unwrap()).expect("Can't connect");
+    let args = Args::parse();
+    let port = args.port;
+
+    let url = format!("ws://localhost:{}/game", port);
+    let url = Url::parse(&url).unwrap();
+    let (mut socket, _) = connect(url).expect("Can't connect to the game server");
 
     let mut bot = Bot::default();
     initialize(&mut bot);

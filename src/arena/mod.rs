@@ -9,7 +9,7 @@ pub mod protocol;
 
 /// A module for running games across multiple clients. Can be fed binaries
 /// and run them in a tournament style. The protocol for communication is
-/// given by JSON messages that update the game state.
+/// given by JSON messages across local websockets that update the game state.
 pub struct Arena {
     pub game: Game,
     pub clients: Vec<String>,
@@ -29,10 +29,10 @@ pub struct ClientInfo {
 }
 
 impl Arena {
-    pub fn new(players: u8) -> Arena {
+    pub fn new(players: u8, binaries : Vec<String>) -> Arena {
         let card_lookup = Arc::new(Card::all());
         let game = Game::new(players, card_lookup);
-        let clients = Vec::new();
+        let clients = binaries;
         let timeout = Duration::from_secs(10);
         Arena {
             game,
@@ -66,13 +66,16 @@ pub struct GameResults {
 }
 
 // Need an arena where multiple clients can compete
-//     - Clients are binaries
-//          -Each binary is equipped with an arg that binds them to a port  
-//     - ClientInfo released to each client when it is their turn to move
-//     - Clients can send their move to the arena
-//          - Clients should also have a timeout (configurable in Arena)
-//          - Should gracefully handle client side crashes
-//          - May print logging?
-//     - Arena will update the game state
 //     - When the game is over, issue a special command (or just terminate the connections)
-//     - Display the Winner and stats??
+//
+//     UI (medium)
+//      - Colorblind friendly shapes (must)
+//      - Elo
+//      - arbitrary tourney? Login?
+//     Servers spinup (high)
+//      - Git management
+//      - separate
+//     Python parsing (high)
+//      - iterate on design?
+//     Sandboxing?
+//     server log? (medium)

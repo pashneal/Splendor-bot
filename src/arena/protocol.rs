@@ -24,15 +24,15 @@ const TIMEOUT : Duration = Duration::from_secs(4);
 static CLIENT_ID : AtomicUsize = AtomicUsize::new(0);
 
 impl Arena {
-    pub async fn launch(port : u16) {
-        let arena = Arena::new(2);
+    pub async fn launch(port : u16, binaries : Vec<String>, num_players : u8) {
+        let init_binaries = binaries.clone();
+        let arena = Arena::new(num_players, binaries);
         // Keep track of the game state
         let arena = Arc::new(RwLock::new(arena));
         // Turn our arena state into a new Filter
         let arena = warp::any().map(move || arena.clone());
 
-        // Keep track of all connected players, key is usize, value
-        // is a websocket sender.
+        // Keep track of all connected players
         let clients = Clients::default();
         // Turn our "clients" state into a new Filter...
         let clients = warp::any().map(move || clients.clone());
@@ -47,6 +47,19 @@ impl Arena {
 
         let routes = game;
 
+        tokio::spawn( async move {
+            // Wait 1 second for server setup then attempt to connect each individual binary
+            tokio::time::sleep(Duration::from_secs(1)).await;
+            for binary in init_binaries {
+                match std::process::Command::new(binary.clone())
+                    .arg(format!("--port={}", port))
+                    .spawn() {
+                        Ok(_) => info!("Launched binary {}", binary),
+                        Err(e) => error!("Failed to launch binary {}: {}", binary, e),
+                    }
+            }
+        });
+
         // Start the server on localhost at the specified port
         warp::serve(routes).run(([127, 0, 0, 1], port)).await;
     }
@@ -58,7 +71,7 @@ pub enum ParseError {
     Unknown,
     #[display(fmt = "Cannot convert action to string")]
     CannotConvertToString,
-    #[display(fmt = "Cannot convert action_string to action")]
+    #[display(fmt = "Cannot convert action string to action")]
     CannotConvertToAction,
 
 }
@@ -129,8 +142,6 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
         info!("{} disconnected", my_id);
         user_disconnected(my_id, clients, arena).await;
     });
-
-
 
     let num_players = init_arena.read().await.game.players().len();
     user_initialized(my_id, init_clients.clone(), init_arena.clone()).await;
