@@ -16,11 +16,11 @@ impl Noble {
                 3,
                 0,
                 Tokens {
-                    black: 0,
-                    blue: 0,
-                    green: 4,
-                    red: 4,
-                    white: 0,
+                    onyx: 0,
+                    sapphire: 0,
+                    emerald: 4,
+                    ruby: 4,
+                    diamond: 0,
                     gold: 0,
                 },
             ),
@@ -28,11 +28,11 @@ impl Noble {
                 3,
                 1,
                 Tokens {
-                    black: 3,
-                    blue: 0,
-                    green: 0,
-                    red: 3,
-                    white: 3,
+                    onyx: 3,
+                    sapphire: 0,
+                    emerald: 0,
+                    ruby: 3,
+                    diamond: 3,
                     gold: 0,
                 },
             ),
@@ -40,11 +40,11 @@ impl Noble {
                 3,
                 2,
                 Tokens {
-                    black: 3,
-                    blue: 0,
-                    green: 3,
-                    red: 3,
-                    white: 0,
+                    onyx: 3,
+                    sapphire: 0,
+                    emerald: 3,
+                    ruby: 3,
+                    diamond: 0,
                     gold: 0,
                 },
             ),
@@ -52,11 +52,11 @@ impl Noble {
                 3,
                 3,
                 Tokens {
-                    black: 0,
-                    blue: 4,
-                    green: 0,
-                    red: 0,
-                    white: 4,
+                    onyx: 0,
+                    sapphire: 4,
+                    emerald: 0,
+                    ruby: 0,
+                    diamond: 4,
                     gold: 0,
                 },
             ),
@@ -64,11 +64,11 @@ impl Noble {
                 3,
                 4,
                 Tokens {
-                    black: 4,
-                    blue: 0,
-                    green: 0,
-                    red: 0,
-                    white: 4,
+                    onyx: 4,
+                    sapphire: 0,
+                    emerald: 0,
+                    ruby: 0,
+                    diamond: 4,
                     gold: 0,
                 },
             ),
@@ -76,11 +76,11 @@ impl Noble {
                 3,
                 5,
                 Tokens {
-                    black: 0,
-                    blue: 4,
-                    green: 4,
-                    red: 0,
-                    white: 0,
+                    onyx: 0,
+                    sapphire: 4,
+                    emerald: 4,
+                    ruby: 0,
+                    diamond: 0,
                     gold: 0,
                 },
             ),
@@ -88,11 +88,11 @@ impl Noble {
                 3,
                 6,
                 Tokens {
-                    black: 0,
-                    blue: 3,
-                    green: 3,
-                    red: 3,
-                    white: 0,
+                    onyx: 0,
+                    sapphire: 3,
+                    emerald: 3,
+                    ruby: 3,
+                    diamond: 0,
                     gold: 0,
                 },
             ),
@@ -100,11 +100,11 @@ impl Noble {
                 3,
                 7,
                 Tokens {
-                    black: 0,
-                    blue: 3,
-                    green: 3,
-                    red: 0,
-                    white: 3,
+                    onyx: 0,
+                    sapphire: 3,
+                    emerald: 3,
+                    ruby: 0,
+                    diamond: 3,
                     gold: 0,
                 },
             ),
@@ -112,11 +112,11 @@ impl Noble {
                 3,
                 8,
                 Tokens {
-                    black: 4,
-                    blue: 0,
-                    green: 4,
-                    red: 0,
-                    white: 0,
+                    onyx: 4,
+                    sapphire: 0,
+                    emerald: 4,
+                    ruby: 0,
+                    diamond: 0,
                     gold: 0,
                 },
             ),
@@ -124,11 +124,11 @@ impl Noble {
                 3,
                 9,
                 Tokens {
-                    black: 3,
-                    blue: 3,
-                    green: 0,
-                    red: 0,
-                    white: 3,
+                    onyx: 3,
+                    sapphire: 3,
+                    emerald: 0,
+                    ruby: 0,
+                    diamond: 3,
                     gold: 0,
                 },
             ),
@@ -142,11 +142,11 @@ impl Noble {
         }
     }
     pub fn is_attracted_to(&self, developments: &Tokens) -> bool {
-        let can_attract = (developments.black >= self.requirements.black)
-            && (developments.blue >= self.requirements.blue)
-            && (developments.green >= self.requirements.green)
-            && (developments.red >= self.requirements.red)
-            && (developments.white >= self.requirements.white);
+        let can_attract = (developments.onyx >= self.requirements.onyx)
+            && (developments.sapphire >= self.requirements.sapphire)
+            && (developments.emerald >= self.requirements.emerald)
+            && (developments.ruby >= self.requirements.ruby)
+            && (developments.diamond >= self.requirements.diamond);
 
         can_attract
     }

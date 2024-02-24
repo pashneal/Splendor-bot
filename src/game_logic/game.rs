@@ -621,26 +621,26 @@ pub mod test {
 
     pub fn test_choose_tokens_1() {
         let mut gems = Tokens::from_vec(&vec![
-            Color::Red,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Green,
+            Color::Ruby,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Emerald,
         ]);
         let mut running = Tokens::empty();
         let choices = choose_tokens(&mut gems, &mut running, 1);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
-                Tokens::from_vec(&vec![Color::Red]),
-                Tokens::from_vec(&vec![Color::Blue]),
-                Tokens::from_vec(&vec![Color::Green]),
+                Tokens::from_vec(&vec![Color::Ruby]),
+                Tokens::from_vec(&vec![Color::Sapphire]),
+                Tokens::from_vec(&vec![Color::Emerald]),
             ])
         );
     }
@@ -648,29 +648,29 @@ pub mod test {
     #[test]
     pub fn test_choose_tokens_2() {
         let mut gems = Tokens::from_vec(&vec![
-            Color::Red,
-            Color::Red,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Green,
+            Color::Ruby,
+            Color::Ruby,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Emerald,
         ]);
         let mut running = Tokens::empty();
         let choices = choose_tokens(&mut gems, &mut running, 2);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
-                Tokens::from_vec(&vec![Color::Red, Color::Red]),
-                Tokens::from_vec(&vec![Color::Blue, Color::Blue]),
-                Tokens::from_vec(&vec![Color::Green, Color::Blue]),
-                Tokens::from_vec(&vec![Color::Red, Color::Blue]),
-                Tokens::from_vec(&vec![Color::Red, Color::Green]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Ruby]),
+                Tokens::from_vec(&vec![Color::Sapphire, Color::Sapphire]),
+                Tokens::from_vec(&vec![Color::Emerald, Color::Sapphire]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Sapphire]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Emerald]),
             ])
         );
     }
@@ -683,16 +683,16 @@ pub mod test {
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
-                Tokens::from_vec(&vec![Color::Red, Color::Blue, Color::Green]),
-                Tokens::from_vec(&vec![Color::Red, Color::Blue, Color::White]),
-                Tokens::from_vec(&vec![Color::Red, Color::Blue, Color::Black]),
-                Tokens::from_vec(&vec![Color::Red, Color::Green, Color::White]),
-                Tokens::from_vec(&vec![Color::Red, Color::Green, Color::Black]),
-                Tokens::from_vec(&vec![Color::Red, Color::White, Color::Black]),
-                Tokens::from_vec(&vec![Color::Blue, Color::Green, Color::White]),
-                Tokens::from_vec(&vec![Color::Blue, Color::Green, Color::Black]),
-                Tokens::from_vec(&vec![Color::Blue, Color::White, Color::Black]),
-                Tokens::from_vec(&vec![Color::Green, Color::White, Color::Black]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Sapphire, Color::Emerald]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Sapphire, Color::Diamond]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Sapphire, Color::Onyx]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Emerald, Color::Diamond]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Emerald, Color::Onyx]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Diamond, Color::Onyx]),
+                Tokens::from_vec(&vec![Color::Sapphire, Color::Emerald, Color::Diamond]),
+                Tokens::from_vec(&vec![Color::Sapphire, Color::Emerald, Color::Onyx]),
+                Tokens::from_vec(&vec![Color::Sapphire, Color::Diamond, Color::Onyx]),
+                Tokens::from_vec(&vec![Color::Emerald, Color::Diamond, Color::Onyx]),
             ])
         );
     }
@@ -700,27 +700,27 @@ pub mod test {
     #[test]
     pub fn test_choose_distinct_tokens() {
         let mut gems = Tokens::from_vec(&vec![
-            Color::Red,
-            Color::Red,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Blue,
-            Color::Green,
+            Color::Ruby,
+            Color::Ruby,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Sapphire,
+            Color::Emerald,
         ]);
         let mut running = Tokens::empty();
         let choices = choose_distinct_tokens(&mut gems, &mut running, 2);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
-                Tokens::from_vec(&vec![Color::Green, Color::Blue]),
-                Tokens::from_vec(&vec![Color::Red, Color::Blue]),
-                Tokens::from_vec(&vec![Color::Red, Color::Green]),
+                Tokens::from_vec(&vec![Color::Emerald, Color::Sapphire]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Sapphire]),
+                Tokens::from_vec(&vec![Color::Ruby, Color::Emerald]),
             ])
         );
     }
@@ -755,27 +755,27 @@ pub mod test {
             vec![cards[43], cards[66], cards[47], cards[67]],
             vec![cards[89], cards[80], cards[86], cards[74]],
         ]);
-        game.play_action(TakeDouble(Color::Black));
+        game.play_action(TakeDouble(Color::Onyx));
         game.play_action(Pass);
         game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 29);
-        assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
+        assert_eq!(!actions.contains(&TakeDouble(Color::Onyx)), true);
 
         game.play_action(TakeDistinct(HashSet::from_iter(vec![
-            Color::White,
-            Color::Green,
-            Color::Red,
+            Color::Diamond,
+            Color::Emerald,
+            Color::Ruby,
         ])));
         game.play_action(Pass);
         game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 29);
-        assert_eq!(!actions.contains(&TakeDouble(Color::Black)), true);
+        assert_eq!(!actions.contains(&TakeDouble(Color::Onyx)), true);
 
-        game.play_action(TakeDouble(Color::White));
+        game.play_action(TakeDouble(Color::Diamond));
         game.play_action(Pass);
         game.play_action(Continue);
 
@@ -783,9 +783,9 @@ pub mod test {
         assert_eq!(actions.len(), 28);
 
         game.play_action(TakeDistinct(HashSet::from_iter(vec![
-            Color::White,
-            Color::Green,
-            Color::Red,
+            Color::Diamond,
+            Color::Emerald,
+            Color::Ruby,
         ])));
         game.play_action(Pass);
         game.play_action(Continue);
@@ -794,9 +794,9 @@ pub mod test {
         assert_eq!(actions.len(), 26);
 
         game.play_action(TakeDistinct(HashSet::from_iter(vec![
-            Color::White,
-            Color::Green,
-            Color::Red,
+            Color::Diamond,
+            Color::Emerald,
+            Color::Ruby,
         ])));
         game.play_action(Pass);
         game.play_action(Continue);
@@ -804,7 +804,7 @@ pub mod test {
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 30 - 4 - 6);
 
-        game.play_action(TakeDouble(Color::Blue));
+        game.play_action(TakeDouble(Color::Sapphire));
         game.play_action(Pass);
         game.play_action(Continue);
 
@@ -813,7 +813,7 @@ pub mod test {
 
         game.play_action(Purchase((
             8,
-            Tokens::from_vec(&vec![Color::White, Color::Green, Color::Red, Color::Black]),
+            Tokens::from_vec(&vec![Color::Diamond, Color::Emerald, Color::Ruby, Color::Onyx]),
         )));
         game.play_action(Pass);
         game.play_action(Continue);

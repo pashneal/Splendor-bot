@@ -196,9 +196,9 @@ mod tests {
     #[test]
     fn test_cannot_afford_1_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(Color::Red));
+        player.add_gems(Tokens::one(Color::Ruby));
         player.add_gems(Tokens::one(Color::Gold));
-        player.add_gems(Tokens::one(Color::Black));
+        player.add_gems(Tokens::one(Color::Onyx));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card);
@@ -208,8 +208,8 @@ mod tests {
     #[test]
     fn test_cannot_afford_0_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(Color::Red));
-        player.add_gems(Tokens::one(Color::Green));
+        player.add_gems(Tokens::one(Color::Ruby));
+        player.add_gems(Tokens::one(Color::Emerald));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card);
@@ -218,9 +218,9 @@ mod tests {
     #[test]
     fn test_payment_specific_0_wild_discount_exact() {
         let mut player = Player::new();
-        player.add_development(Color::Red);
-        player.add_development(Color::Green);
-        player.add_development(Color::Green);
+        player.add_development(Color::Ruby);
+        player.add_development(Color::Emerald);
+        player.add_development(Color::Emerald);
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
@@ -233,11 +233,11 @@ mod tests {
                 .first()
                 .unwrap(),
             Tokens {
-                red: 0,
-                green: 0,
-                blue: 0,
-                white: 0,
-                black: 0,
+                ruby: 0,
+                emerald: 0,
+                sapphire: 0,
+                diamond: 0,
+                onyx: 0,
                 gold: 0,
             }
         );
@@ -245,9 +245,9 @@ mod tests {
     #[test]
     fn test_payment_specific_0_wild_discount_less() {
         let mut player = Player::new();
-        player.add_development(Color::Red);
-        player.add_gems(Tokens::one(Color::Green));
-        player.add_gems(Tokens::one(Color::Green));
+        player.add_development(Color::Ruby);
+        player.add_gems(Tokens::one(Color::Emerald));
+        player.add_gems(Tokens::one(Color::Emerald));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
@@ -260,11 +260,11 @@ mod tests {
                 .first()
                 .unwrap(),
             Tokens {
-                red: 0,
-                green: 2,
-                blue: 0,
-                white: 0,
-                black: 0,
+                ruby: 0,
+                emerald: 2,
+                sapphire: 0,
+                diamond: 0,
+                onyx: 0,
                 gold: 0,
             }
         );
@@ -272,10 +272,10 @@ mod tests {
     #[test]
     fn test_payment_specific_1_wild_discount_less() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(Color::Black));
-        player.add_development(Color::Red);
+        player.add_gems(Tokens::one(Color::Onyx));
+        player.add_development(Color::Ruby);
         player.add_gems(Tokens::one(Color::Gold));
-        player.add_gems(Tokens::one(Color::Green));
+        player.add_gems(Tokens::one(Color::Emerald));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
@@ -288,11 +288,11 @@ mod tests {
                 .first()
                 .unwrap(),
             Tokens {
-                red: 0,
-                green: 1,
-                blue: 0,
-                white: 0,
-                black: 0,
+                ruby: 0,
+                emerald: 1,
+                sapphire: 0,
+                diamond: 0,
+                onyx: 0,
                 gold: 1,
             }
         );
@@ -301,11 +301,11 @@ mod tests {
     #[test]
     fn test_payment_ambiguous_1_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(Color::Red));
-        player.add_gems(Tokens::one(Color::Black));
+        player.add_gems(Tokens::one(Color::Ruby));
+        player.add_gems(Tokens::one(Color::Onyx));
         player.add_gems(Tokens::one(Color::Gold));
-        player.add_gems(Tokens::one(Color::Green));
-        player.add_gems(Tokens::one(Color::Green));
+        player.add_gems(Tokens::one(Color::Emerald));
+        player.add_gems(Tokens::one(Color::Emerald));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
@@ -314,27 +314,27 @@ mod tests {
         let set = payment;
         let target = vec![
             Tokens {
-                red: 1,
-                green: 1,
-                blue: 0,
-                white: 0,
-                black: 0,
+                ruby: 1,
+                emerald: 1,
+                sapphire: 0,
+                diamond: 0,
+                onyx: 0,
                 gold: 1,
             },
             Tokens {
-                red: 0,
-                green: 2,
-                blue: 0,
-                white: 0,
-                black: 0,
+                ruby: 0,
+                emerald: 2,
+                sapphire: 0,
+                diamond: 0,
+                onyx: 0,
                 gold: 1,
             },
             Tokens {
-                red: 1,
-                green: 2,
-                blue: 0,
-                white: 0,
-                black: 0,
+                ruby: 1,
+                emerald: 2,
+                sapphire: 0,
+                diamond: 0,
+                onyx: 0,
                 gold: 0,
             },
         ];
@@ -345,19 +345,19 @@ mod tests {
     #[test]
     fn test_payment_specific_2_wild_discount_more() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(Color::Red));
-        player.add_gems(Tokens::one(Color::Red));
-        player.add_gems(Tokens::one(Color::Black));
-        player.add_gems(Tokens::one(Color::Black));
+        player.add_gems(Tokens::one(Color::Ruby));
+        player.add_gems(Tokens::one(Color::Ruby));
+        player.add_gems(Tokens::one(Color::Onyx));
+        player.add_gems(Tokens::one(Color::Onyx));
         player.add_gems(Tokens::one(Color::Gold));
         player.add_gems(Tokens::one(Color::Gold));
-        player.add_gems(Tokens::one(Color::Green));
+        player.add_gems(Tokens::one(Color::Emerald));
 
-        player.add_development(Color::Red);
-        player.add_development(Color::Green);
-        player.add_development(Color::Green);
-        player.add_development(Color::Green);
-        player.add_development(Color::Green);
+        player.add_development(Color::Ruby);
+        player.add_development(Color::Emerald);
+        player.add_development(Color::Emerald);
+        player.add_development(Color::Emerald);
+        player.add_development(Color::Emerald);
 
         let card = Card::all()[6];
         let payment = player.payment_options_for(&card).unwrap();
@@ -370,11 +370,11 @@ mod tests {
                 .first()
                 .unwrap(),
             Tokens {
-                red: 0,
-                green: 0,
-                blue: 0,
-                white: 0,
-                black: 0,
+                ruby: 0,
+                emerald: 0,
+                sapphire: 0,
+                diamond: 0,
+                onyx: 0,
                 gold: 0,
             }
         )
@@ -383,13 +383,13 @@ mod tests {
     #[test]
     fn test_payment_specific_2_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(Color::Red));
-        player.add_gems(Tokens::one(Color::Red));
-        player.add_gems(Tokens::one(Color::Black));
-        player.add_gems(Tokens::one(Color::Black));
+        player.add_gems(Tokens::one(Color::Ruby));
+        player.add_gems(Tokens::one(Color::Ruby));
+        player.add_gems(Tokens::one(Color::Onyx));
+        player.add_gems(Tokens::one(Color::Onyx));
         player.add_gems(Tokens::one(Color::Gold));
         player.add_gems(Tokens::one(Color::Gold));
-        player.add_gems(Tokens::one(Color::Green));
+        player.add_gems(Tokens::one(Color::Emerald));
 
         let card = Card::all()[6];
         let payment = player.payment_options_for(&card).unwrap();
@@ -402,11 +402,11 @@ mod tests {
                 .first()
                 .unwrap(),
             Tokens {
-                red: 0,
-                green: 1,
-                blue: 0,
-                white: 0,
-                black: 0,
+                ruby: 0,
+                emerald: 1,
+                sapphire: 0,
+                diamond: 0,
+                onyx: 0,
                 gold: 2,
             }
         )
@@ -415,9 +415,9 @@ mod tests {
     #[test]
     fn test_payment_ambiguous_3_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(Color::Green));
-        player.add_gems(Tokens::one(Color::Green));
-        player.add_gems(Tokens::one(Color::Black));
+        player.add_gems(Tokens::one(Color::Emerald));
+        player.add_gems(Tokens::one(Color::Emerald));
+        player.add_gems(Tokens::one(Color::Onyx));
         player.add_gems(Tokens::one(Color::Gold));
         player.add_gems(Tokens::one(Color::Gold));
         player.add_gems(Tokens::one(Color::Gold));

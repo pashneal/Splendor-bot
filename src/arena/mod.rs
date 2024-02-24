@@ -71,9 +71,10 @@ pub struct GameResults {
 //      - Colorblind friendly shapes (must)
 //      - Elo
 //      - arbitrary tourney? Login?
-//     Servers spinup (high)
+//     Servers spinup (medium-high)
 //      - Git management
 //      - separate
 //     Python parsing (high)
 //      - iterate on design?
+//     Action Explanation (high)
 //     Sandboxing?
