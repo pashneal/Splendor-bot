@@ -7,23 +7,26 @@ use clap::Parser;
 
 type WebSocket = tungstenite::WebSocket<MaybeTlsStream<std::net::TcpStream>>;
 
-
-
 /// Your bot struct, which will live for the duration of the game
 /// Feel free to add any fields you need, but they must each implement Default!
 #[derive(Debug, Default)]
 pub struct Bot {
-    pub message : String,
+    pub name : String,
+    pub turns : usize,
 }
 
 /// Initialize your bot here!
 /// feel free to change around the items in your Bot struct
 /// This is called *once* at the start of a new game
 pub fn initialize(bot: &mut Bot, log: &mut Log) {
-    bot.message = "Hello world".to_string();
+    // The stuff in bot carries over from turn to turn!
+    bot.name = "Cool bot name".to_string();
+    bot.turns = 0;
+
     // Send a message from this bot to the server for debugging!
     log.send("Hello from a new bot!");
 }
+
 /// The main bread and butter of your bot!
 ///
 /// This is called whenever the game needs to take an action from your bot,
@@ -43,7 +46,9 @@ pub fn take_action(bot: &mut Bot, info: ClientInfo, log : &mut Log) -> Action {
     let mut rng = thread_rng();
     let action = legal_actions.choose(&mut rng).unwrap();
 
-    let message = format!("I chose to {:?}! Take that!", action);
+    bot.turns += 1;
+    let message = format!("I chose to {:?} and I have seen {} turns! Take that!", action, bot.turns);
+
     // Note: nothing will print to the console, 
     println!("This does not print out!!");
     // use the log instead so that the server prints it for you
@@ -52,13 +57,11 @@ pub fn take_action(bot: &mut Bot, info: ClientInfo, log : &mut Log) -> Action {
     action.clone()
 }
 
-
 /// This is called at the end of the game, and you can use it to clean up
 /// TODO: Actually call this from the server when the game is over
 pub fn game_over(bot: &mut Bot, info: ClientInfo, results: GameResults) {
     todo!()
 }
-
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -71,6 +74,7 @@ pub struct Args {
 pub struct Log {
     socket : WebSocket,
 }
+
 impl Log {
     pub fn new(port: u16) -> Self {
         let url = format!("ws://localhost:{}/log", port);
