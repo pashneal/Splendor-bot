@@ -31,6 +31,7 @@ fn token_match(cost: Tokens, gems: Tokens, running_payment: Tokens) -> HashSet<T
     if gems.total() == 0 {
         return HashSet::new();
     }
+
     // Take one token that satisfies the cost or a wild token and recurse
     let mut result = Vec::new();
     for color in Color::all() {

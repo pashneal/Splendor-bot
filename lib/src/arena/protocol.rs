@@ -252,7 +252,9 @@ async fn action_played(clients: Clients, arena: ArenaLock) {
 
     trace!("Sending game state to player {}", player_num);
     if let Some(tx) = clients.write().await.get_mut(&player_num) {
-        let info = Message::text(serde_json::to_string(&client_info).unwrap());
+        let info_str = serde_json::to_string(&client_info).unwrap();
+        println!("Game state: {}", info_str);
+        let info = Message::text(info_str);
         tx.send(info).await.unwrap();
         trace!("Sent game state!");
     } else {
