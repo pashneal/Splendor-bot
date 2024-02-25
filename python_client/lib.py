@@ -5,7 +5,7 @@ from serde.json import from_json, to_json
 from dataclasses import dataclass
 from enum import Enum
 
-from serde import serde, Untagged, AdjacentTagging, InternalTagging
+from serde import serde, Untagged
 
 
 class Color(Enum):
@@ -16,65 +16,81 @@ class Color(Enum):
     Diamond = "Diamond"
     Gold = "Gold"
 
+
 @serde
 class Tokens:
-    onyx : int
-    sapphire : int
-    emerald : int
-    ruby : int
-    diamond : int
-    gold : int
+    onyx: int
+    sapphire: int
+    emerald: int
+    ruby: int
+    diamond: int
+    gold: int
 
-@serde 
+
+@serde
 class Reserve:
-    Reserve : int
+    Reserve: int
+
 
 @serde
 class ReserveHidden:
-    ReserveHidden : int
+    ReserveHidden: int
+
 
 @serde
 class Purchase:
-    Purchase : typing.Tuple[int, Tokens]
+    Purchase: typing.Tuple[int, Tokens]
+
 
 @serde
 class AttractNoble:
-    AttractNoble : int 
+    AttractNoble: int
+
 
 @serde
 class Discard:
-    Discard : typing.List[Color]
+    Discard: typing.List[Color]
+
 
 @serde
 class TakeDistinct:
-    TakeDistinct : typing.List[Color]
+    TakeDistinct: typing.List[Color]
+
 
 @serde
 class TakeDouble:
-    TakeDouble : Color
+    TakeDouble: Color
 
-@serde  
+
+@serde
 @dataclass
 class LogMessage:
-    Log : str
+    Log: str
+
 
 @serde(tagging=Untagged)
 @dataclass
 class ActionMessage:
-    Action : typing.Union[
-            TakeDistinct, TakeDouble, Purchase, AttractNoble, Discard, Reserve, ReserveHidden]
+    Action: typing.Union[
+        TakeDistinct,
+        TakeDouble,
+        Purchase,
+        AttractNoble,
+        Discard,
+        Reserve,
+        ReserveHidden,
+    ]
 
 
-
-class Logger: 
+class Logger:
     def __init__(self, socket):
         self._socket = socket
 
     def send(self, message):
         self._socket.send
 
+
 def get_port():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', '-p', type=int)
+    parser.add_argument("--port", "-p", type=int)
     return parser.parse_args().port
-
