@@ -427,9 +427,9 @@ mod tests {
         let payment = player.payment_options_for(&card).unwrap();
 
         //             = 0 ways to pay with 0 wilds
-        // gg.b        = 1 way to pay with 1 wild
-        // .g.b | gg.. = 2 ways to pay with 2 wilds
-        // .g.. | ..b. = 2 ways to pay with 3 wilds
+        // ee.o        = 1 way to pay with 1 wild
+        // .e.o | ee.. = 2 ways to pay with 2 wilds
+        // .e.. | ..o. = 2 ways to pay with 3 wilds
 
         assert_eq!(payment.len(), 5);
     }
