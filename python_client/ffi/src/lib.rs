@@ -33,6 +33,17 @@ pub struct PyTokens {
 }
 
 impl PyTokens {
+    pub fn from_cost(cost: Cost) -> Self {
+        let tokens = cost.to_tokens();
+        PyTokens {
+            onyx: tokens.onyx,
+            sapphire: tokens.sapphire,
+            emerald: tokens.emerald,
+            ruby: tokens.ruby,
+            diamond: tokens.diamond,
+            gold: tokens.gold,
+        }
+    }
     pub fn from(tokens: Tokens) -> Self {
         PyTokens {
             onyx: tokens.onyx,
@@ -196,8 +207,6 @@ impl PyAction {
     }
 
     pub fn __repr__(&self) -> String {
-        // TODO: represent the information in a more implementation
-        // agnostic way
         format!("{}", self.__str__())
     }
 
@@ -230,9 +239,12 @@ impl PyAction {
 /// A Python wrapper for the `ClientInfo` struct
 #[pyclass]
 pub struct PyClientInfo {
-    pub board: Board,
-    pub history: GameHistory,
-    pub players: Vec<PlayerPublicInfo>,
+    #[pyo3(get)]
+    pub board: PyBoard,
+    #[pyo3(get)]
+    pub game_history: PyGameHistory,
+    #[pyo3(get)]
+    pub players: Vec<PyPlayerPublicInfo>,
     #[pyo3(get)]
     pub current_player: PyPlayer,
     #[pyo3(get)]
@@ -246,11 +258,14 @@ impl PyClientInfo {
         let legal_actions = client_info.legal_actions;
         let py_legal_actions = legal_actions.into_iter().map(PyAction::from).collect();
         let py_current_player = PyPlayer::from(&client_info.current_player);
+        let py_player_public_info = client_info.players.iter().map(PyPlayerPublicInfo::from).collect();
+        let py_board = PyBoard::from(&client_info.board);
+        let py_game_history = PyGameHistory::from(client_info.history);
 
         PyClientInfo {
-            board: client_info.board,
-            history: client_info.history,
-            players: client_info.players,
+            board: py_board,
+            game_history: py_game_history,
+            players: py_player_public_info,
             current_player: py_current_player,
             current_player_num: client_info.current_player_num,
             legal_actions: py_legal_actions,
@@ -282,6 +297,72 @@ impl PyPlayer {
             gems: PyTokens::from(*player.gems()),
             developments: PyTokens::from(*player.developments()),
             blind_reserved: player.blind_reserved(),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct PyPlayerPublicInfo {
+    #[pyo3(get)]
+    points: u8,
+    #[pyo3(get)]
+    num_reserved: usize,
+    #[pyo3(get)]
+    developments: PyTokens,
+    #[pyo3(get)]
+    gems: PyTokens,
+}
+
+impl PyPlayerPublicInfo {
+    pub fn from(player: &PlayerPublicInfo) -> Self {
+        PyPlayerPublicInfo {
+            points: player.points,
+            num_reserved: player.num_reserved,
+            developments: PyTokens::from(player.developments.to_tokens()),
+            gems: PyTokens::from(player.gems),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct PyBoard {
+    #[pyo3(get)]
+    pub deck_counts: [usize; 3],
+    #[pyo3(get)]
+    pub available_cards: Vec<Vec<CardId>>,
+    #[pyo3(get)]
+    pub nobles: Vec<NobleId>,
+    #[pyo3(get)]
+    pub tokens: PyTokens,
+}
+
+impl PyBoard {
+    pub fn from(board: &Board) -> Self {
+        PyBoard {
+            deck_counts: board.deck_counts,
+            available_cards: board.available_cards.clone(),
+            nobles: board.nobles.clone(),
+            tokens: PyTokens::from(board.tokens),
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct PyGameHistory {
+    // TODO: encapsulate history information in clean intuitive interface 
+    // rather than just exposing the raw history
+    #[pyo3(get)]
+    pub history: Vec<(usize, PyAction)>,
+}
+
+impl PyGameHistory {
+    pub fn from(history: GameHistory) -> Self {
+        let py_history = history.into_iter().map(|(player_num, action)| (player_num, PyAction::from(action))).collect();
+        PyGameHistory {
+            history: py_history,
         }
     }
 }

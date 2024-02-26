@@ -8,10 +8,10 @@ use cached::proc_macro::cached;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayerPublicInfo {
-    points: u8,
-    num_reserved: usize,
-    developments: Cost,
-    gems: Tokens,
+    pub points: u8,
+    pub num_reserved: usize,
+    pub developments: Cost,
+    pub gems: Tokens,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
