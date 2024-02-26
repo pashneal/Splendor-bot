@@ -107,6 +107,10 @@ impl Player {
     pub fn all_reserved(&self) -> Vec<CardId> {
         self.reserved.clone()
     }
+    /// Gets the list of cards that were blind reserved  
+    pub fn blind_reserved(&self) -> Vec<CardId> {
+        self.blind_reserved.clone()
+    }
 
     pub fn gems(&self) -> &Tokens {
         &self.gems

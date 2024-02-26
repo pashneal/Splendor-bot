@@ -18,3 +18,13 @@ pub use crate::player::*;
 pub use crate::token::*;
 pub use crate::protocol::*;
 pub use crate::client::*;
+
+
+pub trait JSONable : serde::Serialize + serde::de::DeserializeOwned {
+    fn from_json(json: &str) -> Self {
+        serde_json::from_str(json).expect("Should be able to deserialize")
+    }
+    fn to_json(&self) -> String {
+        serde_json::to_string(self).expect("Should be able to serialize")
+    }
+}

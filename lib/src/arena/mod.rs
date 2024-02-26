@@ -3,6 +3,7 @@ use crate::player::*;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use std::sync::Arc;
+use crate::JSONable;
 use crate::card::Card;
 
 pub mod protocol;
@@ -27,6 +28,8 @@ pub struct ClientInfo {
     pub current_player_num: usize,
     pub legal_actions: Vec<Action>,
 }
+
+impl JSONable for ClientInfo {}
 
 impl Arena {
     pub fn new(players: u8, binaries : Vec<String>) -> Arena {
