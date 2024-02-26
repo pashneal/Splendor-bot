@@ -13,7 +13,6 @@ pub enum PyColor {
     Gold,
 }
 
-
 /// A python wrapper for the `Tokens` struct
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -59,30 +58,33 @@ impl PyTokens {
 #[pymethods]
 impl PyTokens {
     #[new]
-    pub fn new(onyx: Option<i8>, 
-               sapphire: Option<i8>,
-               emerald: Option<i8>,
-               ruby: Option<i8>,
-               diamond: Option<i8>,
-               gold: Option<i8>) -> Self {
-
+    pub fn new(
+        onyx: Option<i8>,
+        sapphire: Option<i8>,
+        emerald: Option<i8>,
+        ruby: Option<i8>,
+        diamond: Option<i8>,
+        gold: Option<i8>,
+    ) -> Self {
         PyTokens {
-            onyx : onyx.unwrap_or(0),
-            sapphire : sapphire.unwrap_or(0),
-            emerald : emerald.unwrap_or(0),
-            ruby : ruby.unwrap_or(0),
-            diamond : diamond.unwrap_or(0),
-            gold : gold.unwrap_or(0),
+            onyx: onyx.unwrap_or(0),
+            sapphire: sapphire.unwrap_or(0),
+            emerald: emerald.unwrap_or(0),
+            ruby: ruby.unwrap_or(0),
+            diamond: diamond.unwrap_or(0),
+            gold: gold.unwrap_or(0),
         }
     }
 
-    pub fn __str__ (&self) -> String{
+    pub fn __str__(&self) -> String {
         //TODO : perhaps we ignore the 0 values?
-        format!("onyx: {}, sapphire: {}, emerald: {}, ruby: {}, diamond: {}, gold: {}", 
-                self.onyx, self.sapphire, self.emerald, self.ruby, self.diamond, self.gold)
+        format!(
+            "onyx: {}, sapphire: {}, emerald: {}, ruby: {}, diamond: {}, gold: {}",
+            self.onyx, self.sapphire, self.emerald, self.ruby, self.diamond, self.gold
+        )
     }
 
-    pub fn __repr__ (&self) -> String{
+    pub fn __repr__(&self) -> String {
         self.__str__()
     }
 }
@@ -110,24 +112,23 @@ pub struct PyAction {
     tier: Option<usize>,
 }
 
-
 /// Rust side only functions for the PyAction enum
 impl PyAction {
-    pub fn from(action : Action) ->  Self {
+    pub fn from(action: Action) -> Self {
         let action_type = match &action {
-                Action::TakeDouble(_) => PyActionType::TakeGems,
-                Action::TakeDistinct(_) => PyActionType::TakeGems,
-                Action::Reserve(_) => PyActionType::Reserve,
-                Action::ReserveHidden(_) => PyActionType::ReserveHidden,
-                Action::Discard(_) => PyActionType::Discard,
-                Action::Purchase(_) => PyActionType::Purchase,
-                Action::AttractNoble(_) => PyActionType::AttractNoble,
-                Action::Pass => PyActionType::Pass,
-                Action::Continue => PyActionType::Continue,
+            Action::TakeDouble(_) => PyActionType::TakeGems,
+            Action::TakeDistinct(_) => PyActionType::TakeGems,
+            Action::Reserve(_) => PyActionType::Reserve,
+            Action::ReserveHidden(_) => PyActionType::ReserveHidden,
+            Action::Discard(_) => PyActionType::Discard,
+            Action::Purchase(_) => PyActionType::Purchase,
+            Action::AttractNoble(_) => PyActionType::AttractNoble,
+            Action::Pass => PyActionType::Pass,
+            Action::Continue => PyActionType::Continue,
         };
         let card_id = match &action {
             Action::Reserve(card_id) => Some(*card_id),
-            Action::Purchase((card_id , _)) => Some(*card_id),
+            Action::Purchase((card_id, _)) => Some(*card_id),
             _ => None,
         };
 
@@ -162,12 +163,10 @@ impl PyAction {
             tokens,
             tier,
         }
-
     }
 }
 
-
-/// Implement duck typing functions for the PyAction enum
+/// Separate the Rust-only struct enum Action to Python-like objects with PyAction
 #[pymethods]
 impl PyAction {
     pub fn action_type(&self) -> PyActionType {
@@ -179,28 +178,28 @@ impl PyAction {
             PyActionType::TakeGems => {
                 let tokens = self.tokens();
                 format!("TakeGems({})", tokens.__str__())
-            },
+            }
             PyActionType::Reserve => {
                 let card_id = self.card_id();
                 format!("Reserve(card_id : {})", card_id)
-            },
+            }
             PyActionType::ReserveHidden => {
                 let tier = self.tier();
                 format!("ReserveHidden(tier : {})", tier)
-            },
+            }
             PyActionType::Discard => {
                 let tokens = self.tokens();
                 format!("Discard({})", tokens.__str__())
-            },
+            }
             PyActionType::Purchase => {
                 let card_id = self.card_id();
                 let tokens = self.tokens();
                 format!("Purchase({}, {})", card_id, tokens.__str__())
-            },
+            }
             PyActionType::AttractNoble => {
                 let noble_id = self.noble_id();
                 format!("AttractNoble({})", noble_id)
-            },
+            }
             PyActionType::Pass => "Pass".to_string(),
             PyActionType::Continue => "Continue".to_string(),
         }
@@ -211,27 +210,32 @@ impl PyAction {
     }
 
     pub fn card_id(&self) -> CardId {
-        let error_message = format!("This action ({:?}) does not have a card_id", self.action_type);
+        let error_message = format!(
+            "This action ({:?}) does not have a card_id",
+            self.action_type
+        );
         self.card_id.expect(&error_message)
     }
 
     pub fn noble_id(&self) -> NobleId {
-
-        let error_message = format!("This action ({:?}) does not have a noble_id", self.action_type);
+        let error_message = format!(
+            "This action ({:?}) does not have a noble_id",
+            self.action_type
+        );
         self.noble_id.expect(&error_message)
     }
 
     pub fn tokens(&self) -> PyTokens {
         match self.tokens.clone() {
             None => panic!("This action ({:?}) does not have tokens", self.action_type),
-            Some(tokens) => tokens
+            Some(tokens) => tokens,
         }
     }
 
     pub fn tier(&self) -> usize {
-        match self.tier{
+        match self.tier {
             None => panic!("This action ({:?}) does not have tokens", self.action_type),
-            Some(tier) => tier
+            Some(tier) => tier,
         }
     }
 }
@@ -258,7 +262,11 @@ impl PyClientInfo {
         let legal_actions = client_info.legal_actions;
         let py_legal_actions = legal_actions.into_iter().map(PyAction::from).collect();
         let py_current_player = PyPlayer::from(&client_info.current_player);
-        let py_player_public_info = client_info.players.iter().map(PyPlayerPublicInfo::from).collect();
+        let py_player_public_info = client_info
+            .players
+            .iter()
+            .map(PyPlayerPublicInfo::from)
+            .collect();
         let py_board = PyBoard::from(&client_info.board);
         let py_game_history = PyGameHistory::from(client_info.history);
 
@@ -272,7 +280,6 @@ impl PyClientInfo {
         }
     }
 }
-
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -352,7 +359,7 @@ impl PyBoard {
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct PyGameHistory {
-    // TODO: encapsulate history information in clean intuitive interface 
+    // TODO: encapsulate history information in clean intuitive interface
     // rather than just exposing the raw history
     #[pyo3(get)]
     pub history: Vec<(usize, PyAction)>,
@@ -360,7 +367,10 @@ pub struct PyGameHistory {
 
 impl PyGameHistory {
     pub fn from(history: GameHistory) -> Self {
-        let py_history = history.into_iter().map(|(player_num, action)| (player_num, PyAction::from(action))).collect();
+        let py_history = history
+            .into_iter()
+            .map(|(player_num, action)| (player_num, PyAction::from(action)))
+            .collect();
         PyGameHistory {
             history: py_history,
         }
@@ -373,7 +383,7 @@ fn multiply(a: isize, b: isize) -> PyResult<isize> {
 }
 
 #[pyfunction]
-pub fn test_from_json(json : String) -> PyClientInfo {
+pub fn test_from_json(json: String) -> PyClientInfo {
     println!("before {}", json);
     let client_info = ClientInfo::from_json(&json);
     let py_client_info = PyClientInfo::from_client_info(client_info);
@@ -391,6 +401,3 @@ fn ffi(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyAction>()?;
     Ok(())
 }
-
-
-
