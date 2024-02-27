@@ -1,5 +1,8 @@
 use pyo3::prelude::*;
 use splendor_tourney::*;
+use clap::Parser; 
+use url::Url;
+use tungstenite::{connect, Message};
 
 /// A Python wrapper for the `Color` enum
 #[pyclass]
@@ -51,6 +54,17 @@ impl PyTokens {
             ruby: tokens.ruby,
             diamond: tokens.diamond,
             gold: tokens.gold,
+        }
+    }
+
+    pub fn into_tokens(self) -> Tokens {
+        Tokens {
+            onyx: self.onyx,
+            sapphire: self.sapphire,
+            emerald: self.emerald,
+            ruby: self.ruby,
+            diamond: self.diamond,
+            gold: self.gold,
         }
     }
 }
@@ -164,9 +178,41 @@ impl PyAction {
             tier,
         }
     }
+
+    pub fn into_action(self) -> Action  {
+        match self.action_type {
+             PyActionType::TakeGems => {
+                 let py_tokens = self.tokens();
+                 let tokens = py_tokens.into_tokens();
+                 let is_double = tokens.total() == 2 && tokens.to_set().len() == 1;
+
+                 match is_double {
+                     true => {
+                         let mut color = Color::Gold;
+                         for c in tokens.to_set() {
+                             color = c
+                         }
+                         Action::TakeDouble(color)
+                     }
+                     false => {
+                         Action::TakeDistinct(tokens.to_set())
+                     }
+                 }
+             }
+             PyActionType::Reserve =>Action::Reserve(self.card_id()),
+             PyActionType::ReserveHidden =>Action::ReserveHidden(self.tier()),
+             PyActionType::Discard =>Action::Discard(self.tokens().into_tokens()),
+             PyActionType::Purchase =>Action::Purchase((self.card_id(), self.tokens().into_tokens())),
+             PyActionType::AttractNoble =>Action::AttractNoble(self.noble_id()),
+             PyActionType::Pass =>Action::Pass,
+             PyActionType::Continue =>Action::Continue,
+        }
+
+    }
 }
 
 /// Separate the Rust-only struct enum Action to Python-like objects with PyAction
+/// TODO: (if i'm feeling nice) make error messages more helpful?
 #[pymethods]
 impl PyAction {
     pub fn action_type(&self) -> PyActionType {
@@ -394,10 +440,106 @@ pub fn test_from_json(json: String) -> PyClientInfo {
 fn ffi(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(multiply, m)?)?;
     m.add_function(wrap_pyfunction!(test_from_json, m)?)?;
+    m.add_function(wrap_pyfunction!(test_call, m)?)?;
+    m.add_function(wrap_pyfunction!(test_init_call, m)?)?;
+    m.add_function(wrap_pyfunction!(run_python_bot, m)?)?;
+
     m.add_class::<PyClientInfo>()?;
     m.add_class::<PyPlayer>()?;
     m.add_class::<PyActionType>()?;
     m.add_class::<PyTokens>()?;
     m.add_class::<PyAction>()?;
     Ok(())
+}
+
+/// A struct for making sure that the bot on the Python side
+/// has proper access to the log stream protocol of the library
+#[pyclass]
+pub struct PyLog  {
+    log : Log,
+}
+
+impl PyLog {
+    pub fn new(port : u16) -> Self {
+        PyLog {
+            log : Log::new(port),
+        }
+    }
+}
+
+/// Expose a method that allows for python-side logging
+#[pymethods]
+impl PyLog {
+    pub fn send(&mut self, message: &str) {
+        self.log.send(message);
+    }
+}
+
+/// A struct for making sure that the bot on the Python side
+/// has proper access to the Runnable protocol of the library
+#[derive(Debug, Default)]
+pub struct PyBotContainer {
+    python_bot : Option<PyAny>,
+}
+
+impl PyBotContainer {
+    pub fn new(bot: PyAny) -> Self {
+        PyBotContainer {
+            python_bot: Some(bot),
+        }
+    }
+}
+
+#[pyfunction]
+pub fn test_init_call( thing : &PyAny) {
+    let thing_inited = thing.call0().expect("It should be callable");
+    println!("thing: {:?}", thing_inited.call_method0("test"));
+}
+
+#[pyfunction]
+pub fn test_call( thing : &PyAny) {
+    println!("thing: {:?}", thing.call_method0("test"));
+}
+
+#[pyfunction]
+pub fn run_python_bot(py: Python, bot_class: &PyAny) {
+    let port = 3030;
+
+    let bot_instance = bot_class.call0().expect("Unable to launch bot, could not call __init__");
+
+
+    let url = format!("ws://localhost:{}/game", port);
+    let url = Url::parse(&url).unwrap();
+    let (mut game_socket, _) = connect(url).expect("Can't connect to the game server");
+
+    // Give the server a chance to start up
+    std::thread::sleep(std::time::Duration::from_millis(100));
+
+    let py_log = PyCell::new(py , PyLog::new(port)).unwrap();
+
+
+    match bot_instance.call_method1("initialize", (py_log.try_borrow_mut().unwrap(),)) {
+        Ok(_) => {},
+        Err(e) => panic!("crashed while calling method initialize(): {}", e)
+    }
+
+    loop {
+        let msg = game_socket.read().expect("Error reading message");
+        let msg = msg.to_text().expect("Error converting message to text");
+        let info: ClientInfo = serde_json::from_str(msg).expect("Error parsing message");
+        let py_info = PyClientInfo::from_client_info(info);
+        let result = bot_instance.call_method1("take_action", (py_info, py_log.try_borrow_mut().unwrap()));
+        let py_action : PyAction = result.expect("Error when calling method take_action()")
+            .extract()
+            .expect("Incorrect type returned by method take_action()");
+
+        let action = py_action.into_action();
+
+        let msg = ClientMessage::Action(action);
+        let msg_str = serde_json::to_string(&msg).expect("Error converting action to string");
+        game_socket.send(Message::Text(msg_str)).expect("Error sending message");
+
+
+    }
+
 }

@@ -56,16 +56,27 @@ impl Arena {
         tokio::spawn( async move {
             // TODO: use a handshake protocol instead of timing
             for binary in init_binaries {
+
                 tokio::time::sleep(Duration::from_secs(1)).await;
-                // Launches without stdout or stderr, we rely on the logs for that
-                match std::process::Command::new(binary.clone())
-                    .arg(format!("--port={}", port))
-                    .stdout(std::process::Stdio::null())
-                    .stderr(std::process::Stdio::null())
-                    .spawn() {
-                        Ok(_) => info!("Launched binary {}", binary),
-                        Err(e) => error!("Failed to launch binary {}: {}", binary, e),
-                    }
+                // Launches without stdout, we rely on the logs for that
+                if binary.ends_with(".py") {
+                    match std::process::Command::new("python3")
+                        .arg(binary.clone())
+                        .arg(format!("--port={}", port))
+                        .stdout(std::process::Stdio::null())
+                        .spawn() {
+                            Ok(_) => info!("Launched python3 script {}", binary),
+                            Err(e) => error!("Failed to launch python3 script {}: {}", binary, e),
+                        }
+                } else {
+                    match std::process::Command::new(binary.clone())
+                        .arg(format!("--port={}", port))
+                        .stdout(std::process::Stdio::null())
+                        .spawn() {
+                            Ok(_) => info!("Launched binary {}", binary),
+                            Err(e) => error!("Failed to launch binary {}: {}", binary, e),
+                        }
+                }
             }
         });
 
@@ -253,7 +264,6 @@ async fn action_played(clients: Clients, arena: ArenaLock) {
     trace!("Sending game state to player {}", player_num);
     if let Some(tx) = clients.write().await.get_mut(&player_num) {
         let info_str = serde_json::to_string(&client_info).unwrap();
-        println!("Game state: {}", info_str);
         let info = Message::text(info_str);
         tx.send(info).await.unwrap();
         trace!("Sent game state!");
