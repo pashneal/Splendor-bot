@@ -428,20 +428,10 @@ fn multiply(a: isize, b: isize) -> PyResult<isize> {
     Ok(a * b)
 }
 
-#[pyfunction]
-pub fn test_from_json(json: String) -> PyClientInfo {
-    println!("before {}", json);
-    let client_info = ClientInfo::from_json(&json);
-    let py_client_info = PyClientInfo::from_client_info(client_info);
-    py_client_info
-}
 
 #[pymodule]
 fn ffi(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(multiply, m)?)?;
-    m.add_function(wrap_pyfunction!(test_from_json, m)?)?;
-    m.add_function(wrap_pyfunction!(test_call, m)?)?;
-    m.add_function(wrap_pyfunction!(test_init_call, m)?)?;
     m.add_function(wrap_pyfunction!(run_python_bot, m)?)?;
 
     m.add_class::<PyClientInfo>()?;
@@ -491,22 +481,8 @@ impl PyBotContainer {
 }
 
 #[pyfunction]
-pub fn test_init_call( thing : &PyAny) {
-    let thing_inited = thing.call0().expect("It should be callable");
-    println!("thing: {:?}", thing_inited.call_method0("test"));
-}
-
-#[pyfunction]
-pub fn test_call( thing : &PyAny) {
-    println!("thing: {:?}", thing.call_method0("test"));
-}
-
-#[pyfunction]
 pub fn run_python_bot(py: Python, bot_class: &PyAny) {
     let port = 3030;
-
-    let bot_instance = bot_class.call0().expect("Unable to launch bot, could not call __init__");
-
 
     let url = format!("ws://localhost:{}/game", port);
     let url = Url::parse(&url).unwrap();
@@ -517,11 +493,7 @@ pub fn run_python_bot(py: Python, bot_class: &PyAny) {
 
     let py_log = PyCell::new(py , PyLog::new(port)).unwrap();
 
-
-    match bot_instance.call_method1("initialize", (py_log.try_borrow_mut().unwrap(),)) {
-        Ok(_) => {},
-        Err(e) => panic!("crashed while calling method initialize(): {}", e)
-    }
+    let bot_instance = bot_class.call1((py_log.try_borrow_mut().unwrap(),)).expect("Unable to launch bot, could not call __init__");
 
     loop {
         let msg = game_socket.read().expect("Error reading message");
@@ -538,8 +510,6 @@ pub fn run_python_bot(py: Python, bot_class: &PyAny) {
         let msg = ClientMessage::Action(action);
         let msg_str = serde_json::to_string(&msg).expect("Error converting action to string");
         game_socket.send(Message::Text(msg_str)).expect("Error sending message");
-
-
     }
 
 }
