@@ -1,6 +1,5 @@
 use pyo3::prelude::*;
 use splendor_tourney::*;
-use clap::Parser; 
 use url::Url;
 use tungstenite::{connect, Message};
 
@@ -462,21 +461,6 @@ impl PyLog {
 impl PyLog {
     pub fn send(&mut self, message: &str) {
         self.log.send(message);
-    }
-}
-
-/// A struct for making sure that the bot on the Python side
-/// has proper access to the Runnable protocol of the library
-#[derive(Debug, Default)]
-pub struct PyBotContainer {
-    python_bot : Option<PyAny>,
-}
-
-impl PyBotContainer {
-    pub fn new(bot: PyAny) -> Self {
-        PyBotContainer {
-            python_bot: Some(bot),
-        }
     }
 }
 
