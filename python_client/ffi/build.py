@@ -15,6 +15,8 @@ def install_maturin():
     subprocess.run(("python3", "-m", "pip", "install", "maturin"), check=True)
 
 def install_windows():
+    for prev_wheel in glob.glob(r".\target\wheels\ffi-*"):
+        os.system(f"del {prev_wheel}")
     os.system("python3 -m maturin build --release")
     wheel = glob.glob(r".\target\wheels\ffi-*")[0]
     os.system(f"python3 -m pip install --force-reinstall {wheel}")
