@@ -18,8 +18,10 @@ def install_maturin():
 def install_windows():
     for prev_wheel in glob.glob(r".\target\wheels\ffi-*"):
         os.system(f"del {prev_wheel}")
+    while glob.glob(r".\target\wheels\ffi-*"):
+        time.sleep(.5)
 
-    os.system("python3 -m maturin build --release")
+    os.system("python3 -m maturin build --release --interpreter python3")
     while not glob.glob(r".\target\wheels\ffi-*"):
         time.sleep(.5)
 
@@ -27,7 +29,7 @@ def install_windows():
     os.system(f"python3 -m pip install --force-reinstall {wheel}")
 
 def install_posix():
-    subprocess.run(("maturin","build","--release"), check=True)
+    subprocess.run(("python3",  "-m" , "maturin","build","--release"), check=True)
     dylib = "./target/release/maturin/libffi.dylib"
     so = "./target/release/maturin/libffi.so"
     target_loc = "../ffi.so"
