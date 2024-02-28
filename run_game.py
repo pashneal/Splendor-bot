@@ -74,9 +74,8 @@ def build_arena():
     subprocess.run( ("cargo", "build", "--release"), check=True)
     os.chdir(CWD)
 
-def run_game(binary0, binary1):
-    path0 = str((Path(PLAYER_0_DIRECTORY)  / Path(binary0)).resolve())
-    path1 = str((Path(PLAYER_1_DIRECTORY)  / Path(binary1)).resolve())
+def run_game(binaries):
+    paths = [str((Path(player_dir)  / Path(binary)).resolve()) for (player_dir, binary) in zip(PLAYER_DIRECTORIES, binaries)]
 
     build_arena()
     
@@ -85,42 +84,36 @@ def run_game(binary0, binary1):
     else:
         os.environ["RUST_LOG"] = "splendor_tourney=info"
 
+    paths = " ".join(paths)
     if is_windows:
-        os.system(f".\\arena\\target\\release\\arena -b {path0} {path1}")
+        os.system(f".\\arena\\target\\release\\arena -b {paths}")
     else:
-        os.system(f"./arena/target/release/arena -b {path0} {path1}")
+        os.system(f"./arena/target/release/arena -b {paths}")
 
 if __name__ == "__main__":
+    # Set the current directory to this one to allow for arbitrary execution
+    # from any path, but keep relative paths sane
+    os.chdir(CWD)
+
     # TODO: Mark auto loser instead of just crashing
-    if not directory_is_valid(PLAYER_0_DIRECTORY):
-        print("PLAYER_0_DIRECTORY variable is not set to a valid directory")
-        exit(1)
-    if not directory_is_valid(PLAYER_1_DIRECTORY):
-        print("PLAYER_1_DIRECTORY variable is not set to a valid directory")
-        exit(1)
+    for player_dir in PLAYER_DIRECTORIES:
+        if not directory_is_valid(player_dir):
+            print(f"ERROR: {player_dir} directory could not be found. Check your configuration!") 
+            exit(1)
 
-    commands0 = str((Path(PLAYER_0_DIRECTORY) / Path("./commands.json")).resolve())
-    commands1 = str((Path(PLAYER_1_DIRECTORY) / Path("./commands.json")).resolve())
-    print(commands1)
+    binaries = []
+    for player_dir in PLAYER_DIRECTORIES:
+        commands = str(Path(player_dir) / Path("commands.json"))
+        if not commands_json_is_valid(commands):
+            print(f"commands.json {commands} is not valid!!")
+            exit(1)
 
-    if not commands_json_is_valid(commands0):
-        print(f"commands.json {commands0} is not valid!!")
-        exit(1)
-    if not commands_json_is_valid(commands1):
-        print(f"commands.json {commands1} is not valid!!")
-        exit(1)
+        json = ""
+        with open(commands) as f:
+            json = load(f)
+        if not execute_build_commands(json, player_dir):
+            exit(1)
 
-    json0 = ""
-    json1 = ""
-    with open(commands0) as f:
-        json0 = load(f)
-    with open(commands1) as f:
-        json1 = load(f)
+        binaries.append(json["binary"])
 
-
-    if not execute_build_commands(json0, PLAYER_0_DIRECTORY):
-        exit(1)
-    if not execute_build_commands(json1, PLAYER_1_DIRECTORY):
-        exit(1)
-
-    run_game(json0["binary"], json1["binary"])
+    run_game(binaries)
