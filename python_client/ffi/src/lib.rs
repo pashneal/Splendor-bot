@@ -468,7 +468,7 @@ impl PyLog {
 pub fn run_python_bot(py: Python, bot_class: &PyAny) {
     let port = 3030;
 
-    let url = format!("ws://localhost:{}/game", port);
+    let url = format!("ws://127.0.0.1:{}/game", port);
     let url = Url::parse(&url).unwrap();
     let (mut game_socket, _) = connect(url).expect("Can't connect to the game server");
 

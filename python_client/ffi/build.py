@@ -15,9 +15,7 @@ def check_cargo_install():
 def install_maturin():
     subprocess.run(("python3", "-m", "pip", "install", "maturin"), check=True)
 def install_maturin_windows():
-    print("Installing maturin for python...")
     subprocess.run(("python", "-m", "pip", "install", "maturin"), check=True)
-    
 
 def install_windows():
     for prev_wheel in glob.glob(r".\target\wheels\ffi-*"):
