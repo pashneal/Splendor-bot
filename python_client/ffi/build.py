@@ -1,5 +1,6 @@
 import os
 import subprocess
+import glob
 
 CWD = os.path.dirname(os.path.realpath(__file__)) 
 
@@ -15,14 +16,8 @@ def install_maturin():
 
 def install_windows():
     os.system("python3 -m maturin build --release")
-    dll = r".\target\release\maturin\ffi.dll"
-    target_loc = r"..\ffi.dll"
-
-    if os.path.isfile(dll):
-        os.system(f"copy {dll} {target_loc}")
-    else:
-        print("ERROR: COULD NOT FIND THE LIBRARY FILE ON WINDOWS")
-        exit(1)
+    wheel = glob.glob(r".\ffi\target\wheels\ffi-*")[0]
+    os.system(f"python3 -m pip install --force-reinstall {wheel}")
 
 def install_posix():
     subprocess.run(("maturin","build","--release"), check=True)
