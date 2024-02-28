@@ -14,6 +14,8 @@ def check_cargo_install():
 
 def install_maturin():
     subprocess.run(("python3", "-m", "pip", "install", "maturin"), check=True)
+def install_maturin_windows():
+    subprocess.run(("python", "-m", "pip", "install", "maturin"), check=True)
 
 def install_windows():
     for prev_wheel in glob.glob(r".\target\wheels\ffi-*"):
@@ -21,12 +23,12 @@ def install_windows():
     while glob.glob(r".\target\wheels\ffi-*"):
         time.sleep(.5)
 
-    os.system("python3 -m maturin build --release --interpreter python3")
+    os.system("python -m maturin build --release --interpreter python")
     while not glob.glob(r".\target\wheels\ffi-*"):
         time.sleep(.5)
 
     wheel = glob.glob(r".\target\wheels\ffi-*")[0]
-    os.system(f"python3 -m pip install --force-reinstall {wheel}")
+    os.system(f"python -m pip install --force-reinstall {wheel}")
 
 def install_posix():
     subprocess.run(("python3",  "-m" , "maturin","build","--release"), check=True)
@@ -47,10 +49,11 @@ os_name = os.name.lower()
 if __name__ == "__main__":
     os.chdir(CWD)
     check_cargo_install()
-    install_maturin()
     if os_name == "windows" or os_name == "nt":
+        install_maturin_windows()
         install_windows()
     elif os_name == "posix":
+        install_maturin()
         install_posix()
     else:
         print(f"ERROR: UNSURE HOW TO INSTALL ON THIS SYSTEM! {os_name}")
