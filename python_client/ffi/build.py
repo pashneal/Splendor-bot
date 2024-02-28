@@ -16,7 +16,7 @@ def install_maturin():
 
 def install_windows():
     os.system("python3 -m maturin build --release")
-    wheel = glob.glob(r".\ffi\target\wheels\ffi-*")[0]
+    wheel = glob.glob(r".\target\wheels\ffi-*")[0]
     os.system(f"python3 -m pip install --force-reinstall {wheel}")
 
 def install_posix():
