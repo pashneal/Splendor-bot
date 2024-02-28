@@ -19,7 +19,7 @@ def install_windows():
     target_loc = "../ffi.dll"
 
     if os.path.isfile(dll):
-        subprocess.run(("copy", dll, target_loc), check=True)
+        os.system(f"copy {dll} {target_loc}")
     else:
         print("ERROR: COULD NOT FIND THE LIBRARY FILE ON WINDOWS")
         exit(1)
