@@ -136,7 +136,6 @@ async fn log_stream_connected( socket : WebSocket) {
 
     let (_tx, mut rx) = socket.split();
     while let Some(msg) = rx.next().await {
-        trace!("Received message: {:?}", msg);
         if let Err(e) = msg {
             error!("error reading message: {}", e);
             break;
@@ -154,9 +153,7 @@ async fn log_stream_connected( socket : WebSocket) {
                 break;
             }
             ClientMessage::Log(log) => {
-                trace!("[Player {}]: {}", id, log);
                 println!("[Player {}]: {}", id, log);
-                println!();
             }
         }
     }

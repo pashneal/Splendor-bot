@@ -42,11 +42,11 @@ if __name__ == "__main__":
     os.chdir(CWD)
     check_cargo_install()
     install_maturin()
-    if os_name == "windows":
+    if os_name == "windows" or os_name == "nt":
         install_windows()
     elif os_name == "posix":
         install_posix()
     else:
-        print("ERROR: UNSURE HOW TO INSTALL ON THIS SYSTEM! {}", os_name)
+        print(f"ERROR: UNSURE HOW TO INSTALL ON THIS SYSTEM! {os_name}")
         exit()
     print(">>> Successfully built! Happy coding :D <<<")
