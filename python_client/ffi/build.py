@@ -15,8 +15,8 @@ def install_maturin():
 
 def install_windows():
     os.system("python3 -m maturin build --release")
-    dll = "./target/release/maturin/ffi.dll"
-    target_loc = "../ffi.dll"
+    dll = r".\target\release\maturin\ffi.dll"
+    target_loc = r"..\ffi.dll"
 
     if os.path.isfile(dll):
         os.system(f"copy {dll} {target_loc}")
