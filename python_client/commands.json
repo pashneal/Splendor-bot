@@ -1,0 +1,6 @@
+{
+  "build" : [
+    "python3 ./ffi/build.py"
+  ],
+  "binary" : "bot.py"
+}
