@@ -55,4 +55,4 @@ if __name__ == "__main__":
     else:
         print(f"ERROR: UNSURE HOW TO INSTALL ON THIS SYSTEM! {os_name}")
         exit()
-    print(">>> Successfully built! Happy coding :D <<<")
+    print(">>> Successfully built Python-Rust library! Happy coding :D <<<")
