@@ -12,7 +12,7 @@ pub struct Log {
 
 impl Log {
     pub fn new(port: u16) -> Self {
-        let url = format!("ws://127.0.0.1:{}/log", port);
+        let url = format!("ws://localhost:{}/log", port);
         let url = Url::parse(&url).unwrap();
         let (socket, _) = connect(url).expect("Can't connect to the game server");
         Self {
@@ -47,7 +47,7 @@ pub fn run_bot<B : Runnable + Default>() {
     let args = Args::parse();
     let port = args.port;
 
-    let url = format!("ws://127.0.0.1:{}/game", port);
+    let url = format!("ws://localhost:{}/game", port);
     let url = Url::parse(&url).unwrap();
     let (mut game_socket, _) = connect(url).expect("Can't connect to the game server");
 
