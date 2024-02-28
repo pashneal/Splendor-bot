@@ -22,6 +22,7 @@ def install_windows():
         subprocess.run(("copy", dll, target_loc), check=True)
     else:
         print("ERROR: COULD NOT FIND THE LIBRARY FILE ON WINDOWS")
+        exit(1)
 
 def install_posix():
     subprocess.run(("maturin","build","--release"), check=True)
@@ -35,6 +36,7 @@ def install_posix():
         subprocess.run(("cp", so, target_loc), check=True)
     else:
         print("ERROR: COULD NOT FIND THE LIBRARY FILE")
+        exit(1)
 
 os_name = os.name.lower() 
 
