@@ -7,6 +7,7 @@ import shutil
 from config import *
 
 CWD = os.path.dirname(os.path.realpath(__file__)) 
+is_windows = os.name.lower() in ["windows", "nt"]
 
 def directory_is_valid(directory):
     if not os.path.exists(directory):
@@ -84,7 +85,10 @@ def run_game(binary0, binary1):
     else:
         os.environ["RUST_LOG"] = "splendor_tourney=info"
 
-    os.system(f"./arena/target/release/arena -b {path0} {path1}")
+    if is_windows:
+        os.system(f".\\arena\\target\\release\\arena -b {path0} {path1}")
+    else:
+        os.system(f"./arena/target/release/arena -b {path0} {path1}")
 
 if __name__ == "__main__":
     # TODO: Mark auto loser instead of just crashing
