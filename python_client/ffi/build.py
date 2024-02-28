@@ -1,6 +1,7 @@
 import os
 import subprocess
 import glob
+import time
 
 CWD = os.path.dirname(os.path.realpath(__file__)) 
 
@@ -17,7 +18,11 @@ def install_maturin():
 def install_windows():
     for prev_wheel in glob.glob(r".\target\wheels\ffi-*"):
         os.system(f"del {prev_wheel}")
+
     os.system("python3 -m maturin build --release")
+    while not glob.glob(r".\target\wheels\ffi-*"):
+        time.sleep(.5)
+
     wheel = glob.glob(r".\target\wheels\ffi-*")[0]
     os.system(f"python3 -m pip install --force-reinstall {wheel}")
 
