@@ -80,10 +80,11 @@ def run_game(binary0, binary1):
     build_arena()
     
     if DEBUG_LOGGING:
-        os.system( f"RUST_LOG=splendor_tourney=trace ./arena/target/release/arena -b {path0} {path1}")
+        os.environ["RUST_LOG"] = "splendor_tourney=trace"
     else:
-        os.system( f"RUST_LOG=splendor_tourney=info ./arena/target/release/arena -b {path0} {path1}")
+        os.environ["RUST_LOG"] = "splendor_tourney=info"
 
+    os.system(f"./arena/target/release/arena -b {path0} {path1}")
 
 if __name__ == "__main__":
     # TODO: Mark auto loser instead of just crashing
