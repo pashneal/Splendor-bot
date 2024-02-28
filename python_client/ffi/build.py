@@ -14,7 +14,7 @@ def install_maturin():
     subprocess.run(("python3", "-m", "pip", "install", "maturin"), check=True)
 
 def install_windows():
-    subprocess.run(("maturin","build","--release"), check=True)
+    os.system("python3 -m maturin build --release")
     dll = "./target/release/maturin/libffi.dll"
     target_loc = "../ffi.dll"
 
