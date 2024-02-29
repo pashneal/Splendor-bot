@@ -329,7 +329,7 @@ impl Game {
         i
     }
 
-    fn advance_history_with(&mut self, history: GameHistory) {
+    pub fn advance_history_with(&mut self, history: GameHistory) {
         for (p, a) in history {
             self.history.add(p, a.clone());
             self.play_action(a);

@@ -14,8 +14,9 @@ use warp::Filter;
 
 use log::{debug, error, info, trace};
 
-type Clients = Arc<RwLock<HashMap<usize, SplitSink<WebSocket, Message>>>>;
-type ArenaLock = Arc<RwLock<Arena>>;
+pub type Clients = Arc<RwLock<HashMap<usize, SplitSink<WebSocket, Message>>>>;
+pub type GlobalArena = Arc<RwLock<Arena>>;
+pub type GlobalGameHistory = Arc<RwLock<GameHistory>>;
 
 type StdError = Box<dyn std::error::Error>;
 
@@ -37,10 +38,18 @@ impl Arena {
         // Turn our "clients" state into a new Filter...
         let clients = warp::any().map(move || clients.clone());
 
+        let replay_next = warp::post()
+            .and(warp::path("replay"))
+            .and(warp::path("next"))
+            .and(arena.clone())
+            .and_then(replay::next_move);
+            
+            
+
         let game = warp::path("game")
             .and(warp::ws())
             .and(clients)
-            .and(arena)
+            .and(arena.clone())
             .map(|ws: warp::ws::Ws, clients, arena| {
                 ws.on_upgrade(move |socket| user_connected(socket, clients, arena))
             });
@@ -51,7 +60,7 @@ impl Arena {
                 ws.on_upgrade(move |socket| log_stream_connected(socket))
             });
 
-        let routes = game.or(log);
+        let routes = game.or(log).or(replay_next);
 
         tokio::spawn( async move {
             // TODO: use a handshake protocol instead of timing
@@ -108,7 +117,7 @@ fn parse_message(message_text: &Message) -> Result<ClientMessage, ParseError> {
     Ok(client_msg)
 }
 
-async fn validate_action( action: &Action, player_id : usize , arena : ArenaLock) -> bool {
+async fn validate_action( action: &Action, player_id : usize , arena : GlobalArena) -> bool {
     // -> Is a legal action
     let actions = arena.read().await.game.get_legal_actions();
     if actions.is_none() {
@@ -161,7 +170,7 @@ async fn log_stream_connected( socket : WebSocket) {
 }
 
 /// Setup a new client to play the game 
-async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
+async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
     let (client_tx, mut client_rx) = ws.split();
     let my_id = CLIENT_ID.fetch_add(1, Ordering::Relaxed);
     clients.write().await.insert(my_id , client_tx);
@@ -214,20 +223,20 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: ArenaLock) {
     }
 }
 
-async fn game_initialized(clients: Clients, arena: ArenaLock) {
+async fn game_initialized(clients: Clients, arena: GlobalArena) {
     info!("All users locked and loaded! Game starting!");
     action_played(clients, arena).await;
 }
 
-async fn user_initialized(my_id: usize, clients: Clients, arena: ArenaLock) {
+async fn user_initialized(my_id: usize, clients: Clients, arena: GlobalArena) {
     info!("{} connected", my_id);
 }
 
-async fn user_disconnected(my_id: usize, clients: Clients, arena: ArenaLock) {
+async fn user_disconnected(my_id: usize, clients: Clients, arena: GlobalArena) {
     clients.write().await.remove(&my_id);
 }
 
-async fn action_played(clients: Clients, arena: ArenaLock) {
+async fn action_played(clients: Clients, arena: GlobalArena) {
 
     // Auto play for any given player if there is only 1 legal action
     loop {
@@ -235,7 +244,13 @@ async fn action_played(clients: Clients, arena: ArenaLock) {
         // If the game is over, don't do anything else 
         if arena.read().await.is_game_over() {
             info!("Game over!");
-            info!("Winner: {:?}", arena.read().await.game.get_winner());
+            let winner = arena.read().await.game.get_winner();
+            match winner {
+                Some(winner) => info!("Winner: Player {:?}", winner),
+                None => info!("No winner! Draw!"),
+            }
+            arena.write().await.finalize_game();
+
             return 
         }
 

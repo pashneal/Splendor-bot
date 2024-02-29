@@ -3,10 +3,15 @@ use crate::player::*;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 use crate::JSONable;
 use crate::card::Card;
 
 pub mod protocol;
+pub mod replay;
+
+use replay::*;
+pub use protocol::*;
 
 /// A module for running games across multiple clients. Can be fed binaries
 /// and run them in a tournament style. The protocol for communication is
@@ -15,6 +20,7 @@ pub struct Arena {
     pub game: Game,
     pub clients: Vec<String>,
     pub timeout: Duration, 
+    replay: Either<Replay<Initialized>, FinalizedReplay>,
 }
 
 /// A struct given to each client that contains all public information and private
@@ -36,15 +42,20 @@ impl Arena {
         let card_lookup = Arc::new(Card::all());
         let game = Game::new(players, card_lookup);
         let clients = binaries;
-        let timeout = Duration::from_secs(10); Arena {
-            game,
+        let timeout = Duration::from_secs(10); 
+
+        Arena {
+            game: game.clone(),
+            replay: Either::Initialized(Replay::new(game)),
             clients,
             timeout,
         }
     }
+
     pub fn is_game_over(&self) -> bool {
         self.game.game_over()
     }
+
     pub fn client_info(&self) -> ClientInfo {
         let players = self.game.players().iter().map(|p| p.to_public()).collect();
         let legal_actions = self
@@ -61,6 +72,26 @@ impl Arena {
             legal_actions,
         }
     }
+
+    pub fn finalize_game(&mut self) {
+        let replay = self.replay.clone();
+        match replay {
+            Either::Initialized(replay) => {
+                let history = self.game.history();
+                let replay = replay.finalize_with(history);
+                let replay = Arc::new(RwLock::new(replay));
+                self.replay = Either::Finalized(replay);
+            }
+            _ => panic!("Cannot finalize game that is already finalized"),
+        }
+    }
+
+    pub fn get_replay(&self) -> Option<FinalizedReplay> {
+        match &self.replay {
+            Either::Finalized(replay) => Some(replay.clone()),
+            _ => None
+        }
+    }
 }
 
 
@@ -70,6 +101,10 @@ pub struct GameResults {
 // Need an arena where multiple clients can compete
 //     - When the game is over, issue a special command (or just terminate the connections)
 //
+//     Visualization (high)
+//        - auto launch visualization server after run_game executes
+//        - indexable history 
+//        - forward + next buttons
 //     UI (medium)
 //      - Colorblind friendly shapes (must)
 //      - Elo
@@ -77,7 +112,5 @@ pub struct GameResults {
 //     Servers spinup (medium-high)
 //      - Git management
 //      - separate
-//     Python parsing (high)
-//      - iterate on design?
 //     Action Explanation (high)
 //     Sandboxing?
