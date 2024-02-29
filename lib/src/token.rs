@@ -1,4 +1,4 @@
-use crate::color::Color;
+use crate::gem_type::GemType;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::HashSet;
@@ -15,27 +15,27 @@ pub struct Tokens {
 }
 
 impl Tokens {
-    pub fn to_set(&self) -> HashSet<Color> {
+    pub fn to_set(&self) -> HashSet<GemType> {
         let mut set = HashSet::new();
         if self.onyx > 0 {
-            set.insert(Color::Onyx);
+            set.insert(GemType::Onyx);
         }
         if self.sapphire > 0 {
-            set.insert(Color::Sapphire);
+            set.insert(GemType::Sapphire);
         }
         if self.emerald > 0 {
-            set.insert(Color::Emerald);
+            set.insert(GemType::Emerald);
         }
         if self.ruby > 0 {
-            set.insert(Color::Ruby);
+            set.insert(GemType::Ruby);
         }
         if self.diamond > 0 {
-            set.insert(Color::Diamond);
+            set.insert(GemType::Diamond);
         }
         set
     }
 
-    pub fn from_vec(vec: &Vec<Color>) -> Tokens {
+    pub fn from_vec(vec: &Vec<GemType>) -> Tokens {
         let mut tokens = Tokens::empty();
         for &color in vec {
             tokens[color] += 1;
@@ -43,7 +43,7 @@ impl Tokens {
         tokens
     }
 
-    pub fn from_set(set: &HashSet<Color>) -> Tokens {
+    pub fn from_set(set: &HashSet<GemType>) -> Tokens {
         let mut tokens = Tokens::empty();
         for color in set {
             tokens[*color] += 1;
@@ -121,7 +121,7 @@ impl Tokens {
         }
     }
 
-    pub fn one(color: Color) -> Tokens {
+    pub fn one(color: GemType) -> Tokens {
         let mut tokens = Tokens::empty();
         tokens[color] = 1;
         tokens
@@ -151,30 +151,30 @@ impl Tokens {
     }
 }
 
-impl Index<Color> for Tokens {
+impl Index<GemType> for Tokens {
     type Output = i8;
 
-    fn index<'a>(&'a self, color: Color) -> &'a i8 {
+    fn index<'a>(&'a self, color: GemType) -> &'a i8 {
         match color {
-            Color::Onyx => &self.onyx,
-            Color::Sapphire => &self.sapphire,
-            Color::Emerald => &self.emerald,
-            Color::Ruby => &self.ruby,
-            Color::Diamond => &self.diamond,
-            Color::Gold => &self.gold,
+            GemType::Onyx => &self.onyx,
+            GemType::Sapphire => &self.sapphire,
+            GemType::Emerald => &self.emerald,
+            GemType::Ruby => &self.ruby,
+            GemType::Diamond => &self.diamond,
+            GemType::Gold => &self.gold,
         }
     }
 }
 
-impl IndexMut<Color> for Tokens {
-    fn index_mut<'a>(&'a mut self, color: Color) -> &'a mut i8 {
+impl IndexMut<GemType> for Tokens {
+    fn index_mut<'a>(&'a mut self, color: GemType) -> &'a mut i8 {
         match color {
-            Color::Onyx => &mut self.onyx,
-            Color::Sapphire => &mut self.sapphire,
-            Color::Emerald => &mut self.emerald,
-            Color::Ruby => &mut self.ruby,
-            Color::Diamond => &mut self.diamond,
-            Color::Gold => &mut self.gold,
+            GemType::Onyx => &mut self.onyx,
+            GemType::Sapphire => &mut self.sapphire,
+            GemType::Emerald => &mut self.emerald,
+            GemType::Ruby => &mut self.ruby,
+            GemType::Diamond => &mut self.diamond,
+            GemType::Gold => &mut self.gold,
         }
     }
 }

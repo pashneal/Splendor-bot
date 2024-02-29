@@ -2,7 +2,7 @@
 
 pub mod arena;
 pub mod card;
-pub mod color;
+pub mod gem_type;
 pub mod game_logic;
 pub mod nobles;
 pub mod player;
@@ -11,7 +11,7 @@ pub mod client;
 
 pub use crate::arena::*;
 pub use crate::card::*;
-pub use crate::color::*;
+pub use crate::gem_type::*;
 pub use crate::game_logic::*;
 pub use crate::nobles::*;
 pub use crate::player::*;

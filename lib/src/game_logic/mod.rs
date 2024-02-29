@@ -1,5 +1,5 @@
 use crate::card::CardId;
-use crate::color::Color;
+use crate::gem_type::GemType;
 use crate::nobles::*;
 use crate::player::Player;
 use crate::token::Tokens;
@@ -24,8 +24,8 @@ enum Phase {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Action {
-    TakeDouble(Color),
-    TakeDistinct(HashSet<Color>),
+    TakeDouble(GemType),
+    TakeDistinct(HashSet<GemType>),
     Reserve(CardId),
     ReserveHidden(usize),
     Purchase((CardId, Tokens)),
@@ -54,7 +54,7 @@ pub fn choose_distinct_tokens(
         return total_choices;
     }
     // Pick one to discard and recurse
-    for color in Color::all_expect_gold() {
+    for color in GemType::all_expect_gold() {
         if gems[color] > 0 {
             if running[color] > 0 {
                 continue;
@@ -81,7 +81,7 @@ pub fn choose_tokens(gems: &mut Tokens, running: &mut Tokens, num_chosen: u32) -
         return total_choices;
     }
     // Pick one to discard and recurse
-    for color in Color::all() {
+    for color in GemType::all() {
         if gems[color] > 0 {
             gems[color] -= 1;
             running[color] += 1;

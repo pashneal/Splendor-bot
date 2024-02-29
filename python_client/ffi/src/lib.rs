@@ -3,10 +3,10 @@ use splendor_tourney::*;
 use url::Url;
 use tungstenite::{connect, Message};
 
-/// A Python wrapper for the `Color` enum
+/// A Python wrapper for the `GemType` enum
 #[pyclass]
 #[derive(Debug, Clone)]
-pub enum PyColor {
+pub enum PyGemType {
     Onyx,
     Sapphire,
     Emerald,
@@ -187,7 +187,7 @@ impl PyAction {
 
                  match is_double {
                      true => {
-                         let mut color = Color::Gold;
+                         let mut color = GemType::Gold;
                          for c in tokens.to_set() {
                              color = c
                          }
