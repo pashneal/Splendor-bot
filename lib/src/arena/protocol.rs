@@ -44,7 +44,20 @@ impl Arena {
             .and(arena.clone())
             .and_then(replay::next_move);
             
+        let replay_prev = warp::post()
+            .and(warp::path("replay"))
+            .and(warp::path("previous"))
+            .and(arena.clone())
+            .and_then(replay::previous_move);
             
+        let replay_goto = warp::post()
+            .and(warp::path("replay"))
+            .and(warp::path("goto"))
+            .and(replay::json_body())
+            .and(arena.clone())
+            .and_then(replay::go_to_move);
+
+        let replay = replay_next.or(replay_prev).or(replay_goto);
 
         let game = warp::path("game")
             .and(warp::ws())
@@ -60,7 +73,7 @@ impl Arena {
                 ws.on_upgrade(move |socket| log_stream_connected(socket))
             });
 
-        let routes = game.or(log).or(replay_next);
+        let routes = game.or(log).or(replay);
 
         tokio::spawn( async move {
             // TODO: use a handshake protocol instead of timing
