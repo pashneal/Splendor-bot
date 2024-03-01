@@ -23,6 +23,8 @@ type StdError = Box<dyn std::error::Error>;
 const TIMEOUT : Duration = Duration::from_secs(4);
 
 static CLIENT_ID : AtomicUsize = AtomicUsize::new(0);
+static TURN_COUNTER : AtomicUsize = AtomicUsize::new(0);
+static LAST_PLAYER : AtomicUsize = AtomicUsize::new(5); 
 
 impl Arena {
     pub async fn launch(port : u16, binaries : Vec<String>, num_players : u8) {
@@ -73,7 +75,10 @@ impl Arena {
                 ws.on_upgrade(move |socket| log_stream_connected(socket))
             });
 
-        let routes = game.or(log).or(replay);
+        let static_files = warp::path("splendor")
+            .and(warp::fs::dir("splendor-viz"));
+
+        let routes = game.or(log).or(replay).or(static_files);
 
         tokio::spawn( async move {
             // TODO: use a handshake protocol instead of timing
@@ -175,7 +180,7 @@ async fn log_stream_connected( socket : WebSocket) {
                 break;
             }
             ClientMessage::Log(log) => {
-                println!("[Player {}]: {}", id, log);
+                println!("[Turn : {}] [Player {}]: {}", TURN_COUNTER.load(Ordering::SeqCst), id, log);
             }
         }
     }
@@ -251,6 +256,7 @@ async fn user_disconnected(my_id: usize, clients: Clients, arena: GlobalArena) {
 
 async fn action_played(clients: Clients, arena: GlobalArena) {
 
+
     // Auto play for any given player if there is only 1 legal action
     loop {
 
@@ -274,6 +280,11 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
         let action = actions[0].clone();
         trace!("Auto played action: {:?}", action);
         arena.write().await.game.play_action(action);
+    }
+    let last_player = arena.read().await.game.current_player_num();
+    if LAST_PLAYER.load(Ordering::SeqCst) != last_player {
+        TURN_COUNTER.fetch_add(1, Ordering::SeqCst);
+        LAST_PLAYER.store(last_player, Ordering::SeqCst);
     }
 
     trace!("Sending game state to clients...");
