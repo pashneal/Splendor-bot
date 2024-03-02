@@ -20,7 +20,7 @@ impl Board {
             deck_counts: game.deck_counts(),
             available_cards: game.cards(),
             nobles: game.nobles().iter().map(|n| n.id()).collect(),
-            tokens: game.tokens().clone(),
+            tokens: game.bank().clone(),
         }
     }
 }

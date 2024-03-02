@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use crate::gem_type::GemType;
 use log::trace;
 use crate::card::CardId;
+use crate::token::Tokens;
 
 // Note: the following code results from me playing around with 
 //
@@ -128,6 +129,8 @@ enum Success {
     Cards(Vec<Vec<JSCard>>),
     #[serde(rename = "decks")]
     Decks(Vec<JSDeck>),
+    #[serde(rename = "bank")]
+    Bank(JSTokens),
 }
 
 #[derive(Debug, Serialize)]
@@ -313,6 +316,31 @@ pub async fn board_decks( arena : GlobalArena) -> Result<impl Reply, Rejection> 
             let deck_counts = replay.read().await.inner.viewable_game.deck_counts();
             let js_decks = to_js_decks(deck_counts);
             Ok(warp::reply::json(&EndpointReply::Success(Success::Decks(js_decks))))
+        }
+    }
+}
+
+pub fn to_js_bank(tokens : &Tokens) -> JSTokens {
+    let map = js_gems_map();
+    let mut js_bank = Vec::new();
+    for gem in GemType::all() {
+        let index = map.get(&gem).unwrap();
+        let count = tokens[gem];
+        if count > 0 {
+            js_bank.push((*index, count));
+        }
+    }
+    js_bank
+}
+
+pub async fn board_bank( arena : GlobalArena) -> Result<impl Reply, Rejection> {
+    let replay = arena.write().await.get_replay();
+    match replay {
+        None => Ok(warp::reply::json(&EndpointReply::Error("No replay available".to_string()))),
+        Some(replay) => {
+            let bank = replay.read().await.inner.viewable_game.bank().clone();
+            let js_bank = to_js_bank(&bank);
+            Ok(warp::reply::json(&EndpointReply::Success(Success::Bank(js_bank))))
         }
     }
 }

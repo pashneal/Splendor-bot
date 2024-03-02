@@ -19,7 +19,7 @@ use log::{debug, error, info, trace};
 #[derive(Debug, Clone)]
 pub struct Game {
     players: Vec<Player>,
-    tokens: Tokens,
+    bank: Tokens,
     decks: Vec<Vec<Card>>,
     current_player: usize,
     nobles: Vec<Noble>,
@@ -83,8 +83,8 @@ impl Game {
         self.dealt_cards.clone()
     }
 
-    pub fn tokens(&self) -> &Tokens {
-        &self.tokens
+    pub fn bank(&self) -> &Tokens {
+        &self.bank
     }
 
     pub fn nobles(&self) -> &Vec<Noble> {
@@ -135,7 +135,7 @@ impl Game {
 
         Game {
             players: (0..players).map(|_| Player::new()).collect(),
-            tokens: Tokens::start(players),
+            bank: Tokens::start(players),
             decks,
             current_player: 0,
             nobles,
@@ -234,10 +234,10 @@ impl Game {
                 // -> Can take 3 distinct tokens
                 // If there are x < 3 distinct token piles:
                 // -> Can take x distinct tokens
-                let distinct_tokens = self.tokens.distinct();
+                let distinct_tokens = self.bank.distinct();
                 let take_max = distinct_tokens.min(3) as u32;
                 let choices = choose_distinct_tokens(
-                    &mut self.tokens.clone(),
+                    &mut self.bank.clone(),
                     &mut Tokens::empty(),
                     take_max,
                 );
@@ -251,7 +251,7 @@ impl Game {
                 // If there are 4 tokens of the same color:
                 // -> Can take the two tokens of that color
                 for color in GemType::all_expect_gold() {
-                    if self.tokens[color] >= 4 {
+                    if self.bank[color] >= 4 {
                         actions.push(TakeDouble(color));
                     }
                 }
@@ -369,14 +369,14 @@ impl Game {
                 // Preconditions:
                 // -> Must be from a pile that has >= 4
                 // -> Cannot take a wild token with this action
-                debug_assert!(self.tokens[color] >= 4);
+                debug_assert!(self.bank[color] >= 4);
                 debug_assert!(!matches!(color, GemType::Gold));
 
                 // TODO: this is a little weird but we can change later
                 // right now it's using debug asserts on the 
                 // Sub operations to check preconditions
-                self.tokens -= Tokens::one(color);
-                self.tokens -= Tokens::one(color);
+                self.bank -= Tokens::one(color);
+                self.bank -= Tokens::one(color);
 
                 let player = &mut self.players[self.current_player];
                 player.add_gems(Tokens::one(color));
@@ -394,11 +394,11 @@ impl Game {
                 // -> Can take 1,2, or 3 distinct colors
                 debug_assert!(colors.len() <= 3 && colors.len() > 0);
                 // -> Which all exist on the board
-                debug_assert!(colors.iter().all(|c| self.tokens[*c] >= 1));
+                debug_assert!(colors.iter().all(|c| self.bank[*c] >= 1));
                 // -> And you can only choose 2 or 1 tokens if all other
                 // piles are depleted (See Splendor FAQ)
                 debug_assert!(if colors.len() < 3 {
-                    self.tokens.distinct() == colors.len()
+                    self.bank.distinct() == colors.len()
                 } else {
                     true
                 });
@@ -409,7 +409,7 @@ impl Game {
                 player.add_gems(Tokens::from_set(&colors));
 
                 for color in colors {
-                    self.tokens -= Tokens::one(color);
+                    self.bank -= Tokens::one(color);
                 }
 
                 if player.gems().total() > 10 {
@@ -428,13 +428,13 @@ impl Game {
                 self.deal_to(tier);
 
                 // See if the player gets an wild/gold gem
-                let gets_gold = self.tokens[GemType::Gold] > 0;
+                let gets_gold = self.bank[GemType::Gold] > 0;
                 let player = &mut self.players[self.current_player];
                 player.reserve_card(card_id);
 
                 if gets_gold {
                     player.add_gems(Tokens::one(GemType::Gold));
-                    self.tokens -= Tokens::one(GemType::Gold);
+                    self.bank -= Tokens::one(GemType::Gold);
                 }
 
                 if player.gems().total() > 10 {
@@ -448,12 +448,12 @@ impl Game {
                 let new_card_id = self.deal_to(tier).expect("Cannot reserve from empty deck");
                 self.remove_card(new_card_id);
 
-                let gets_gold = self.tokens[GemType::Gold] > 0;
+                let gets_gold = self.bank[GemType::Gold] > 0;
                 let player = &mut self.players[self.current_player];
 
                 if gets_gold {
                     player.add_gems(Tokens::one(GemType::Gold));
-                    self.tokens -= Tokens::one(GemType::Gold);
+                    self.bank -= Tokens::one(GemType::Gold);
                 }
 
                 player.blind_reserve_card(new_card_id);
@@ -482,7 +482,7 @@ impl Game {
                 player.purchase_card(&card, &payment);
 
                 // Put the payment back on the board
-                self.tokens += payment;
+                self.bank += payment;
 
                 if self.has_card(card_id) {
                     let tier = self.remove_card(card_id);
@@ -503,7 +503,7 @@ impl Game {
                 debug_assert!((*player.gems() - discards).legal());
 
                 player.remove_gems(discards);
-                self.tokens += discards;
+                self.bank += discards;
 
                 Phase::NobleAction
             }
@@ -546,7 +546,7 @@ impl Game {
 
         debug_assert!(
             Tokens::start(self.players.len() as u8)
-                == self.tokens
+                == self.bank
                     + self
                         .players
                         .iter()
