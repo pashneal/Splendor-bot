@@ -65,7 +65,13 @@ impl Arena {
             .and(arena.clone())
             .and_then(replay::board_nobles);
 
-        let replay = replay_next.or(replay_prev).or(replay_goto).or(replay_board_nobles);
+        let replay_board_cards = warp::get()
+            .and(warp::path("replay"))
+            .and(warp::path("cards"))
+            .and(arena.clone())
+            .and_then(replay::board_cards);
+
+        let replay = replay_next.or(replay_prev).or(replay_goto).or(replay_board_nobles).or(replay_board_cards);
 
         let game = warp::path("game")
             .and(warp::ws())

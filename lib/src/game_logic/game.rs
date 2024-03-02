@@ -75,6 +75,10 @@ impl Game {
             .expect("Deck size is != 3")
     }
 
+    pub fn card_lookup(&self) -> Arc<Vec<Card>> {
+        self.card_lookup.clone()
+    }
+
     pub fn cards(&self) -> Vec<Vec<CardId>> {
         self.dealt_cards.clone()
     }

@@ -91,7 +91,7 @@ impl Card {
         self.points
     }
 
-    pub fn color(&self) -> GemType {
+    pub fn gem(&self) -> GemType {
         self.gem_type
     }
 

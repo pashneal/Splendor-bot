@@ -140,7 +140,7 @@ impl Player {
         debug_assert!(payment.legal());
         self.gems -= *payment;
         debug_assert!(self.gems.legal());
-        self.add_development(card.color());
+        self.add_development(card.gem());
         self.points += card.points();
         self.reserved.retain(|&x| x != card.id());
         self.blind_reserved.retain(|&x| x != card.id());

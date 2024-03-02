@@ -5,6 +5,7 @@ use crate::nobles::Noble;
 use std::collections::HashMap;
 use crate::gem_type::GemType;
 use log::trace;
+use crate::card::CardId;
 
 // Note: the following code results from me playing around with 
 //
@@ -97,7 +98,17 @@ impl Replay<Finalized> {
 pub type FinalizedReplay = Arc<RwLock<Replay<Finalized>>>;
 
 
-type JSNoble = Vec<(usize, i8)>;
+// (color/gem, amount)
+type JSTokens = Vec<(usize, i8)>;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct JSCard {
+    tier : usize,
+    points : usize,
+    #[serde(rename = "colorIndex")]
+    color_index : usize,
+    tokens : JSTokens,
+}
 
 
 #[derive(Debug, Serialize)]
@@ -105,7 +116,9 @@ enum Success {
     #[serde(rename = "move_index")]
     Move(usize),
     #[serde(rename = "nobles")]
-    Nobles(Vec<JSNoble>),
+    Nobles(Vec<JSTokens>),
+    #[serde(rename = "cards")]
+    Cards(Vec<Vec<JSCard>>),
 }
 
 #[derive(Debug, Serialize)]
@@ -164,7 +177,7 @@ pub async fn go_to_move(move_number : Move, arena : GlobalArena ) -> Result<impl
     }
 }
 
-// Match the conventions of the frontend of a given noble
+// Match the conventions of the frontend gems
 //
 //          color    : index 
 //	 white (diamond) : 0
@@ -172,18 +185,23 @@ pub async fn go_to_move(move_number : Move, arena : GlobalArena ) -> Result<impl
 //	 green (emerald) : 2 
 //	 red (ruby)      : 3
 //	 black (onyx)    : 4
-//   
-// Converts a noble to a vector representing the color distribution
-// of the cost of the noble as a list of (color_index, number_needed)
-fn to_js_noble(noble : &Noble) -> JSNoble {
-
+//	 yellow (gold)   : 5
+fn js_gems_map() -> HashMap<GemType, usize> {
     let mut map = HashMap::new();
     map.insert(GemType::Diamond, 0);
     map.insert(GemType::Sapphire, 1);
     map.insert(GemType::Emerald, 2);
     map.insert(GemType::Ruby, 3);
     map.insert(GemType::Onyx, 4);
-    
+    map.insert(GemType::Gold, 5);
+    map
+}
+
+// Converts a noble to a vector representing the color distribution
+// of the cost of the noble as a list of (color_index, number_needed)
+fn to_js_noble(noble : &Noble) -> JSTokens {
+
+    let mut map = js_gems_map(); 
     let mut js_noble = Vec::new();
 
     let tokens = noble.requirements();
@@ -210,6 +228,57 @@ pub async fn board_nobles( arena : GlobalArena) -> Result<impl Reply, Rejection>
             trace!("Got nobles : {:#?}", nobles);
             let js_nobles = nobles.iter().map(|n| to_js_noble(&n)).collect();
             Ok(warp::reply::json(&EndpointReply::Success(Success::Nobles(js_nobles))))
+        }
+    }
+}
+
+
+fn to_js_cards(card_ids : Vec<Vec<CardId>>, card_lookup : Arc<Vec<Card>>)  -> Vec<Vec<JSCard>> {
+    let cards = card_ids.iter().flatten().map(|&c| card_lookup[c as usize].clone()).collect::<Vec<Card>>();
+    let map = js_gems_map();
+    let js_cards : Vec<JSCard> = cards.iter().map(|c| {
+        let tier = (c.tier() - 1) as usize;
+        let points = c.points() as usize;
+        let cost = c.cost();
+        let mut js_cost = Vec::new();
+
+        for gem in GemType::all_expect_gold() {
+            let index = map.get(&gem).unwrap();
+            let count = cost[gem];
+            if count > 0 {
+                js_cost.push((*index, count));
+            }
+        }
+
+        let color_index = map.get(&c.gem()).unwrap();
+
+        JSCard {
+            tier,
+            points,
+            color_index : *color_index,
+            tokens : js_cost,
+        }
+    }).collect();
+
+    // Group by tier
+    let mut grouped = vec![Vec::new(); 3];
+    for card in js_cards {
+        grouped[card.tier].push(card);
+    }
+
+    grouped
+
+}
+
+pub async fn board_cards( arena : GlobalArena) -> Result<impl Reply, Rejection> {
+    let replay = arena.write().await.get_replay();
+    match replay {
+        None => Ok(warp::reply::json(&EndpointReply::Error("No replay available".to_string()))),
+        Some(replay) => {
+            let card_lookup = replay.read().await.inner.viewable_game.card_lookup();
+            let cards = replay.read().await.inner.viewable_game.cards();
+            let js_cards = to_js_cards(cards, card_lookup);
+            Ok(warp::reply::json(&EndpointReply::Success(Success::Cards(js_cards))))
         }
     }
 }
