@@ -110,7 +110,7 @@ impl Arena {
             .and(warp::ws())
             .map(|ws: warp::ws::Ws| ws.on_upgrade(move |socket| log_stream_connected(socket)));
 
-        let static_files = warp::path("splendor").and(warp::fs::dir("splendor-viz"));
+        let static_files = warp::path("splendor").and(warp::fs::dir("frontend"));
 
         let routes = game.or(log).or(replay).or(static_files);
 
