@@ -17,6 +17,7 @@ pub struct PlayerPublicInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
     points: u8,
+    noble_points: u8,
     reserved: Vec<CardId>,
     gems: Tokens,
     developments: Tokens,
@@ -65,6 +66,7 @@ impl Player {
     pub fn new() -> Player {
         Player {
             points: 0,
+            noble_points: 0,
             reserved: Vec::new(),
             gems: Tokens::empty(),
             developments: Tokens::empty(),
@@ -85,8 +87,16 @@ impl Player {
         self.points
     }
 
+    pub fn noble_points(&self) -> u8 {
+        self.noble_points
+    }
     pub fn add_points(&mut self, points: u8) {
         self.points += points;
+    }
+
+    pub fn add_noble_points(&mut self) {
+        self.points += 3;
+        self.noble_points += 3;
     }
 
     /// Return the number of reserved cards in total

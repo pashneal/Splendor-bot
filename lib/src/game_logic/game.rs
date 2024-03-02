@@ -513,7 +513,7 @@ impl Game {
                 let noble = &self.nobles[noble_index];
                 debug_assert!(noble.is_attracted_to(player.developments()));
 
-                player.add_points(noble.points());
+                player.add_noble_points();
                 self.nobles.remove(noble_index);
 
                 Phase::PlayerActionEnd

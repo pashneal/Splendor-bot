@@ -118,6 +118,14 @@ pub struct JSDeck {
 pub struct JSPlayer {
     developments: JSTokens,
     gems : JSTokens,
+    #[serde(rename = "totalGems")]
+    total_gems: u32,
+    #[serde(rename = "reservedCards")]
+    reserved_cards: Vec<JSCard>,
+    #[serde(rename = "totalPoints")]
+    total_points: u8,
+    #[serde(rename = "noblePoints")]
+    noble_points: u8,
 }
 
 #[derive(Debug, Serialize)]
@@ -384,7 +392,7 @@ pub async fn board_bank(arena: GlobalArena) -> Result<impl Reply, Rejection> {
 
 //  Converts metadata about the players to a list of JSPlayer
 //  using the conventions laid out in the frontend
-pub fn to_js_players(players: &Vec<Player>) -> Vec<JSPlayer> {
+pub fn to_js_players(players: &Vec<Player>, card_lookup: Arc<Vec<Card>>) -> Vec<JSPlayer> {
     let mut js_players = Vec::new();
     for player in players {
         let developments = player.developments();
@@ -392,6 +400,7 @@ pub fn to_js_players(players: &Vec<Player>) -> Vec<JSPlayer> {
 
         let mut js_developments = Vec::new();
         let mut js_gems = Vec::new();
+        let mut js_cards =  Vec::new();
 
 
         for gem in GemType::all_expect_gold() {
@@ -407,9 +416,43 @@ pub fn to_js_players(players: &Vec<Player>) -> Vec<JSPlayer> {
             js_gems.push((*index, count));
         }
 
+        for card_id in player.all_reserved() {
+            let card = card_lookup[card_id as usize].clone();
+            let tier = (card.tier() - 1) as usize;
+            let points = card.points() as usize;
+            let cost = card.cost();
+            let mut js_cost = Vec::new();
+
+            for gem in GemType::all_expect_gold() {
+                let index = map.get(&gem).unwrap();
+                let count = cost[gem];
+                if count > 0 {
+                    js_cost.push((*index, count));
+                }
+            }
+
+            let color_index = map.get(&card.gem()).unwrap();
+            let color_index = *color_index;
+
+            js_cards.push(JSCard {
+                tier,
+                points,
+                color_index,
+                tokens: js_cost,
+            });
+        }
+
+        let total_gems = player.gems().total();
+        let total_points = player.points();
+        let noble_points = player.noble_points();
+
         js_players.push(JSPlayer { 
             developments : js_developments,
             gems : js_gems,
+            reserved_cards : js_cards, 
+            total_gems,
+            total_points,
+            noble_points,
         });
     }
     js_players
@@ -422,7 +465,9 @@ pub async fn board_players(arena: GlobalArena) -> Result<impl Reply, Rejection> 
             "No replay available".to_string(),
         ))),
         Some(replay) => {
-            let players = to_js_players(replay.read().await.inner.viewable_game.players());
+            let card_lookup = replay.read().await.inner.viewable_game.card_lookup();
+            let players = to_js_players(replay.read().await.inner.viewable_game.players()
+                                        , card_lookup);
             Ok(warp::reply::json(&EndpointReply::Success(Success::Players(
                 players,
             ))))
