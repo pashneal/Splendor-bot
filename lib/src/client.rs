@@ -1,13 +1,12 @@
 use crate::*;
-use tungstenite::{connect, Message, stream::MaybeTlsStream};
-use url::Url;
 use clap::Parser;
+use tungstenite::{connect, stream::MaybeTlsStream, Message};
+use url::Url;
 
 pub type WebSocket = tungstenite::WebSocket<MaybeTlsStream<std::net::TcpStream>>;
 
-
 pub struct Log {
-    socket : WebSocket,
+    socket: WebSocket,
 }
 
 impl Log {
@@ -15,15 +14,15 @@ impl Log {
         let url = format!("ws://127.0.0.1:{}/log", port);
         let url = Url::parse(&url).unwrap();
         let (socket, _) = connect(url).expect("Can't connect to the game server");
-        Self {
-            socket,
-        }
+        Self { socket }
     }
 
     pub fn send(&mut self, message: &str) {
         let message = ClientMessage::Log(message.to_string());
         let message = serde_json::to_string(&message).expect("Error converting message to string");
-        self.socket.send(Message::Text(message)).expect("Error writing message");
+        self.socket
+            .send(Message::Text(message))
+            .expect("Error writing message");
     }
 }
 
@@ -38,12 +37,11 @@ pub struct Args {
     /// The port to connect to
     #[arg(short, long)]
     port: u16,
-
 }
 
-/// The protocol for communication and running the bot between the client and 
-/// the server. Sends logs and actions to the server when appropriate. 
-pub fn run_bot<B : Runnable + Default>() {
+/// The protocol for communication and running the bot between the client and
+/// the server. Sends logs and actions to the server when appropriate.
+pub fn run_bot<B: Runnable + Default>() {
     let args = Args::parse();
     let port = args.port;
 
@@ -68,7 +66,8 @@ pub fn run_bot<B : Runnable + Default>() {
         let msg = ClientMessage::Action(action);
 
         let msg_str = serde_json::to_string(&msg).expect("Error converting action to string");
-        game_socket.send(Message::Text(msg_str)).expect("Error sending message");
-
+        game_socket
+            .send(Message::Text(msg_str))
+            .expect("Error sending message");
     }
 }

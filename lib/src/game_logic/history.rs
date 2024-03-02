@@ -45,7 +45,7 @@ impl GameHistory {
     pub fn num_moves(&self) -> i32 {
         let mut moves = 0;
         // Group the actions by player and count every transition
-        self.history.iter().fold( None, |acc, (p, _)| {
+        self.history.iter().fold(None, |acc, (p, _)| {
             if let Some(last_p) = acc {
                 if last_p != *p {
                     moves += 1;
@@ -82,11 +82,12 @@ impl GameHistory {
     // and return a new history with only the actions taken until that point
     pub fn take_until_move(&self, move_index_target: i32) -> GameHistory {
         let move_index_target = (move_index_target + 1) as usize;
-        let actions = self.group_by_player()
-                          .into_iter()
-                          .take(move_index_target)
-                          .flatten()
-                          .collect();
+        let actions = self
+            .group_by_player()
+            .into_iter()
+            .take(move_index_target)
+            .flatten()
+            .collect();
         GameHistory::from(actions)
     }
 }

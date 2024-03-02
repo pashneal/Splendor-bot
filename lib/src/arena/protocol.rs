@@ -5,11 +5,11 @@ use std::sync::{
     Arc,
 };
 
-use futures_util::{SinkExt, StreamExt, TryFutureExt, stream::SplitSink};
+use derive_more::{Display, Error};
+use futures_util::{stream::SplitSink, SinkExt, StreamExt, TryFutureExt};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
-use derive_more::{Display, Error};
 use warp::Filter;
 
 use log::{debug, error, info, trace};
@@ -20,14 +20,14 @@ pub type GlobalGameHistory = Arc<RwLock<GameHistory>>;
 
 type StdError = Box<dyn std::error::Error>;
 
-const TIMEOUT : Duration = Duration::from_secs(4);
+const TIMEOUT: Duration = Duration::from_secs(4);
 
-static CLIENT_ID : AtomicUsize = AtomicUsize::new(0);
-static TURN_COUNTER : AtomicUsize = AtomicUsize::new(0);
-static LAST_PLAYER : AtomicUsize = AtomicUsize::new(5); 
+static CLIENT_ID: AtomicUsize = AtomicUsize::new(0);
+static TURN_COUNTER: AtomicUsize = AtomicUsize::new(0);
+static LAST_PLAYER: AtomicUsize = AtomicUsize::new(5);
 
 impl Arena {
-    pub async fn launch(port : u16, binaries : Vec<String>, num_players : u8) {
+    pub async fn launch(port: u16, binaries: Vec<String>, num_players: u8) {
         let init_binaries = binaries.clone();
         let arena = Arena::new(num_players, binaries);
         // Keep track of the game state
@@ -45,13 +45,13 @@ impl Arena {
             .and(warp::path("next"))
             .and(arena.clone())
             .and_then(replay::next_move);
-            
+
         let replay_prev = warp::post()
             .and(warp::path("replay"))
             .and(warp::path("previous"))
             .and(arena.clone())
             .and_then(replay::previous_move);
-            
+
         let replay_goto = warp::post()
             .and(warp::path("replay"))
             .and(warp::path("goto"))
@@ -83,7 +83,13 @@ impl Arena {
             .and(arena.clone())
             .and_then(replay::board_bank);
 
-        let replay = replay_next.or(replay_prev).or(replay_goto).or(replay_board_nobles).or(replay_board_cards).or(replay_board_decks).or(replay_board_bank);
+        let replay = replay_next
+            .or(replay_prev)
+            .or(replay_goto)
+            .or(replay_board_nobles)
+            .or(replay_board_cards)
+            .or(replay_board_decks)
+            .or(replay_board_bank);
 
         let game = warp::path("game")
             .and(warp::ws())
@@ -95,19 +101,15 @@ impl Arena {
 
         let log = warp::path("log")
             .and(warp::ws())
-            .map(|ws: warp::ws::Ws| {
-                ws.on_upgrade(move |socket| log_stream_connected(socket))
-            });
+            .map(|ws: warp::ws::Ws| ws.on_upgrade(move |socket| log_stream_connected(socket)));
 
-        let static_files = warp::path("splendor")
-            .and(warp::fs::dir("splendor-viz"));
+        let static_files = warp::path("splendor").and(warp::fs::dir("splendor-viz"));
 
         let routes = game.or(log).or(replay).or(static_files);
 
-        tokio::spawn( async move {
+        tokio::spawn(async move {
             // TODO: use a handshake protocol instead of timing
             for binary in init_binaries {
-
                 tokio::time::sleep(Duration::from_secs(1)).await;
                 // Launches without stdout, we rely on the logs for that
                 if binary.ends_with(".py") {
@@ -115,18 +117,20 @@ impl Arena {
                         .arg(binary.clone())
                         .arg(format!("--port={}", port))
                         .stdout(std::process::Stdio::null())
-                        .spawn() {
-                            Ok(_) => info!("Launched python3 script {}", binary),
-                            Err(e) => error!("Failed to launch python3 script {}: {}", binary, e),
-                        }
+                        .spawn()
+                    {
+                        Ok(_) => info!("Launched python3 script {}", binary),
+                        Err(e) => error!("Failed to launch python3 script {}: {}", binary, e),
+                    }
                 } else {
                     match std::process::Command::new(binary.clone())
                         .arg(format!("--port={}", port))
                         .stdout(std::process::Stdio::null())
-                        .spawn() {
-                            Ok(_) => info!("Launched binary {}", binary),
-                            Err(e) => error!("Failed to launch binary {}: {}", binary, e),
-                        }
+                        .spawn()
+                    {
+                        Ok(_) => info!("Launched binary {}", binary),
+                        Err(e) => error!("Failed to launch binary {}: {}", binary, e),
+                    }
                 }
             }
         });
@@ -144,7 +148,6 @@ pub enum ParseError {
     CannotConvertToString,
     #[display(fmt = "Cannot convert string to client message")]
     CannotConvertToClientMessage,
-
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -154,12 +157,15 @@ pub enum ClientMessage {
 }
 
 fn parse_message(message_text: &Message) -> Result<ClientMessage, ParseError> {
-    let message_str = message_text.to_str().map_err(|_| ParseError::CannotConvertToString)?;
-    let client_msg: ClientMessage= serde_json::from_str(message_str).map_err(|_| ParseError::CannotConvertToClientMessage)?;
+    let message_str = message_text
+        .to_str()
+        .map_err(|_| ParseError::CannotConvertToString)?;
+    let client_msg: ClientMessage =
+        serde_json::from_str(message_str).map_err(|_| ParseError::CannotConvertToClientMessage)?;
     Ok(client_msg)
 }
 
-async fn validate_action( action: &Action, player_id : usize , arena : GlobalArena) -> bool {
+async fn validate_action(action: &Action, player_id: usize, arena: GlobalArena) -> bool {
     // -> Is a legal action
     let actions = arena.read().await.game.get_legal_actions();
     if actions.is_none() {
@@ -179,11 +185,11 @@ async fn validate_action( action: &Action, player_id : usize , arena : GlobalAre
     true
 }
 
-async fn log_stream_connected( socket : WebSocket) {
-    // TODO: This makes an assumption that 
+async fn log_stream_connected(socket: WebSocket) {
+    // TODO: This makes an assumption that
     // the client that last connected is the one that is logging
     // This may not be a good assumption
-    let id  = CLIENT_ID.load(Ordering::Relaxed) - 1;
+    let id = CLIENT_ID.load(Ordering::Relaxed) - 1;
 
     let (_tx, mut rx) = socket.split();
     while let Some(msg) = rx.next().await {
@@ -193,7 +199,7 @@ async fn log_stream_connected( socket : WebSocket) {
         }
         let msg = msg.unwrap();
 
-        let client_msg  = parse_message(&msg);
+        let client_msg = parse_message(&msg);
         if let Err(e) = client_msg {
             error!("error parsing message! {:?}", e);
             break;
@@ -204,25 +210,29 @@ async fn log_stream_connected( socket : WebSocket) {
                 break;
             }
             ClientMessage::Log(log) => {
-                println!("[Turn : {}] [Player {}]: {}", TURN_COUNTER.load(Ordering::SeqCst), id, log);
+                println!(
+                    "[Turn : {}] [Player {}]: {}",
+                    TURN_COUNTER.load(Ordering::SeqCst),
+                    id,
+                    log
+                );
             }
         }
     }
-
 }
 
-/// Setup a new client to play the game 
+/// Setup a new client to play the game
 async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
     let (client_tx, mut client_rx) = ws.split();
     let my_id = CLIENT_ID.fetch_add(1, Ordering::Relaxed);
-    clients.write().await.insert(my_id , client_tx);
+    clients.write().await.insert(my_id, client_tx);
 
     let init_clients = clients.clone();
     let init_arena = arena.clone();
 
     // Convert messages from the client into a stream of actions
     // So we play them in the game as soon as they come in
-    tokio::spawn( async move {
+    tokio::spawn(async move {
         while let Some(msg) = client_rx.next().await {
             trace!("Received message: {:?}", msg);
             if let Err(e) = msg {
@@ -231,7 +241,7 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
             }
             let msg = msg.unwrap();
 
-            let client_msg  = parse_message(&msg);
+            let client_msg = parse_message(&msg);
             if let Err(e) = client_msg {
                 error!("error parsing message from json string! {:?}", e);
                 break;
@@ -250,7 +260,7 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
                     error!("Logs sent to the wrong endpoint! {:?}", log);
                     break;
                 }
-            }  
+            }
         }
         info!("{} disconnected", my_id);
         user_disconnected(my_id, clients, arena).await;
@@ -279,12 +289,9 @@ async fn user_disconnected(my_id: usize, clients: Clients, arena: GlobalArena) {
 }
 
 async fn action_played(clients: Clients, arena: GlobalArena) {
-
-
     // Auto play for any given player if there is only 1 legal action
     loop {
-
-        // If the game is over, don't do anything else 
+        // If the game is over, don't do anything else
         if arena.read().await.is_game_over() {
             info!("Game over!");
             let winner = arena.read().await.game.get_winner();
@@ -296,10 +303,15 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
             }
             arena.write().await.finalize_game();
 
-            return 
+            return;
         }
 
-        let actions = arena.read().await.game.get_legal_actions().expect("No legal actions!");
+        let actions = arena
+            .read()
+            .await
+            .game
+            .get_legal_actions()
+            .expect("No legal actions!");
         if actions.len() != 1 {
             break;
         }
@@ -314,7 +326,7 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
     }
 
     trace!("Sending game state to clients...");
-    // Determine which client to send the next game state to 
+    // Determine which client to send the next game state to
     let client_info = arena.read().await.client_info();
     let player_num = client_info.current_player_num;
 
@@ -332,5 +344,4 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
     } else {
         panic!("no tx for client with id {}", player_num);
     }
-
 }

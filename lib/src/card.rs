@@ -1,7 +1,7 @@
 use crate::gem_type::GemType;
 use crate::token::Tokens;
-use std::ops::{Index, IndexMut};
 use serde::{Deserialize, Serialize};
+use std::ops::{Index, IndexMut};
 
 #[derive(PartialEq, Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Cost {

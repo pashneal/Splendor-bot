@@ -236,11 +236,8 @@ impl Game {
                 // -> Can take x distinct tokens
                 let distinct_tokens = self.bank.distinct();
                 let take_max = distinct_tokens.min(3) as u32;
-                let choices = choose_distinct_tokens(
-                    &mut self.bank.clone(),
-                    &mut Tokens::empty(),
-                    take_max,
-                );
+                let choices =
+                    choose_distinct_tokens(&mut self.bank.clone(), &mut Tokens::empty(), take_max);
 
                 if take_max > 0 {
                     for choice in choices {
@@ -373,7 +370,7 @@ impl Game {
                 debug_assert!(!matches!(color, GemType::Gold));
 
                 // TODO: this is a little weird but we can change later
-                // right now it's using debug asserts on the 
+                // right now it's using debug asserts on the
                 // Sub operations to check preconditions
                 self.bank -= Tokens::one(color);
                 self.bank -= Tokens::one(color);
@@ -817,7 +814,12 @@ pub mod test {
 
         game.play_action(Purchase((
             8,
-            Tokens::from_vec(&vec![GemType::Diamond, GemType::Emerald, GemType::Ruby, GemType::Onyx]),
+            Tokens::from_vec(&vec![
+                GemType::Diamond,
+                GemType::Emerald,
+                GemType::Ruby,
+                GemType::Onyx,
+            ]),
         )));
         game.play_action(Pass);
         game.play_action(Continue);

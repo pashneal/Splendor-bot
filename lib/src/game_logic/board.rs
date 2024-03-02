@@ -15,7 +15,6 @@ pub struct Board {
 
 impl Board {
     pub fn from_game(game: &Game) -> Self {
-
         Board {
             deck_counts: game.deck_counts(),
             available_cards: game.cards(),

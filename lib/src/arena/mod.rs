@@ -1,17 +1,17 @@
+use crate::card::Card;
 use crate::game_logic::*;
 use crate::player::*;
-use serde::{Deserialize, Serialize};
-use std::time::Duration;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use crate::JSONable;
-use crate::card::Card;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::RwLock;
 
 pub mod protocol;
 pub mod replay;
 
-use replay::*;
 pub use protocol::*;
+use replay::*;
 
 /// A module for running games across multiple clients. Can be fed binaries
 /// and run them in a tournament style. The protocol for communication is
@@ -19,7 +19,7 @@ pub use protocol::*;
 pub struct Arena {
     pub game: Game,
     pub clients: Vec<String>,
-    pub timeout: Duration, 
+    pub timeout: Duration,
     replay: Either<Replay<Initialized>, FinalizedReplay>,
 }
 
@@ -38,11 +38,11 @@ pub struct ClientInfo {
 impl JSONable for ClientInfo {}
 
 impl Arena {
-    pub fn new(players: u8, binaries : Vec<String>) -> Arena {
+    pub fn new(players: u8, binaries: Vec<String>) -> Arena {
         let card_lookup = Arc::new(Card::all());
         let game = Game::new(players, card_lookup);
         let clients = binaries;
-        let timeout = Duration::from_secs(10); 
+        let timeout = Duration::from_secs(10);
 
         Arena {
             game: game.clone(),
@@ -89,21 +89,19 @@ impl Arena {
     pub fn get_replay(&self) -> Option<FinalizedReplay> {
         match &self.replay {
             Either::Finalized(replay) => Some(replay.clone()),
-            _ => None
+            _ => None,
         }
     }
 }
 
-
-pub struct GameResults {
-}
+pub struct GameResults {}
 
 // Need an arena where multiple clients can compete
 //     - When the game is over, issue a special command (or just terminate the connections)
 //
 //     Visualization (high)
 //        - auto launch visualization server after run_game executes
-//        - indexable history 
+//        - indexable history
 //        - forward + next buttons
 //     UI (medium)
 //      - Colorblind friendly shapes (must)

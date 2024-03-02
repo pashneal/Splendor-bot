@@ -3,8 +3,8 @@ use crate::gem_type::GemType;
 use crate::nobles::*;
 use crate::player::Player;
 use crate::token::Tokens;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use serde::{Serialize, Deserialize};
 
 pub mod board;
 pub mod game;

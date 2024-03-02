@@ -1,6 +1,5 @@
-use crate::token::Tokens;
 use crate::card::Cost;
-
+use crate::token::Tokens;
 
 pub type NobleId = u8;
 

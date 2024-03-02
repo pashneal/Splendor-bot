@@ -1,8 +1,8 @@
 use crate::card::*;
 use crate::gem_type::*;
 use crate::token::Tokens;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use serde::{Serialize, Deserialize};
 
 use cached::proc_macro::cached;
 
