@@ -114,6 +114,12 @@ pub struct JSDeck {
     tier: usize,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct JSPlayer {
+    developments: JSTokens,
+    gems : JSTokens,
+}
+
 #[derive(Debug, Serialize)]
 enum Success {
     #[serde(rename = "move_index")]
@@ -126,6 +132,8 @@ enum Success {
     Decks(Vec<JSDeck>),
     #[serde(rename = "bank")]
     Bank(JSTokens),
+    #[serde(rename = "players")]
+    Players(Vec<JSPlayer>),
 }
 
 #[derive(Debug, Serialize)]
@@ -254,6 +262,8 @@ pub async fn board_nobles(arena: GlobalArena) -> Result<impl Reply, Rejection> {
     }
 }
 
+// Converts a list of card ids to a list of JSCards
+// using the conventions laid out in the frontend
 fn to_js_cards(card_ids: Vec<Vec<CardId>>, card_lookup: Arc<Vec<Card>>) -> Vec<Vec<JSCard>> {
     let cards = card_ids
         .iter()
@@ -314,6 +324,8 @@ pub async fn board_cards(arena: GlobalArena) -> Result<impl Reply, Rejection> {
     }
 }
 
+// Converts a list of card counts to a list of JSDeck
+// using the conventions laid out in the frontend
 pub fn to_js_decks(deck_counts: [usize; 3]) -> Vec<JSDeck> {
     let mut decks = Vec::new();
     for (i, &count) in deck_counts.iter().enumerate() {
@@ -340,6 +352,8 @@ pub async fn board_decks(arena: GlobalArena) -> Result<impl Reply, Rejection> {
     }
 }
 
+// Converts a list of gems/tokens from the public board area to a list of JSTokens
+// using the conventions laid out in the frontend
 pub fn to_js_bank(tokens: &Tokens) -> JSTokens {
     let map = js_gems_map();
     let mut js_bank = Vec::new();
@@ -360,10 +374,57 @@ pub async fn board_bank(arena: GlobalArena) -> Result<impl Reply, Rejection> {
             "No replay available".to_string(),
         ))),
         Some(replay) => {
-            let bank = replay.read().await.inner.viewable_game.bank().clone();
-            let js_bank = to_js_bank(&bank);
+            let bank = to_js_bank(replay.read().await.inner.viewable_game.bank());
             Ok(warp::reply::json(&EndpointReply::Success(Success::Bank(
-                js_bank,
+                bank,
+            ))))
+        }
+    }
+}
+
+//  Converts metadata about the players to a list of JSPlayer
+//  using the conventions laid out in the frontend
+pub fn to_js_players(players: &Vec<Player>) -> Vec<JSPlayer> {
+    let mut js_players = Vec::new();
+    for player in players {
+        let developments = player.developments();
+        let map = js_gems_map();
+
+        let mut js_developments = Vec::new();
+        let mut js_gems = Vec::new();
+
+
+        for gem in GemType::all_expect_gold() {
+            let index = map.get(&gem).unwrap();
+            let count = developments[gem];
+            js_developments.push((*index, count));
+
+        }
+
+        for gem in GemType::all() {
+            let index = map.get(&gem).unwrap();
+            let count = player.gems()[gem];
+            js_gems.push((*index, count));
+        }
+
+        js_players.push(JSPlayer { 
+            developments : js_developments,
+            gems : js_gems,
+        });
+    }
+    js_players
+}
+
+pub async fn board_players(arena: GlobalArena) -> Result<impl Reply, Rejection> {
+    let replay = arena.write().await.get_replay();
+    match replay {
+        None => Ok(warp::reply::json(&EndpointReply::Error(
+            "No replay available".to_string(),
+        ))),
+        Some(replay) => {
+            let players = to_js_players(replay.read().await.inner.viewable_game.players());
+            Ok(warp::reply::json(&EndpointReply::Success(Success::Players(
+                players,
             ))))
         }
     }

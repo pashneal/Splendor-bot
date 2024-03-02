@@ -1,0 +1,3 @@
+[submodule "splendor-viz"]
+	path = splendor-viz
+	url = https://github.com/pashneal/splendor-viz
