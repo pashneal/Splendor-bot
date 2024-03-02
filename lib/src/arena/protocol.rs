@@ -59,7 +59,13 @@ impl Arena {
             .and(arena.clone())
             .and_then(replay::go_to_move);
 
-        let replay = replay_next.or(replay_prev).or(replay_goto);
+        let replay_board_nobles = warp::get()
+            .and(warp::path("replay"))
+            .and(warp::path("nobles"))
+            .and(arena.clone())
+            .and_then(replay::board_nobles);
+
+        let replay = replay_next.or(replay_prev).or(replay_goto).or(replay_board_nobles);
 
         let game = warp::path("game")
             .and(warp::ws())
@@ -264,6 +270,8 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
         if arena.read().await.is_game_over() {
             info!("Game over!");
             let winner = arena.read().await.game.get_winner();
+            let board = Board::from_game(&arena.read().await.game);
+            trace!("Final board: {:?}", board);
             match winner {
                 Some(winner) => info!("Winner: Player {:?}", winner),
                 None => info!("No winner! Draw!"),

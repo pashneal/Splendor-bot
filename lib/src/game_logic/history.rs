@@ -6,6 +6,8 @@ pub struct GameHistory {
     pub history: Vec<(usize, Action)>,
 }
 
+type PlayerActions = Vec<(usize, Action)>;
+
 impl GameHistory {
     pub fn new() -> Self {
         GameHistory {
@@ -54,20 +56,38 @@ impl GameHistory {
         moves
     }
 
-    pub fn take_until_move(&self, move_index: i32) -> GameHistory {
-        let mut new_history = vec![];
-        let num_moves = self.num_moves();
-        let mut move_index = 0;
+    pub fn group_by_player(&self) -> Vec<PlayerActions> {
+        let mut turn_sequences = vec![];
+        let mut current_turn = vec![];
         let mut last_player = None;
         for (player_num, action) in self.history.iter() {
-            new_history.push((*player_num, action.clone()));
             if last_player != Some(*player_num) {
-                move_index += 1;
+                if !current_turn.is_empty() {
+                    turn_sequences.push(current_turn);
+                }
+                current_turn = vec![];
             }
+            current_turn.push((*player_num, action.clone()));
             last_player = Some(*player_num);
         }
 
-        GameHistory::from(new_history)
+        if !current_turn.is_empty() {
+            turn_sequences.push(current_turn);
+        }
+
+        turn_sequences
+    }
+
+    // Inclusively traverse the history until the given move index
+    // and return a new history with only the actions taken until that point
+    pub fn take_until_move(&self, move_index_target: i32) -> GameHistory {
+        let move_index_target = (move_index_target + 1) as usize;
+        let actions = self.group_by_player()
+                          .into_iter()
+                          .take(move_index_target)
+                          .flatten()
+                          .collect();
+        GameHistory::from(actions)
     }
 }
 

@@ -1,4 +1,6 @@
 use crate::token::Tokens;
+use crate::card::Cost;
+
 
 pub type NobleId = u8;
 
@@ -155,5 +157,8 @@ impl Noble {
     }
     pub fn points(&self) -> u8 {
         self.points
+    }
+    pub fn requirements(&self) -> &Tokens {
+        &self.requirements
     }
 }
