@@ -6,7 +6,7 @@ PLAYER_DIRECTORIES = ["python_client/",  "rust_client/", "python_client/", "rust
 
 # If this is set to True, then report all server errors as well 
 # If set to false, only report logs from clients
-DEBUG_LOGGING = True
+DEBUG_LOGGING = False
 
 # TODO: Doesn't do anything YET
 # Uses Fischer time control conventions, that is, 
