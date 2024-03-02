@@ -110,6 +110,13 @@ pub struct JSCard {
     tokens : JSTokens,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct JSDeck {
+    #[serde(rename = "cardCount")]
+    card_count : usize,
+    #[serde(rename = "tier")]
+    tier : usize,
+}
 
 #[derive(Debug, Serialize)]
 enum Success {
@@ -119,6 +126,8 @@ enum Success {
     Nobles(Vec<JSTokens>),
     #[serde(rename = "cards")]
     Cards(Vec<Vec<JSCard>>),
+    #[serde(rename = "decks")]
+    Decks(Vec<JSDeck>),
 }
 
 #[derive(Debug, Serialize)]
@@ -279,6 +288,31 @@ pub async fn board_cards( arena : GlobalArena) -> Result<impl Reply, Rejection> 
             let cards = replay.read().await.inner.viewable_game.cards();
             let js_cards = to_js_cards(cards, card_lookup);
             Ok(warp::reply::json(&EndpointReply::Success(Success::Cards(js_cards))))
+        }
+    }
+}
+
+pub fn to_js_decks(deck_counts : [usize; 3]) -> Vec<JSDeck> {
+    let mut decks = Vec::new();
+    for (i, &count) in deck_counts.iter().enumerate() {
+        let tier = i;
+        let card_count = count;
+        decks.push(JSDeck {
+            card_count,
+            tier,
+        });
+    }
+    decks
+}
+
+pub async fn board_decks( arena : GlobalArena) -> Result<impl Reply, Rejection> {
+    let replay = arena.write().await.get_replay();
+    match replay {
+        None => Ok(warp::reply::json(&EndpointReply::Error("No replay available".to_string()))),
+        Some(replay) => {
+            let deck_counts = replay.read().await.inner.viewable_game.deck_counts();
+            let js_decks = to_js_decks(deck_counts);
+            Ok(warp::reply::json(&EndpointReply::Success(Success::Decks(js_decks))))
         }
     }
 }
