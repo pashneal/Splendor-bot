@@ -99,10 +99,6 @@ pub struct GameResults {}
 // Need an arena where multiple clients can compete
 //     - When the game is over, issue a special command (or just terminate the connections)
 //
-//     Visualization (high)
-//        - auto launch visualization server after run_game executes
-//        - indexable history
-//        - forward + next buttons
 //     UI (medium)
 //      - Colorblind friendly shapes (must)
 //      - Elo
