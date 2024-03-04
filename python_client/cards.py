@@ -14,7 +14,7 @@ class Bot:
         card_61 = PyCard(61)
         card_42 = PyCard(42)
 
-        # actions that require a card can be created with the card_id instad
+        # actions that require a card can be created with the card_id instead
         if PyAction.purchase(card_id = 61) == PyAction.purchase(card = card_61):
             log.send("[61] They are the same!")
 
