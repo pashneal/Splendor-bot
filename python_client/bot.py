@@ -10,6 +10,7 @@ class Bot:
         log.send("Hmmmm... I'm taking this action: " + str(action))
         return action
 
-ffi.run_python_bot(Bot)
+if __name__ == "__main__":
+    ffi.run_python_bot(Bot)
 
 

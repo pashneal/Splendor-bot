@@ -17,7 +17,7 @@ pub enum PyGemType {
 
 /// A python wrapper for the `Tokens` struct
 #[pyclass]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PyTokens {
     #[pyo3(get)]
     pub onyx: i8,
@@ -103,11 +103,11 @@ impl PyTokens {
 }
 
 #[pyclass]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PyActionType {
     TakeGems,
-    Reserve,
-    ReserveHidden,
+    ReserveFaceUp,
+    ReserveFaceDown,
     Discard,
     Purchase,
     AttractNoble,
@@ -131,8 +131,8 @@ impl PyAction {
         let action_type = match &action {
             Action::TakeDouble(_) => PyActionType::TakeGems,
             Action::TakeDistinct(_) => PyActionType::TakeGems,
-            Action::Reserve(_) => PyActionType::Reserve,
-            Action::ReserveHidden(_) => PyActionType::ReserveHidden,
+            Action::Reserve(_) => PyActionType::ReserveFaceUp,
+            Action::ReserveHidden(_) => PyActionType::ReserveFaceDown,
             Action::Discard(_) => PyActionType::Discard,
             Action::Purchase(_) => PyActionType::Purchase,
             Action::AttractNoble(_) => PyActionType::AttractNoble,
@@ -198,8 +198,8 @@ impl PyAction {
                      }
                  }
              }
-             PyActionType::Reserve =>Action::Reserve(self.card_id()),
-             PyActionType::ReserveHidden =>Action::ReserveHidden(self.tier()),
+             PyActionType::ReserveFaceUp =>Action::Reserve(self.card_id()),
+             PyActionType::ReserveFaceDown =>Action::ReserveHidden(self.tier()),
              PyActionType::Discard =>Action::Discard(self.tokens().into_tokens()),
              PyActionType::Purchase =>Action::Purchase((self.card_id(), self.tokens().into_tokens())),
              PyActionType::AttractNoble =>Action::AttractNoble(self.noble_id()),
@@ -224,13 +224,13 @@ impl PyAction {
                 let tokens = self.tokens();
                 format!("TakeGems({})", tokens.__str__())
             }
-            PyActionType::Reserve => {
+            PyActionType::ReserveFaceUp => {
                 let card_id = self.card_id();
-                format!("Reserve(card_id : {})", card_id)
+                format!("ReserveFaceUp(card_id : {})", card_id)
             }
-            PyActionType::ReserveHidden => {
+            PyActionType::ReserveFaceDown => {
                 let tier = self.tier();
-                format!("ReserveHidden(tier : {})", tier)
+                format!("ReserveFaceDown(tier : {})", tier)
             }
             PyActionType::Discard => {
                 let tokens = self.tokens();
@@ -281,6 +281,109 @@ impl PyAction {
         match self.tier {
             None => panic!("This action ({:?}) does not have tokens", self.action_type),
             Some(tier) => tier,
+        }
+    }
+    
+    pub fn __eq__(&self, other: &PyAction) -> bool {
+        self.action_type == other.action_type
+            && self.card_id == other.card_id
+            && self.noble_id == other.noble_id
+            && self.tokens == other.tokens
+            && self.tier == other.tier
+    }
+
+    #[staticmethod]
+    pub fn purchase(
+        card_id : Option<CardId>,
+        onyx: Option<i8>,
+        sapphire: Option<i8>,
+        emerald: Option<i8>,
+        ruby: Option<i8>,
+        diamond: Option<i8>,
+        gold : Option<i8>,
+    ) -> Self {
+        PyAction {
+            action_type: PyActionType::Purchase,
+            card_id,
+            noble_id: None,
+            tokens: Some(PyTokens::new(onyx, sapphire, emerald, ruby, diamond, gold)),
+            tier : None,
+        }
+    }
+
+    #[staticmethod]
+    pub fn reserve_face_down(
+        tier : Option<usize>,
+    ) -> Self{
+        PyAction {
+            action_type: PyActionType::ReserveFaceDown,
+            card_id: None,
+            noble_id: None,
+            tokens: None,
+            tier,
+        }
+    }
+
+    #[staticmethod]
+    pub fn reserve_face_up(
+        card_id : Option<CardId>,
+    ) -> Self{
+        PyAction {
+            action_type: PyActionType::ReserveFaceUp,
+            card_id,
+            noble_id: None,
+            tokens: None,
+            tier: None,
+        }
+    }
+
+    #[staticmethod]
+    pub fn take_gems(
+        onyx: Option<i8>,
+        sapphire: Option<i8>,
+        emerald: Option<i8>,
+        ruby: Option<i8>,
+        diamond: Option<i8>,
+    ) -> Self {
+        // TODO: we can check against legal actions and 
+        // be sure to only allow legal gem takes, and point out 
+        // specifically which gems are illegal
+        PyAction {
+            action_type: PyActionType::TakeGems,
+            card_id: None,
+            noble_id: None,
+            tokens: Some(PyTokens::new(onyx, sapphire, emerald, ruby, diamond, None)),
+            tier: None,
+        }
+    }
+
+    #[staticmethod]
+    pub fn discard(
+        onyx: Option<i8>,
+        sapphire: Option<i8>,
+        emerald: Option<i8>,
+        ruby: Option<i8>,
+        diamond: Option<i8>,
+    ) -> Self {
+        PyAction {
+            action_type: PyActionType::Discard,
+            card_id: None,
+            noble_id: None,
+            tokens: Some(PyTokens::new(onyx, sapphire, emerald, ruby, diamond, None)),
+            tier: None,
+        }
+    }
+
+    #[staticmethod]
+    pub fn attract_noble(
+        noble_id: Option<NobleId>,
+    ) -> Self {
+        PyAction {
+            action_type: PyActionType::AttractNoble,
+            card_id: None,
+            noble_id,
+            tokens: None,
+            tier: None,
         }
     }
 }
