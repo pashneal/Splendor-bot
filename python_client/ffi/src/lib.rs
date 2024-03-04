@@ -562,8 +562,9 @@ impl PyLog {
 /// Expose a method that allows for python-side logging
 #[pymethods]
 impl PyLog {
-    pub fn send(&mut self, message: &str) {
-        self.log.send(message);
+    pub fn send(&mut self, message: PyObject) {
+        let message = message.to_string();
+        self.log.send(&message);
     }
 }
 

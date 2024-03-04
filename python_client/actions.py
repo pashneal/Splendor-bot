@@ -5,16 +5,13 @@ import random
 class Bot:
     def __init__(self, log):
         log.send("Send instructions at any time")
-        log.send("They'll all show up in the server's log")
-        print("But this will not show up, so be careful to use log.send instead")
-        # This would result in an error, because you need to send a string 
-        # log.send([])
+        log.send(["Hello", "World!"])
 
+        print("But this will not show up, so be careful to use log.send instead")
 
     # This function is called every time it's your turn
     # You must return a PyAction object
     def take_action(self, game_client_info, log):
-
         #######################
         # PyAction Examples
         #######################
@@ -132,8 +129,10 @@ class Bot:
          
 
         # You aren't allowed to pass a turn, 
-        # if you only have one legal action, it will automatically be taken for you
+        # if you only have one legal action, the server will automatically
+        # play it for you
         some_random_action = random.choice(legal_actions)
+        log.send("I'm taking a random action: " + str(some_random_action))
         return some_random_action
 
 
