@@ -1,5 +1,5 @@
 import ffi
-from ffi import *
+from ffi import PyAction, PyActionType
 import random
 
 class Bot:
@@ -9,7 +9,8 @@ class Bot:
 
         print("But this will not show up, so be careful to use log.send instead")
 
-    # This function is called every time it's your turn
+    # This function is called every time the server 
+    # needs a move from your bot
     # You must return a PyAction object
     def take_action(self, game_client_info, log):
         #######################
@@ -25,13 +26,13 @@ class Bot:
         for legal_action in legal_actions:
 
             # You can get the type of the PyAction
-            action_type = legal_action.action_type()
+            action_type = legal_action.action_type
 
             # This is when you take gems from the bank
             if action_type == PyActionType.TakeGems:
                 # You can access the tokens
                 # being taken with this action 
-                tokens = legal_action.tokens()
+                tokens = legal_action.tokens
 
                 # You can access the number of tokens associated with each with this 
                 # specific take gems action
@@ -57,7 +58,7 @@ class Bot:
             # This is when you take a card from the faceup set of cards
             if action_type == PyActionType.ReserveFaceUp:
                 # You can access the card_id of the card being reserved
-                card_id = legal_action.card_id()
+                card_id = legal_action.card_id
 
                 # You can also create your own Reserve actions
                 action = PyAction.reserve_face_up( card_id = 0 )
@@ -71,7 +72,7 @@ class Bot:
                 # 0 is the first tier
                 # 1 is the second tier
                 # 2 is the third tier
-                tier = legal_action.tier()
+                tier = legal_action.tier
 
                 # You can also create your own ReserveFaceDown actions
                 action = PyAction.reserve_face_down( tier = 2 )
@@ -82,9 +83,9 @@ class Bot:
             # This is when you purchase a card from your hand (or the board)
             if action_type == PyActionType.Purchase:
                 # You can access the card_id of the card being purchased
-                card_id = legal_action.card_id()
+                card_id = legal_action.card_id
                 # And which specific tokens you'll be using to pay for it
-                tokens = legal_action.tokens()
+                tokens = legal_action.tokens
 
                 # You can also create your own Purchase actions
                 action = PyAction.purchase( card_id = 43, 
@@ -110,7 +111,7 @@ class Bot:
             # back to the bank
             if action_type == PyActionType.Discard:
                 # You can access the tokens being discarded
-                tokens = legal_action.tokens()
+                tokens = legal_action.tokens
 
                 # You can also create your own Discard actions
                 action = PyAction.discard( onyx = 1, ruby = 1, sapphire = 1 )
@@ -120,7 +121,7 @@ class Bot:
             # This is when you attract a noble to your hand
             if action_type == PyActionType.AttractNoble:
                 # You can access the noble_id of the noble being attracted
-                noble_id = legal_action.noble_id()
+                noble_id = legal_action.noble_id
 
                 # You can also create your own AttractNoble actions
                 action = PyAction.attract_noble( noble_id = 0 )

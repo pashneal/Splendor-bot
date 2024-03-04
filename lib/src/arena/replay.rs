@@ -295,7 +295,7 @@ fn to_js_cards(card_ids: Vec<Vec<CardId>>, card_lookup: Arc<Vec<Card>>) -> Vec<V
                 }
             }
 
-            let color_index = map.get(&c.gem()).unwrap();
+            let color_index = map.get(&c.gem_type()).unwrap();
 
             JSCard {
                 tier,
@@ -431,7 +431,7 @@ pub fn to_js_players(players: &Vec<Player>, card_lookup: Arc<Vec<Card>>) -> Vec<
                 }
             }
 
-            let color_index = map.get(&card.gem()).unwrap();
+            let color_index = map.get(&card.gem_type()).unwrap();
             let color_index = *color_index;
 
             js_cards.push(JSCard {

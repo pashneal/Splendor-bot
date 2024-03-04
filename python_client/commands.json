@@ -2,5 +2,5 @@
   "build" : [
     "python3 ./ffi/build.py"
   ],
-  "binary" : "actions.py"
+  "binary" : "cards.py"
 }
