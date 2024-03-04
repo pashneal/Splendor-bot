@@ -564,7 +564,6 @@ pub struct PyClientInfo {
     #[pyo3(get)]
     pub players: Vec<PyPlayerPublicInfo>,
     pub current_player: PyPlayer,
-    #[pyo3(get)]
     pub player_index: usize,
     #[pyo3(get)]
     pub legal_actions: Vec<PyAction>,
@@ -574,7 +573,7 @@ impl PyClientInfo {
     pub fn from_client_info(client_info: ClientInfo) -> Self {
         let legal_actions = client_info.legal_actions;
         let py_legal_actions = legal_actions.into_iter().map(PyAction::from).collect();
-        let py_current_player = PyPlayer::from(&client_info.current_player);
+        let py_current_player = PyPlayer::from(&client_info.current_player, client_info.current_player_num);
         let py_player_public_info = client_info
             .players
             .iter()
@@ -621,6 +620,8 @@ impl PyClientInfo {
 #[derive(Debug, Clone)]
 pub struct PyPlayer {
     #[pyo3(get)]
+    index: usize,
+    #[pyo3(get)]
     points: u8,
     #[pyo3(get)]
     reserved_cards: Vec<PyCard>,
@@ -631,8 +632,9 @@ pub struct PyPlayer {
 }
 
 impl PyPlayer {
-    pub fn from(player: &Player) -> Self {
+    pub fn from(player: &Player, index : usize) -> Self {
         PyPlayer {
+            index,
             points: player.points(),
             reserved_cards: player.all_reserved().into_iter().map(PyCard::from_id).collect(),
             gems: PyTokens::from(*player.gems()),
