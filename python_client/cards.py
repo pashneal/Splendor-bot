@@ -14,10 +14,6 @@ class Bot:
         card_61 = PyCard(61)
         card_42 = PyCard(42)
 
-        # And print its details
-        log.send(card_61)
-        log.send(card_42)
-
         # actions that require a card can be created with the card_id instad
         if PyAction.purchase(card_id = 61) == PyAction.purchase(card = card_61):
             log.send("[61] They are the same!")
@@ -28,11 +24,11 @@ class Bot:
         # There are also several useful properties of a card to check out
         card = PyCard(23)
 
-        log.send(card.id) # The unique ID of the card with these properties
-        log.send(card.tier) # The tier (0, 1 or 2) that the card is in, 2 is the most expensive
-        log.send(card.points) # The amount of points the card is worth when played
-        log.send(card.gem_type) # The gem associated at the top of the card
-        log.send(card.cost) # The cost of the card in total gems
+        log.send(f"ID {card.id}") # The unique ID of the card with these properties
+        log.send(f"TIER {card.tier}") # The tier 0, 1 or 2 that the card is in, 0 is the cheapest
+        log.send(f"POINTS {card.points}") # The amount of points the card is worth when played
+        log.send(f"GEM_TYPE {card.gem_type}") # The gem associated at the top of the card
+        log.send(f"COST {card.cost}") # The cost of the card in total gems
 
 
     # This function is called every time the server 
@@ -54,7 +50,7 @@ class Bot:
         developments = game_info.me.developments
 
         total_developments = 0
-        # And how many of each gem you have played
+        # And how many of each gem_type you have played
         total_developments += developments.onyx
         total_developments += developments.sapphire
         total_developments += developments.diamond
