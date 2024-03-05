@@ -589,7 +589,6 @@ impl PyClientInfo {
     }
 }
 
-/// TODO: hide and error on information of private players (Perhaps we make PyPlayer do that?)
 /// TODO: would an opponents() method be useful??
 ///
 /// API for the Python clients to access the info
