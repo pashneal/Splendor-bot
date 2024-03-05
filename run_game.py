@@ -66,7 +66,7 @@ def execute_build_commands(json, directory):
             os.chdir(CWD)
             print(f"FAILED executing command : {build_command}")
             return False
-    os.chdir(CWD)
+        os.chdir(CWD)
     return True
 
 def build_arena():
