@@ -129,7 +129,7 @@ class Bot:
                 return legal_action
          
 
-        # You aren't allowed to pass a turn, 
+        # You aren't allowed to pass a turn,
         # if you only have one legal action, the server will automatically
         # play it for you
         some_random_action = random.choice(legal_actions)

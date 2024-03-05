@@ -551,7 +551,7 @@ pub struct PyClientInfo {
     #[pyo3(get)]
     pub board: PyBoard,
     #[pyo3(get)]
-    pub game_history: PyGameHistory,
+    pub history: PyGameHistory,
     #[pyo3(get)]
     pub players: Vec<PyPlayer>,
     pub current_player: PyPlayer,
@@ -562,6 +562,10 @@ pub struct PyClientInfo {
 
 impl PyClientInfo {
     pub fn from_client_info(client_info: ClientInfo) -> Self {
+        // TODO: going to need to
+        // make sure that the number of players
+        // is conveyed to the python side in 
+        // the __init__ function
         let legal_actions = client_info.legal_actions;
         let py_legal_actions = legal_actions.into_iter().map(PyAction::from).collect();
         let py_current_player =
@@ -580,7 +584,7 @@ impl PyClientInfo {
 
         PyClientInfo {
             board: py_board,
-            game_history: py_game_history,
+            history: py_game_history,
             players: py_players,
             current_player: py_current_player,
             player_index: client_info.current_player_num,
@@ -616,7 +620,7 @@ pub struct PyPlayer {
     #[pyo3(get)]
     index: usize,
     #[pyo3(get)]
-    points: u8,
+    total_points: u8,
     #[pyo3(get)]
     num_reserved_cards: usize,
     #[pyo3(get)]
@@ -630,7 +634,7 @@ impl PyPlayer {
     pub fn from(player: &Player, index: usize) -> Self {
         PyPlayer {
             index,
-            points: player.points(),
+            total_points: player.points(),
             reserved_cards: Some(
                 player
                     .all_reserved()
@@ -647,7 +651,7 @@ impl PyPlayer {
     pub fn from_public(player: &PlayerPublicInfo, index: usize) -> Self {
         PyPlayer {
             index,
-            points: player.points,
+            total_points: player.points,
             reserved_cards: None,
             num_reserved_cards: player.num_reserved,
             gems: PyTokens::from(player.gems),
@@ -670,24 +674,59 @@ impl PyPlayer {
 }
 
 #[pyclass]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PyNoble {
+    #[pyo3(get)]
+    pub points: u8,
+    #[pyo3(get)]
+    pub cost: PyTokens,
+    #[pyo3(get)]
+    pub id: NobleId,
+}
+
+impl PyNoble {
+    pub fn from(noble: &Noble) -> Self {
+        PyNoble {
+            points: noble.points(),
+            cost: PyTokens::from(*noble.requirements()),
+            id: noble.id(),
+        }
+    }
+}
+
+#[pymethods]
+impl PyNoble {
+    #[new]
+    pub fn new(id : NobleId) -> PyNoble {
+        let noble = Noble::all()[id as usize].clone();
+        PyNoble::from(&noble)
+    }
+
+    pub fn __eq__(&self, other: &PyNoble) -> bool {
+        self == other
+    }
+}
+
+#[pyclass]
 #[derive(Debug, Clone)]
 pub struct PyBoard {
     #[pyo3(get)]
     pub deck_counts: [usize; 3],
     pub available_cards: Vec<Vec<CardId>>,
     #[pyo3(get)]
-    pub nobles: Vec<NobleId>,
+    pub nobles: Vec<PyNoble>,
     #[pyo3(get)]
-    pub tokens: PyTokens,
+    pub gems: PyTokens,
 }
 
 impl PyBoard {
     pub fn from(board: &Board) -> Self {
+        let board_nobles = board.nobles.clone().into_iter().map(PyNoble::new).collect();
         PyBoard {
             deck_counts: board.deck_counts,
             available_cards: board.available_cards.clone(),
-            nobles: board.nobles.clone(),
-            tokens: PyTokens::from(board.tokens),
+            nobles: board_nobles,
+            gems: PyTokens::from(board.tokens),
         }
     }
 }
@@ -718,22 +757,49 @@ impl PyBoard {
 
 #[pyclass]
 #[derive(Debug, Clone)]
-pub struct PyGameHistory {
-    // TODO: encapsulate history information in clean intuitive interface
-    // rather than just exposing the raw history
+pub struct PyTurn{
     #[pyo3(get)]
-    pub history: Vec<(usize, PyAction)>,
+    pub player_index: usize,
+    #[pyo3(get)]
+    pub actions: Vec<PyAction>,
+}
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct PyGameHistory {
+    turns: Vec<PyTurn>,
 }
 
 impl PyGameHistory {
     pub fn from(history: GameHistory) -> Self {
-        let py_history = history
-            .into_iter()
-            .map(|(player_num, action)| (player_num, PyAction::from(action)))
-            .collect();
+        let turns = history.group_by_player().into_iter().map(|turn_sequences| {
+            let actions = turn_sequences.iter().map(|(_, action)| {
+                PyAction::from(action.clone())
+            }).filter(|action| {
+                action.action_type != PyActionType::Continue
+            }).collect();
+
+            let player_index = turn_sequences[0].0;
+            PyTurn {
+                player_index,
+                actions,
+            }
+        }).collect();
+
         PyGameHistory {
-            history: py_history,
+            turns,
         }
+    }
+
+
+}
+
+#[pymethods]
+impl PyGameHistory {
+    #[getter]
+    pub fn turns(&self) -> Vec<(usize, Vec<PyAction>)> {
+        self.turns.iter().map(|turn| {
+            (turn.player_index, turn.actions.clone())
+        }).collect()
     }
 }
 
@@ -753,6 +819,7 @@ fn ffi(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyTokens>()?;
     m.add_class::<PyAction>()?;
     m.add_class::<PyCard>()?;
+    m.add_class::<PyNoble>()?;
     m.add_class::<PyGemType>()?;
     Ok(())
 }
@@ -821,3 +888,7 @@ pub fn run_python_bot(py: Python, bot_class: &PyAny) {
             .expect("Error sending message");
     }
 }
+
+
+
+// TODO: Clean up and make sure equality checking is not referential equality (python default) but instead value equality
