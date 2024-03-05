@@ -562,7 +562,7 @@ pub struct PyClientInfo {
     #[pyo3(get)]
     pub game_history: PyGameHistory,
     #[pyo3(get)]
-    pub players: Vec<PyPlayerPublicInfo>,
+    pub players: Vec<PyPlayer>,
     pub current_player: PyPlayer,
     pub player_index: usize,
     #[pyo3(get)]
@@ -574,18 +574,22 @@ impl PyClientInfo {
         let legal_actions = client_info.legal_actions;
         let py_legal_actions = legal_actions.into_iter().map(PyAction::from).collect();
         let py_current_player = PyPlayer::from(&client_info.current_player, client_info.current_player_num);
-        let py_player_public_info = client_info
+        let mut py_players : Vec<PyPlayer>= client_info
             .players
             .iter()
-            .map(PyPlayerPublicInfo::from)
+            .enumerate()
+            .map(|(index, player)| PyPlayer::from_public(player, index))
             .collect();
+
+        py_players[py_current_player.index] = py_current_player.clone();
+
         let py_board = PyBoard::from(&client_info.board);
         let py_game_history = PyGameHistory::from(client_info.history);
 
         PyClientInfo {
             board: py_board,
             game_history: py_game_history,
-            players: py_player_public_info,
+            players: py_players,
             current_player: py_current_player,
             player_index: client_info.current_player_num,
             legal_actions: py_legal_actions,
@@ -600,7 +604,7 @@ impl PyClientInfo {
 /// of the game sent from a connected server
 #[pymethods]
 impl PyClientInfo {
-    pub fn face_up_cards(&self, tier: Option<usize>) -> Vec<PyCard> {
+    pub fn face_up_cards(&self, tier: Option<usize>) -> PyResult<Vec<PyCard>> {
         self.board.face_up_cards(tier)
     }
 
@@ -624,11 +628,12 @@ pub struct PyPlayer {
     #[pyo3(get)]
     points: u8,
     #[pyo3(get)]
-    reserved_cards: Vec<PyCard>,
+    num_reserved_cards : usize,
     #[pyo3(get)]
     gems: PyTokens,
     #[pyo3(get)]
     developments: PyTokens,
+    reserved_cards: Option<Vec<PyCard>>,
 }
 
 impl PyPlayer {
@@ -636,38 +641,36 @@ impl PyPlayer {
         PyPlayer {
             index,
             points: player.points(),
-            reserved_cards: player.all_reserved().into_iter().map(PyCard::from_id).collect(),
+            reserved_cards: Some(player.all_reserved().into_iter().map(PyCard::from_id).collect()),
+            num_reserved_cards: player.num_reserved(),
             gems: PyTokens::from(*player.gems()),
             developments: PyTokens::from(*player.developments()),
         }
     }
-}
 
-#[pyclass]
-#[derive(Debug, Clone)]
-pub struct PyPlayerPublicInfo {
-    #[pyo3(get)]
-    points: u8,
-    #[pyo3(get)]
-    num_reserved_cards: usize,
-    #[pyo3(get)]
-    developments: PyTokens,
-    #[pyo3(get)]
-    gems: PyTokens,
-}
-
-impl PyPlayerPublicInfo {
-    /// TODO: Good error message when a player 
-    /// attempts to peek at the reserve_card of another player
-    pub fn from(player: &PlayerPublicInfo) -> Self {
-        PyPlayerPublicInfo {
+    pub fn from_public(player: &PlayerPublicInfo, index : usize) -> Self {
+        PyPlayer {
+            index,
             points: player.points,
+            reserved_cards: None,
             num_reserved_cards: player.num_reserved,
-            developments: PyTokens::from(player.developments.to_tokens()),
             gems: PyTokens::from(player.gems),
+            developments: PyTokens::from(player.developments.to_tokens()),
         }
     }
 }
+
+#[pymethods]
+impl PyPlayer {
+    #[getter]
+    pub fn reserved_cards(&self) -> PyResult<Vec<PyCard>> {
+        if self.reserved_cards.is_none() {
+            return Err(PyErr::new::<pyo3::exceptions::PyAttributeError, _>("Attempeted to peek at the reserved_cards of an opponent!"));
+        }
+        Ok(self.reserved_cards.clone().unwrap())
+    }
+}
+
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -694,14 +697,15 @@ impl PyBoard {
 
 #[pymethods] 
 impl PyBoard {
-    pub fn face_up_cards(&self, tier: Option<usize>) -> Vec<PyCard> {
+    pub fn face_up_cards(&self, tier: Option<usize>) -> PyResult<Vec<PyCard>> {
         if tier.is_some() && tier.unwrap() > 2 {
-            panic!("Invalid tier: {}", tier.unwrap());
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>("Tier must be 0, 1, or 2"));
         }
-        match tier {
+        let cards = match tier {
             None => self.available_cards.iter().flatten().map(|&card_id| PyCard::from_id(card_id)).collect(),
             Some(tier) => self.available_cards[tier].iter().map(|&card_id| PyCard::from_id(card_id)).collect()
-        }
+        };
+        Ok(cards)
     }
 }
 

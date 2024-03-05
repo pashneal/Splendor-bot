@@ -71,11 +71,15 @@ class Bot:
         # But be careful! Attempting to peek at reserved_cards from a player
         # that is not you will result in an error which can crash your bot!
         # TODO: allow this for only the current player
+        my_index = game_info.me.index
+        player = game_info.players[my_index]
+        i_can_peek = player.reserved_cards
+        log.send(f"Player {my_index} : reserved {i_can_peek}")
+
         try:
-            my_index = game_info.me.index
-            not_my_index = (index + 1) % game_info.num_players
+            not_my_index = (my_index + 1) % game_info.num_players
             opponent = game_info.players[not_my_index]
-            i_want_to_peek = opponent.reserved_cards
+            i_cannot_peek = opponent.reserved_cards
         except:
             log.send("Ooops! You can't look at other players reserved cards!")
 
