@@ -564,7 +564,7 @@ impl PyClientInfo {
     pub fn from_client_info(client_info: ClientInfo) -> Self {
         // TODO: going to need to
         // make sure that the number of players
-        // is conveyed to the python side in 
+        // is conveyed to the python side in
         // the __init__ function
         let legal_actions = client_info.legal_actions;
         let py_legal_actions = legal_actions.into_iter().map(PyAction::from).collect();
@@ -697,7 +697,7 @@ impl PyNoble {
 #[pymethods]
 impl PyNoble {
     #[new]
-    pub fn new(id : NobleId) -> PyNoble {
+    pub fn new(id: NobleId) -> PyNoble {
         let noble = Noble::all()[id as usize].clone();
         PyNoble::from(&noble)
     }
@@ -757,7 +757,7 @@ impl PyBoard {
 
 #[pyclass]
 #[derive(Debug, Clone)]
-pub struct PyTurn{
+pub struct PyTurn {
     #[pyo3(get)]
     pub player_index: usize,
     #[pyo3(get)]
@@ -771,35 +771,36 @@ pub struct PyGameHistory {
 
 impl PyGameHistory {
     pub fn from(history: GameHistory) -> Self {
-        let turns = history.group_by_player().into_iter().map(|turn_sequences| {
-            let actions = turn_sequences.iter().map(|(_, action)| {
-                PyAction::from(action.clone())
-            }).filter(|action| {
-                action.action_type != PyActionType::Continue
-            }).collect();
+        let turns = history
+            .group_by_player()
+            .into_iter()
+            .map(|turn_sequences| {
+                let actions = turn_sequences
+                    .iter()
+                    .map(|(_, action)| PyAction::from(action.clone()))
+                    .filter(|action| action.action_type != PyActionType::Continue)
+                    .collect();
 
-            let player_index = turn_sequences[0].0;
-            PyTurn {
-                player_index,
-                actions,
-            }
-        }).collect();
+                let player_index = turn_sequences[0].0;
+                PyTurn {
+                    player_index,
+                    actions,
+                }
+            })
+            .collect();
 
-        PyGameHistory {
-            turns,
-        }
+        PyGameHistory { turns }
     }
-
-
 }
 
 #[pymethods]
 impl PyGameHistory {
     #[getter]
     pub fn turns(&self) -> Vec<(usize, Vec<PyAction>)> {
-        self.turns.iter().map(|turn| {
-            (turn.player_index, turn.actions.clone())
-        }).collect()
+        self.turns
+            .iter()
+            .map(|turn| (turn.player_index, turn.actions.clone()))
+            .collect()
     }
 }
 
@@ -888,7 +889,5 @@ pub fn run_python_bot(py: Python, bot_class: &PyAny) {
             .expect("Error sending message");
     }
 }
-
-
 
 // TODO: Clean up and make sure equality checking is not referential equality (python default) but instead value equality
