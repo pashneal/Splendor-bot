@@ -1,9 +1,8 @@
+use lazy_static::lazy_static;
 use pyo3::prelude::*;
 use splendor_tourney::*;
-use url::Url;
 use tungstenite::{connect, Message};
-use lazy_static::lazy_static;
-
+use url::Url;
 
 lazy_static! {
     static ref CARD_LOOKUP: [Card; 90] = Card::all_const();
@@ -30,19 +29,17 @@ impl PyCard {
             gem_type: PyGemType::from(card.gem_type()),
         }
     }
-    pub fn from_id(card_id : CardId) -> Self {
+    pub fn from_id(card_id: CardId) -> Self {
         if card_id >= CARD_LOOKUP.len() as CardId {
             panic!("Invalid card id: [{}], card ids must be from 0-89", card_id);
         }
         let card = CARD_LOOKUP[card_id as usize];
         PyCard::from(&card)
     }
-
 }
 
 #[pymethods]
 impl PyCard {
-
     /// Get a list of all the possible cards
     #[staticmethod]
     pub fn all_possible_cards() -> Vec<PyCard> {
@@ -59,10 +56,7 @@ impl PyCard {
     }
 
     pub fn __str__(&self) -> String {
-        format!(
-            "Card(id: {})",
-            self.id
-        )
+        format!("Card(id: {})", self.id)
     }
 
     pub fn __repr__(&self) -> String {
@@ -73,7 +67,7 @@ impl PyCard {
     pub fn id(&self) -> CardId {
         self.id
     }
-    
+
     #[getter]
     pub fn tier(&self) -> u8 {
         self.tier
@@ -305,35 +299,34 @@ impl PyAction {
         }
     }
 
-    pub fn into_action(self) -> Action  {
+    pub fn into_action(self) -> Action {
         match self.action_type {
-             PyActionType::TakeGems => {
-                 let py_tokens = self.tokens();
-                 let tokens = py_tokens.into_tokens();
-                 let is_double = tokens.total() == 2 && tokens.to_set().len() == 1;
+            PyActionType::TakeGems => {
+                let py_tokens = self.tokens();
+                let tokens = py_tokens.into_tokens();
+                let is_double = tokens.total() == 2 && tokens.to_set().len() == 1;
 
-                 match is_double {
-                     true => {
-                         let mut color = GemType::Gold;
-                         for c in tokens.to_set() {
-                             color = c
-                         }
-                         Action::TakeDouble(color)
-                     }
-                     false => {
-                         Action::TakeDistinct(tokens.to_set())
-                     }
-                 }
-             }
-             PyActionType::ReserveFaceUp =>Action::Reserve(self.card_id()),
-             PyActionType::ReserveFaceDown =>Action::ReserveHidden(self.tier()),
-             PyActionType::Discard =>Action::Discard(self.tokens().into_tokens()),
-             PyActionType::Purchase =>Action::Purchase((self.card_id(), self.tokens().into_tokens())),
-             PyActionType::AttractNoble =>Action::AttractNoble(self.noble_id()),
-             PyActionType::Pass =>Action::Pass,
-             PyActionType::Continue =>Action::Continue,
+                match is_double {
+                    true => {
+                        let mut color = GemType::Gold;
+                        for c in tokens.to_set() {
+                            color = c
+                        }
+                        Action::TakeDouble(color)
+                    }
+                    false => Action::TakeDistinct(tokens.to_set()),
+                }
+            }
+            PyActionType::ReserveFaceUp => Action::Reserve(self.card_id()),
+            PyActionType::ReserveFaceDown => Action::ReserveHidden(self.tier()),
+            PyActionType::Discard => Action::Discard(self.tokens().into_tokens()),
+            PyActionType::Purchase => {
+                Action::Purchase((self.card_id(), self.tokens().into_tokens()))
+            }
+            PyActionType::AttractNoble => Action::AttractNoble(self.noble_id()),
+            PyActionType::Pass => Action::Pass,
+            PyActionType::Continue => Action::Continue,
         }
-
     }
 }
 
@@ -341,7 +334,6 @@ impl PyAction {
 /// TODO: (if i'm feeling nice) make error messages more helpful?
 #[pymethods]
 impl PyAction {
-
     pub fn __str__(&self) -> String {
         match self.action_type.clone() {
             PyActionType::TakeGems => {
@@ -391,7 +383,7 @@ impl PyAction {
         );
         PyCard::from_id(self.card_id.expect(&error_message))
     }
-    
+
     #[getter]
     pub fn card_id(&self) -> CardId {
         let error_message = format!(
@@ -410,10 +402,13 @@ impl PyAction {
         self.noble_id.expect(&error_message)
     }
 
-    #[getter] 
+    #[getter]
     pub fn tokens(&self) -> PyTokens {
         match self.tokens.clone() {
-            None => panic!("This action type ({:?}) does not have tokens", self.action_type),
+            None => panic!(
+                "This action type ({:?}) does not have tokens",
+                self.action_type
+            ),
             Some(tokens) => tokens,
         }
     }
@@ -421,11 +416,14 @@ impl PyAction {
     #[getter]
     pub fn tier(&self) -> usize {
         match self.tier {
-            None => panic!("This action type ({:?}) does not have tokens", self.action_type),
+            None => panic!(
+                "This action type ({:?}) does not have tokens",
+                self.action_type
+            ),
             Some(tier) => tier,
         }
     }
-    
+
     pub fn __eq__(&self, other: &PyAction) -> bool {
         self.action_type == other.action_type
             && self.card_id == other.card_id
@@ -436,14 +434,14 @@ impl PyAction {
 
     #[staticmethod]
     pub fn purchase(
-        card : Option<PyCard>,
-        card_id : Option<CardId>,
+        card: Option<PyCard>,
+        card_id: Option<CardId>,
         onyx: Option<i8>,
         sapphire: Option<i8>,
         emerald: Option<i8>,
         ruby: Option<i8>,
         diamond: Option<i8>,
-        gold : Option<i8>,
+        gold: Option<i8>,
     ) -> Self {
         // Make sure only card or card_id is passed in
         if card.is_some() && card_id.is_some() {
@@ -461,14 +459,12 @@ impl PyAction {
             card_id,
             noble_id: None,
             tokens: Some(PyTokens::new(onyx, sapphire, emerald, ruby, diamond, gold)),
-            tier : None,
+            tier: None,
         }
     }
 
     #[staticmethod]
-    pub fn reserve_face_down(
-        tier : Option<usize>,
-    ) -> Self{
+    pub fn reserve_face_down(tier: Option<usize>) -> Self {
         PyAction {
             action_type: PyActionType::ReserveFaceDown,
             card_id: None,
@@ -479,10 +475,7 @@ impl PyAction {
     }
 
     #[staticmethod]
-    pub fn reserve_face_up(
-        card : Option<PyCard>,
-        card_id : Option<CardId>,
-    ) -> Self{
+    pub fn reserve_face_up(card: Option<PyCard>, card_id: Option<CardId>) -> Self {
         // Make sure only card or card_id is passed in
         if card.is_some() && card_id.is_some() {
             panic!("Only one of card or card_id should be passed in! Not both");
@@ -511,8 +504,8 @@ impl PyAction {
         ruby: Option<i8>,
         diamond: Option<i8>,
     ) -> Self {
-        // TODO: we can check against legal actions and 
-        // be sure to only allow legal gem takes, and point out 
+        // TODO: we can check against legal actions and
+        // be sure to only allow legal gem takes, and point out
         // specifically which gems are illegal
         PyAction {
             action_type: PyActionType::TakeGems,
@@ -541,9 +534,7 @@ impl PyAction {
     }
 
     #[staticmethod]
-    pub fn attract_noble(
-        noble_id: Option<NobleId>,
-    ) -> Self {
+    pub fn attract_noble(noble_id: Option<NobleId>) -> Self {
         PyAction {
             action_type: PyActionType::AttractNoble,
             card_id: None,
@@ -573,8 +564,9 @@ impl PyClientInfo {
     pub fn from_client_info(client_info: ClientInfo) -> Self {
         let legal_actions = client_info.legal_actions;
         let py_legal_actions = legal_actions.into_iter().map(PyAction::from).collect();
-        let py_current_player = PyPlayer::from(&client_info.current_player, client_info.current_player_num);
-        let mut py_players : Vec<PyPlayer>= client_info
+        let py_current_player =
+            PyPlayer::from(&client_info.current_player, client_info.current_player_num);
+        let mut py_players: Vec<PyPlayer> = client_info
             .players
             .iter()
             .enumerate()
@@ -600,7 +592,7 @@ impl PyClientInfo {
 /// TODO: hide and error on information of private players (Perhaps we make PyPlayer do that?)
 /// TODO: would an opponents() method be useful??
 ///
-/// API for the Python clients to access the info 
+/// API for the Python clients to access the info
 /// of the game sent from a connected server
 #[pymethods]
 impl PyClientInfo {
@@ -617,7 +609,6 @@ impl PyClientInfo {
     pub fn num_players(&self) -> usize {
         self.players.len()
     }
-
 }
 
 #[pyclass]
@@ -628,7 +619,7 @@ pub struct PyPlayer {
     #[pyo3(get)]
     points: u8,
     #[pyo3(get)]
-    num_reserved_cards : usize,
+    num_reserved_cards: usize,
     #[pyo3(get)]
     gems: PyTokens,
     #[pyo3(get)]
@@ -637,18 +628,24 @@ pub struct PyPlayer {
 }
 
 impl PyPlayer {
-    pub fn from(player: &Player, index : usize) -> Self {
+    pub fn from(player: &Player, index: usize) -> Self {
         PyPlayer {
             index,
             points: player.points(),
-            reserved_cards: Some(player.all_reserved().into_iter().map(PyCard::from_id).collect()),
+            reserved_cards: Some(
+                player
+                    .all_reserved()
+                    .into_iter()
+                    .map(PyCard::from_id)
+                    .collect(),
+            ),
             num_reserved_cards: player.num_reserved(),
             gems: PyTokens::from(*player.gems()),
             developments: PyTokens::from(*player.developments()),
         }
     }
 
-    pub fn from_public(player: &PlayerPublicInfo, index : usize) -> Self {
+    pub fn from_public(player: &PlayerPublicInfo, index: usize) -> Self {
         PyPlayer {
             index,
             points: player.points,
@@ -665,12 +662,13 @@ impl PyPlayer {
     #[getter]
     pub fn reserved_cards(&self) -> PyResult<Vec<PyCard>> {
         if self.reserved_cards.is_none() {
-            return Err(PyErr::new::<pyo3::exceptions::PyAttributeError, _>("Attempeted to peek at the reserved_cards of an opponent!"));
+            return Err(PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
+                "Attempeted to peek at the reserved_cards of an opponent!",
+            ));
         }
         Ok(self.reserved_cards.clone().unwrap())
     }
 }
-
 
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -695,15 +693,25 @@ impl PyBoard {
     }
 }
 
-#[pymethods] 
+#[pymethods]
 impl PyBoard {
     pub fn face_up_cards(&self, tier: Option<usize>) -> PyResult<Vec<PyCard>> {
         if tier.is_some() && tier.unwrap() > 2 {
-            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>("Tier must be 0, 1, or 2"));
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                "Tier must be 0, 1, or 2",
+            ));
         }
         let cards = match tier {
-            None => self.available_cards.iter().flatten().map(|&card_id| PyCard::from_id(card_id)).collect(),
-            Some(tier) => self.available_cards[tier].iter().map(|&card_id| PyCard::from_id(card_id)).collect()
+            None => self
+                .available_cards
+                .iter()
+                .flatten()
+                .map(|&card_id| PyCard::from_id(card_id))
+                .collect(),
+            Some(tier) => self.available_cards[tier]
+                .iter()
+                .map(|&card_id| PyCard::from_id(card_id))
+                .collect(),
         };
         Ok(cards)
     }
@@ -735,7 +743,6 @@ fn multiply(a: isize, b: isize) -> PyResult<isize> {
     Ok(a * b)
 }
 
-
 #[pymodule]
 fn ffi(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(multiply, m)?)?;
@@ -754,14 +761,14 @@ fn ffi(_py: Python, m: &PyModule) -> PyResult<()> {
 /// A struct for making sure that the bot on the Python side
 /// has proper access to the log stream protocol of the library
 #[pyclass]
-pub struct PyLog  {
-    log : Log,
+pub struct PyLog {
+    log: Log,
 }
 
 impl PyLog {
-    pub fn new(port : u16) -> Self {
+    pub fn new(port: u16) -> Self {
         PyLog {
-            log : Log::new(port),
+            log: Log::new(port),
         }
     }
 }
@@ -781,8 +788,6 @@ impl PyLog {
 pub fn run_python_bot(py: Python, bot_class: &PyAny) {
     let port = 3030;
 
-
-
     let url = format!("ws://127.0.0.1:{}/game", port);
     let url = Url::parse(&url).unwrap();
     let (mut game_socket, _) = connect(url).expect("Can't connect to the game server");
@@ -790,17 +795,21 @@ pub fn run_python_bot(py: Python, bot_class: &PyAny) {
     // Give the server a chance to start up
     std::thread::sleep(std::time::Duration::from_millis(100));
 
-    let py_log = PyCell::new(py , PyLog::new(port)).unwrap();
+    let py_log = PyCell::new(py, PyLog::new(port)).unwrap();
 
-    let bot_instance = bot_class.call1((py_log.try_borrow_mut().unwrap(),)).expect("Unable to launch bot, could not call __init__");
+    let bot_instance = bot_class
+        .call1((py_log.try_borrow_mut().unwrap(),))
+        .expect("Unable to launch bot, could not call __init__");
 
     loop {
         let msg = game_socket.read().expect("Error reading message");
         let msg = msg.to_text().expect("Error converting message to text");
         let info: ClientInfo = serde_json::from_str(msg).expect("Error parsing message");
         let py_info = PyClientInfo::from_client_info(info);
-        let result = bot_instance.call_method1("take_action", (py_info, py_log.try_borrow_mut().unwrap()));
-        let py_action : PyAction = result.expect("Error when calling method take_action()")
+        let result =
+            bot_instance.call_method1("take_action", (py_info, py_log.try_borrow_mut().unwrap()));
+        let py_action: PyAction = result
+            .expect("Error when calling method take_action()")
             .extract()
             .expect("Incorrect type returned by method take_action()");
 
@@ -808,7 +817,8 @@ pub fn run_python_bot(py: Python, bot_class: &PyAny) {
 
         let msg = ClientMessage::Action(action);
         let msg_str = serde_json::to_string(&msg).expect("Error converting action to string");
-        game_socket.send(Message::Text(msg_str)).expect("Error sending message");
+        game_socket
+            .send(Message::Text(msg_str))
+            .expect("Error sending message");
     }
-
 }
