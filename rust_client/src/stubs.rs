@@ -144,7 +144,7 @@ impl Into<splendor_tourney::Action> for Action {
     }
 }
 
-/// Re-export the splendor_tourney module ClientInfo
+/// Re-export the splendor_tourney module Board
 /// into one that has a more user-friendly interface
 #[derive(Debug, Clone)]
 pub struct Board {
@@ -220,7 +220,7 @@ impl Card {
     }
 }
 
-/// Re-export the splendor_tourney module ClientInfo
+/// Re-export the splendor_tourney module GameHistory
 /// into one that has a more user-friendly interface
 #[derive(Debug, Clone)]
 pub struct GameHistory {
@@ -245,7 +245,7 @@ impl GameHistory {
     }
 }
 
-/// Re-export the splendor_tourney module ClientInfo
+/// Re-export the splendor_tourney module Player
 /// into one that has a more user-friendly interface
 #[derive(Debug, Clone)]
 pub struct Player {
