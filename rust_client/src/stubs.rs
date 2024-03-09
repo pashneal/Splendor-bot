@@ -1,6 +1,6 @@
-//#![allow(unused_imports)]
-//#![allow(unused_variables)]
-//#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+#![allow(dead_code)]
 /// This module repackages the splendor_tourney module into a
 /// more convenient form 
 ///
@@ -34,6 +34,7 @@ pub enum ModelError {
 
 /// Re-export the splendor_tourney module Action
 /// into one that has a more user-friendly interface
+#[derive(Debug, Clone)]
 pub enum Action {
     /// Take gem tokens from the bank 
     TakeGems(Gems),
@@ -133,6 +134,9 @@ impl Action {
     }
 }
 
+/// Re-export the splendor_tourney module ClientInfo
+/// into one that has a more user-friendly interface
+#[derive(Debug, Clone)]
 pub struct Board {
    pub deck_counts: [usize; 3], 
    pub nobles: Vec<NobleId>,
@@ -173,6 +177,7 @@ impl Board {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Card {
     pub points: u8,
     pub cost: Cost,
@@ -205,6 +210,9 @@ impl Card {
     }
 }
 
+/// Re-export the splendor_tourney module ClientInfo
+/// into one that has a more user-friendly interface
+#[derive(Debug, Clone)]
 pub struct GameHistory {
     pub turns : Vec<(usize, Vec<Action>)>
 }
@@ -227,11 +235,9 @@ impl GameHistory {
     }
 }
 
-pub struct ClientInfo {
-    board : Board,
-    history : GameHistory,
-}
-
+/// Re-export the splendor_tourney module ClientInfo
+/// into one that has a more user-friendly interface
+#[derive(Debug, Clone)]
 pub struct Player {
     pub index: usize,
     pub total_points: u8,
@@ -267,6 +273,47 @@ impl Player {
             num_reserved_cards: player.num_reserved,
             gems: Gems::from(player.gems),
             developments: Gems::from(player.developments.to_gems()),
+        }
+    }
+}
+
+/// Re-export the splendor_tourney module ClientInfo
+/// into one that has a more user-friendly interface
+#[derive(Debug, Clone)]
+pub struct ClientInfo {
+    pub board : Board,
+    pub history : GameHistory,
+    pub players : Vec<Player>,
+    pub current_player : Player,
+    pub player_index : usize,
+    pub legal_actions : Vec<Action>,
+}
+
+impl ClientInfo {
+    pub fn from_splendor_tourney(client_info: splendor_tourney::ClientInfo) -> Self {
+        let legal_actions = client_info.legal_actions;
+        let legal_actions = legal_actions.into_iter().map(Action::from).collect();
+        let current_player =
+            Player::from(&client_info.current_player, client_info.current_player_num);
+        let mut players: Vec<Player> = client_info
+            .players
+            .iter()
+            .enumerate()
+            .map(|(index, player)| Player::from_public(player, index))
+            .collect();
+
+        players[current_player.index] = current_player.clone();
+
+        let board = Board::from(client_info.board);
+        let game_history = GameHistory::from(client_info.history);
+
+        ClientInfo {
+            board,
+            history: game_history,
+            players,
+            current_player,
+            player_index: client_info.current_player_num,
+            legal_actions,
         }
     }
 }
