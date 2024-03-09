@@ -1,3 +1,5 @@
+mod models;
+
 use splendor_tourney::*;
 use rand::{thread_rng, seq::SliceRandom};
 

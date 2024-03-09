@@ -1,5 +1,5 @@
 # If you'd like to run a different set of directories, change here!!
-PLAYER_DIRECTORIES = ["python_client/",  "rust_client/", ]
+PLAYER_DIRECTORIES = ["python_client/",  "./examples/python_cards", "./examples/python_actions/", "./examples/python_board_and_history/"]
 # For example: to run with four players:
 # PLAYER_DIRECTORIES = ["python_client/",  "rust_client/", "python_client/", "rust_client/"]
 

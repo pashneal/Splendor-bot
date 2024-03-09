@@ -10,7 +10,7 @@ pub struct Board {
     pub deck_counts: [usize; 3],
     pub available_cards: Vec<Vec<CardId>>,
     pub nobles: Vec<NobleId>,
-    pub tokens: Tokens,
+    pub gems: Gems,
 }
 
 impl Board {
@@ -19,7 +19,7 @@ impl Board {
             deck_counts: game.deck_counts(),
             available_cards: game.cards(),
             nobles: game.nobles().iter().map(|n| n.id()).collect(),
-            tokens: game.bank().clone(),
+            gems: game.bank().clone(),
         }
     }
 }

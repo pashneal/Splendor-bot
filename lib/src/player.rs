@@ -1,6 +1,6 @@
 use crate::card::*;
-use crate::gem_type::*;
-use crate::token::Tokens;
+use crate::gem::*;
+use crate::gems::Gems;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -11,7 +11,7 @@ pub struct PlayerPublicInfo {
     pub points: u8,
     pub num_reserved: usize,
     pub developments: Cost,
-    pub gems: Tokens,
+    pub gems: Gems,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,13 +19,13 @@ pub struct Player {
     points: u8,
     noble_points: u8,
     reserved: Vec<CardId>,
-    gems: Tokens,
-    developments: Tokens,
+    gems: Gems,
+    developments: Gems,
     blind_reserved: Vec<CardId>,
 }
 
 #[cached]
-fn token_match(cost: Tokens, gems: Tokens, running_payment: Tokens) -> HashSet<Tokens> {
+fn gem_match(cost: Gems, gems: Gems, running_payment: Gems) -> HashSet<Gems> {
     if cost.total() == 0 {
         return HashSet::from_iter(vec![running_payment]);
     }
@@ -35,25 +35,25 @@ fn token_match(cost: Tokens, gems: Tokens, running_payment: Tokens) -> HashSet<T
 
     // Take one token that satisfies the cost or a wild token and recurse
     let mut result = Vec::new();
-    for color in GemType::all() {
+    for color in Gem::all() {
         if cost[color] > 0 {
-            let new_cost = cost - Tokens::one(color);
+            let new_cost = cost - Gems::one(color);
 
             if gems[color] > 0 {
-                let new_gems = gems - Tokens::one(color);
-                result.extend(token_match(
+                let new_gems = gems - Gems::one(color);
+                result.extend(gem_match(
                     new_cost,
                     new_gems,
-                    running_payment + Tokens::one(color),
+                    running_payment + Gems::one(color),
                 ));
             }
 
-            if gems[GemType::Gold] > 0 {
-                let new_gems = gems - Tokens::one(GemType::Gold);
-                result.extend(token_match(
+            if gems[Gem::Gold] > 0 {
+                let new_gems = gems - Gems::one(Gem::Gold);
+                result.extend(gem_match(
                     new_cost,
                     new_gems,
-                    running_payment + Tokens::one(GemType::Gold),
+                    running_payment + Gems::one(Gem::Gold),
                 ));
             }
         }
@@ -68,8 +68,8 @@ impl Player {
             points: 0,
             noble_points: 0,
             reserved: Vec::new(),
-            gems: Tokens::empty(),
-            developments: Tokens::empty(),
+            gems: Gems::empty(),
+            developments: Gems::empty(),
             blind_reserved: Vec::new(),
         }
     }
@@ -78,7 +78,7 @@ impl Player {
         PlayerPublicInfo {
             points: self.points,
             num_reserved: self.reserved.len(),
-            developments: Cost::from_tokens(&self.developments),
+            developments: Cost::from_gems(&self.developments),
             gems: self.gems.clone(),
         }
     }
@@ -122,23 +122,23 @@ impl Player {
         self.blind_reserved.clone()
     }
 
-    pub fn gems(&self) -> &Tokens {
+    pub fn gems(&self) -> &Gems {
         &self.gems
     }
 
-    fn add_development(&mut self, color: GemType) {
-        self.developments += Tokens::one(color);
+    fn add_development(&mut self, color: Gem) {
+        self.developments += Gems::one(color);
     }
 
-    pub fn developments(&self) -> &Tokens {
+    pub fn developments(&self) -> &Gems {
         &self.developments
     }
 
-    pub fn remove_gems(&mut self, gems: Tokens) {
+    pub fn remove_gems(&mut self, gems: Gems) {
         self.gems -= gems;
     }
 
-    pub fn add_gems(&mut self, gems: Tokens) {
+    pub fn add_gems(&mut self, gems: Gems) {
         self.gems += gems;
     }
 
@@ -146,11 +146,11 @@ impl Player {
         self.reserved.contains(&card_id)
     }
 
-    pub fn purchase_card(&mut self, card: &Card, payment: &Tokens) {
+    pub fn purchase_card(&mut self, card: &Card, payment: &Gems) {
         debug_assert!(payment.legal());
         self.gems -= *payment;
         debug_assert!(self.gems.legal());
-        self.add_development(card.gem_type());
+        self.add_development(card.gem());
         self.points += card.points();
         self.reserved.retain(|&x| x != card.id());
         self.blind_reserved.retain(|&x| x != card.id());
@@ -169,23 +169,23 @@ impl Player {
 
     /// Returns the token spread that a player needs to afford
     /// a given card.
-    pub fn payment_options_for(&self, card: &Card) -> Option<HashSet<Tokens>> {
+    pub fn payment_options_for(&self, card: &Card) -> Option<HashSet<Gems>> {
         let cost = card.cost();
-        let cost = cost.discounted_with(&self.developments).to_tokens();
+        let cost = cost.discounted_with(&self.developments).to_gems();
         let mut total_deficit = 0;
-        for color in GemType::all() {
+        for color in Gems::all() {
             let deficit = cost[color] - self.gems[color];
             if deficit > 0 {
                 total_deficit += deficit;
             }
         }
 
-        // Cannot pay off deficit with wild tokens
-        if total_deficit > self.gems[GemType::Gold] {
+        // Cannot pay off deficit with wild gems
+        if total_deficit > self.gems[Gem::Gold] {
             return None;
         }
         // Card is free!
-        let payments = token_match(cost, self.gems, Tokens::empty());
+        let payments = gem_match(cost, self.gems, Gems::empty());
         if payments.len() == 0 {
             return None;
         }
@@ -197,12 +197,12 @@ impl Player {
 mod tests {
     use super::*;
     use crate::card::Card;
-    use crate::gem_type::GemType;
-    use crate::token::Tokens;
+    use crate::gem::Gem;
+    use crate::gems::Gems;
 
     /// Testing strategy:
     ///     payment_to_afford:
-    ///         - has 0, 1, >1 wild (gold) tokens
+    ///         - has 0, 1, >1 wild (gold) gems
     ///         - can afford, cannot afford
     ///         - specific (unique) payment, ambiguous (multiple) payments
     ///         - development discounts (output):
@@ -211,9 +211,9 @@ mod tests {
     #[test]
     fn test_cannot_afford_1_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(GemType::Ruby));
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Onyx));
+        player.add_gems(Gems::one(Gem::Ruby));
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Onyx));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card);
@@ -223,8 +223,8 @@ mod tests {
     #[test]
     fn test_cannot_afford_0_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(GemType::Ruby));
-        player.add_gems(Tokens::one(GemType::Emerald));
+        player.add_gems(Gems::one(Gem::Ruby));
+        player.add_gems(Gems::one(Gem::Emerald));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card);
@@ -233,9 +233,9 @@ mod tests {
     #[test]
     fn test_payment_specific_0_wild_discount_exact() {
         let mut player = Player::new();
-        player.add_development(GemType::Ruby);
-        player.add_development(GemType::Emerald);
-        player.add_development(GemType::Emerald);
+        player.add_development(Gem::Ruby);
+        player.add_development(Gem::Emerald);
+        player.add_development(Gem::Emerald);
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
@@ -247,7 +247,7 @@ mod tests {
                 .collect::<Vec<_>>()
                 .first()
                 .unwrap(),
-            Tokens {
+            Gems {
                 ruby: 0,
                 emerald: 0,
                 sapphire: 0,
@@ -260,9 +260,9 @@ mod tests {
     #[test]
     fn test_payment_specific_0_wild_discount_less() {
         let mut player = Player::new();
-        player.add_development(GemType::Ruby);
-        player.add_gems(Tokens::one(GemType::Emerald));
-        player.add_gems(Tokens::one(GemType::Emerald));
+        player.add_development(Gem::Ruby);
+        player.add_gems(Gems::one(Gem::Emerald));
+        player.add_gems(Gems::one(Gem::Emerald));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
@@ -274,7 +274,7 @@ mod tests {
                 .collect::<Vec<_>>()
                 .first()
                 .unwrap(),
-            Tokens {
+            Gems {
                 ruby: 0,
                 emerald: 2,
                 sapphire: 0,
@@ -287,10 +287,10 @@ mod tests {
     #[test]
     fn test_payment_specific_1_wild_discount_less() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(GemType::Onyx));
-        player.add_development(GemType::Ruby);
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Emerald));
+        player.add_gems(Gems::one(Gem::Onyx));
+        player.add_development(Gem::Ruby);
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Emerald));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
@@ -302,7 +302,7 @@ mod tests {
                 .collect::<Vec<_>>()
                 .first()
                 .unwrap(),
-            Tokens {
+            Gems {
                 ruby: 0,
                 emerald: 1,
                 sapphire: 0,
@@ -316,11 +316,11 @@ mod tests {
     #[test]
     fn test_payment_ambiguous_1_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(GemType::Ruby));
-        player.add_gems(Tokens::one(GemType::Onyx));
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Emerald));
-        player.add_gems(Tokens::one(GemType::Emerald));
+        player.add_gems(Gems::one(Gem::Ruby));
+        player.add_gems(Gems::one(Gem::Onyx));
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Emerald));
+        player.add_gems(Gems::one(Gem::Emerald));
 
         let card = Card::all()[4];
         let payment = player.payment_options_for(&card).unwrap();
@@ -328,7 +328,7 @@ mod tests {
 
         let set = payment;
         let target = vec![
-            Tokens {
+            Gems {
                 ruby: 1,
                 emerald: 1,
                 sapphire: 0,
@@ -336,7 +336,7 @@ mod tests {
                 onyx: 0,
                 gold: 1,
             },
-            Tokens {
+            Gems {
                 ruby: 0,
                 emerald: 2,
                 sapphire: 0,
@@ -344,7 +344,7 @@ mod tests {
                 onyx: 0,
                 gold: 1,
             },
-            Tokens {
+            Gems {
                 ruby: 1,
                 emerald: 2,
                 sapphire: 0,
@@ -360,19 +360,19 @@ mod tests {
     #[test]
     fn test_payment_specific_2_wild_discount_more() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(GemType::Ruby));
-        player.add_gems(Tokens::one(GemType::Ruby));
-        player.add_gems(Tokens::one(GemType::Onyx));
-        player.add_gems(Tokens::one(GemType::Onyx));
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Emerald));
+        player.add_gems(Gems::one(Gem::Ruby));
+        player.add_gems(Gems::one(Gem::Ruby));
+        player.add_gems(Gems::one(Gem::Onyx));
+        player.add_gems(Gems::one(Gem::Onyx));
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Emerald));
 
-        player.add_development(GemType::Ruby);
-        player.add_development(GemType::Emerald);
-        player.add_development(GemType::Emerald);
-        player.add_development(GemType::Emerald);
-        player.add_development(GemType::Emerald);
+        player.add_development(Gem::Ruby);
+        player.add_development(Gem::Emerald);
+        player.add_development(Gem::Emerald);
+        player.add_development(Gem::Emerald);
+        player.add_development(Gem::Emerald);
 
         let card = Card::all()[6];
         let payment = player.payment_options_for(&card).unwrap();
@@ -384,7 +384,7 @@ mod tests {
                 .collect::<Vec<_>>()
                 .first()
                 .unwrap(),
-            Tokens {
+            Gems {
                 ruby: 0,
                 emerald: 0,
                 sapphire: 0,
@@ -398,13 +398,13 @@ mod tests {
     #[test]
     fn test_payment_specific_2_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(GemType::Ruby));
-        player.add_gems(Tokens::one(GemType::Ruby));
-        player.add_gems(Tokens::one(GemType::Onyx));
-        player.add_gems(Tokens::one(GemType::Onyx));
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Emerald));
+        player.add_gems(Gems::one(Gem::Ruby));
+        player.add_gems(Gems::one(Gem::Ruby));
+        player.add_gems(Gems::one(Gem::Onyx));
+        player.add_gems(Gems::one(Gem::Onyx));
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Emerald));
 
         let card = Card::all()[6];
         let payment = player.payment_options_for(&card).unwrap();
@@ -416,7 +416,7 @@ mod tests {
                 .collect::<Vec<_>>()
                 .first()
                 .unwrap(),
-            Tokens {
+            Gems {
                 ruby: 0,
                 emerald: 1,
                 sapphire: 0,
@@ -430,21 +430,21 @@ mod tests {
     #[test]
     fn test_payment_ambiguous_3_wild() {
         let mut player = Player::new();
-        player.add_gems(Tokens::one(GemType::Emerald));
-        player.add_gems(Tokens::one(GemType::Emerald));
-        player.add_gems(Tokens::one(GemType::Onyx));
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Gold));
-        player.add_gems(Tokens::one(GemType::Gold));
+        player.add_gems(Gems::one(Gem::Emerald));
+        player.add_gems(Gems::one(Gem::Emerald));
+        player.add_gems(Gems::one(Gem::Onyx));
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Gold));
+        player.add_gems(Gems::one(Gem::Gold));
 
         let card = Card::all()[13];
 
         let payment = player.payment_options_for(&card).unwrap();
 
-        //             = 0 ways to pay with 0 wilds
-        // ee.o        = 1 way to pay with 1 wild
-        // .e.o | ee.. = 2 ways to pay with 2 wilds
-        // .e.. | ..o. = 2 ways to pay with 3 wilds
+        //             = 0 ways to pay with 0 golds
+        // ee.o        = 1 way to pay with 1 gold
+        // .e.o | ee.. = 2 ways to pay with 2 golds
+        // .e.. | ..o. = 2 ways to pay with 3 golds
 
         assert_eq!(payment.len(), 5);
     }

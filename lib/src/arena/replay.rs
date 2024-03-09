@@ -1,8 +1,8 @@
 use super::*;
 use crate::card::CardId;
-use crate::gem_type::GemType;
+use crate::gem::Gem;
 use crate::nobles::Noble;
-use crate::token::Tokens;
+use crate::gems::Gems;
 use log::trace;
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -95,7 +95,7 @@ impl Replay<Finalized> {
 pub type FinalizedReplay = Arc<RwLock<Replay<Finalized>>>;
 
 // (color/gem, amount)
-type JSTokens = Vec<(usize, i8)>;
+type JSGems = Vec<(usize, i8)>;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct JSCard {
@@ -103,7 +103,7 @@ pub struct JSCard {
     points: usize,
     #[serde(rename = "colorIndex")]
     color_index: usize,
-    tokens: JSTokens,
+    gems: JSGems,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -116,8 +116,8 @@ pub struct JSDeck {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct JSPlayer {
-    developments: JSTokens,
-    gems : JSTokens,
+    developments: JSGems,
+    gems : JSGems,
     #[serde(rename = "totalGems")]
     total_gems: u32,
     #[serde(rename = "reservedCards")]
@@ -133,13 +133,13 @@ enum Success {
     #[serde(rename = "move_index")]
     Move(usize),
     #[serde(rename = "nobles")]
-    Nobles(Vec<JSTokens>),
+    Nobles(Vec<JSGems>),
     #[serde(rename = "cards")]
     Cards(Vec<Vec<JSCard>>),
     #[serde(rename = "decks")]
     Decks(Vec<JSDeck>),
     #[serde(rename = "bank")]
-    Bank(JSTokens),
+    Bank(JSGems),
     #[serde(rename = "players")]
     Players(Vec<JSPlayer>),
 }
@@ -221,28 +221,28 @@ pub async fn go_to_move(move_number: Move, arena: GlobalArena) -> Result<impl Re
 //	 red (ruby)      : 3
 //	 black (onyx)    : 4
 //	 yellow (gold)   : 5
-fn js_gems_map() -> HashMap<GemType, usize> {
+fn js_gems_map() -> HashMap<Gem, usize> {
     let mut map = HashMap::new();
-    map.insert(GemType::Diamond, 0);
-    map.insert(GemType::Sapphire, 1);
-    map.insert(GemType::Emerald, 2);
-    map.insert(GemType::Ruby, 3);
-    map.insert(GemType::Onyx, 4);
-    map.insert(GemType::Gold, 5);
+    map.insert(Gem::Diamond, 0);
+    map.insert(Gem::Sapphire, 1);
+    map.insert(Gem::Emerald, 2);
+    map.insert(Gem::Ruby, 3);
+    map.insert(Gem::Onyx, 4);
+    map.insert(Gem::Gold, 5);
     map
 }
 
 // Converts a noble to a vector representing the color distribution
 // of the cost of the noble as a list of (color_index, number_needed)
-fn to_js_noble(noble: &Noble) -> JSTokens {
+fn to_js_noble(noble: &Noble) -> JSGems {
     let mut map = js_gems_map();
     let mut js_noble = Vec::new();
 
-    let tokens = noble.requirements();
+    let gems = noble.requirements();
 
-    for gem in GemType::all_expect_gold() {
+    for gem in Gem::all_expect_gold() {
         let index = map.get(&gem).unwrap();
-        let count = tokens[gem];
+        let count = gems[gem];
         if count > 0 {
             js_noble.push((*index, count));
         }
@@ -287,7 +287,7 @@ fn to_js_cards(card_ids: Vec<Vec<CardId>>, card_lookup: Arc<Vec<Card>>) -> Vec<V
             let cost = c.cost();
             let mut js_cost = Vec::new();
 
-            for gem in GemType::all_expect_gold() {
+            for gem in Gem::all_expect_gold() {
                 let index = map.get(&gem).unwrap();
                 let count = cost[gem];
                 if count > 0 {
@@ -295,13 +295,13 @@ fn to_js_cards(card_ids: Vec<Vec<CardId>>, card_lookup: Arc<Vec<Card>>) -> Vec<V
                 }
             }
 
-            let color_index = map.get(&c.gem_type()).unwrap();
+            let color_index = map.get(&c.gem()).unwrap();
 
             JSCard {
                 tier,
                 points,
                 color_index: *color_index,
-                tokens: js_cost,
+                gems: js_cost,
             }
         })
         .collect();
@@ -360,14 +360,14 @@ pub async fn board_decks(arena: GlobalArena) -> Result<impl Reply, Rejection> {
     }
 }
 
-// Converts a list of gems/tokens from the public board area to a list of JSTokens
+// Converts a list of gems from the public board area to a list of JSGems
 // using the conventions laid out in the frontend
-pub fn to_js_bank(tokens: &Tokens) -> JSTokens {
+pub fn to_js_bank(gems: &Gems) -> JSGems {
     let map = js_gems_map();
     let mut js_bank = Vec::new();
-    for gem in GemType::all() {
+    for gem in Gem::all() {
         let index = map.get(&gem).unwrap();
-        let count = tokens[gem];
+        let count = gems[gem];
         if count > 0 {
             js_bank.push((*index, count));
         }
@@ -403,14 +403,14 @@ pub fn to_js_players(players: &Vec<Player>, card_lookup: Arc<Vec<Card>>) -> Vec<
         let mut js_cards =  Vec::new();
 
 
-        for gem in GemType::all_expect_gold() {
+        for gem in Gem::all_expect_gold() {
             let index = map.get(&gem).unwrap();
             let count = developments[gem];
             js_developments.push((*index, count));
 
         }
 
-        for gem in GemType::all() {
+        for gem in Gem::all() {
             let index = map.get(&gem).unwrap();
             let count = player.gems()[gem];
             js_gems.push((*index, count));
@@ -423,7 +423,7 @@ pub fn to_js_players(players: &Vec<Player>, card_lookup: Arc<Vec<Card>>) -> Vec<
             let cost = card.cost();
             let mut js_cost = Vec::new();
 
-            for gem in GemType::all_expect_gold() {
+            for gem in Gem::all_expect_gold() {
                 let index = map.get(&gem).unwrap();
                 let count = cost[gem];
                 if count > 0 {
@@ -431,14 +431,14 @@ pub fn to_js_players(players: &Vec<Player>, card_lookup: Arc<Vec<Card>>) -> Vec<
                 }
             }
 
-            let color_index = map.get(&card.gem_type()).unwrap();
+            let color_index = map.get(&card.gem()).unwrap();
             let color_index = *color_index;
 
             js_cards.push(JSCard {
                 tier,
                 points,
                 color_index,
-                tokens: js_cost,
+                gems: js_cost,
             });
         }
 

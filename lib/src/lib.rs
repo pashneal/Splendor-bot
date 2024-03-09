@@ -4,20 +4,20 @@ pub mod arena;
 pub mod card;
 pub mod client;
 pub mod game_logic;
-pub mod gem_type;
+pub mod gem;
 pub mod nobles;
 pub mod player;
-pub mod token;
+pub mod gems;
 
 pub use crate::arena::*;
 pub use crate::card::*;
 pub use crate::client::*;
 pub use crate::game_logic::*;
-pub use crate::gem_type::*;
+pub use crate::gem::*;
 pub use crate::nobles::*;
 pub use crate::player::*;
 pub use crate::protocol::*;
-pub use crate::token::*;
+pub use crate::gems::*;
 
 pub trait JSONable: serde::Serialize + serde::de::DeserializeOwned {
     fn from_json(json: &str) -> Self {

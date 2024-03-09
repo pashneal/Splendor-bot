@@ -1,0 +1,6 @@
+{
+  "build" : [
+    "python3 ../../python_client/ffi/build.py"
+  ],
+  "binary" : "actions.py"
+}

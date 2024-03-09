@@ -1,8 +1,8 @@
 use crate::card::{Card, CardId};
-use crate::gem_type::GemType;
+use crate::gem::Gem;
 use crate::nobles::*;
 use crate::player::Player;
-use crate::token::Tokens;
+use crate::gems::Gems;
 
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -19,7 +19,7 @@ use log::{debug, error, info, trace};
 #[derive(Debug, Clone)]
 pub struct Game {
     players: Vec<Player>,
-    bank: Tokens,
+    bank: Gems,
     decks: Vec<Vec<Card>>,
     current_player: usize,
     nobles: Vec<Noble>,
@@ -83,7 +83,7 @@ impl Game {
         self.dealt_cards.clone()
     }
 
-    pub fn bank(&self) -> &Tokens {
+    pub fn bank(&self) -> &Gems {
         &self.bank
     }
 
@@ -135,7 +135,7 @@ impl Game {
 
         Game {
             players: (0..players).map(|_| Player::new()).collect(),
-            bank: Tokens::start(players),
+            bank: Gems::start(players),
             decks,
             current_player: 0,
             nobles,
@@ -184,13 +184,13 @@ impl Game {
                 }
             }
 
-            Phase::PlayerTokenCapExceeded => {
-                let mut running = Tokens::empty();
+            Phase::PlayerGemCapExceeded => {
+                let mut running = Gems::empty();
                 let player = &self.players[self.current_player];
                 let mut gems = player.gems().clone();
 
                 let discard_num = player.gems().total() - 10;
-                let choices = choose_tokens(&mut gems, &mut running, discard_num);
+                let choices = choose_gems(&mut gems, &mut running, discard_num);
                 let discard_actions = choices.iter().map(|d| Discard(*d)).collect();
                 Some(discard_actions)
             }
@@ -237,7 +237,7 @@ impl Game {
                 let distinct_tokens = self.bank.distinct();
                 let take_max = distinct_tokens.min(3) as u32;
                 let choices =
-                    choose_distinct_tokens(&mut self.bank.clone(), &mut Tokens::empty(), take_max);
+                    choose_distinct_gems(&mut self.bank.clone(), &mut Gems::empty(), take_max);
 
                 if take_max > 0 {
                     for choice in choices {
@@ -247,7 +247,7 @@ impl Game {
 
                 // If there are 4 tokens of the same color:
                 // -> Can take the two tokens of that color
-                for color in GemType::all_expect_gold() {
+                for color in Gem::all_expect_gold() {
                     if self.bank[color] >= 4 {
                         actions.push(TakeDouble(color));
                     }
@@ -275,7 +275,7 @@ impl Game {
                 Pass => true,
                 _ => false,
             },
-            Phase::PlayerTokenCapExceeded => match action {
+            Phase::PlayerGemCapExceeded => match action {
                 Discard(_) => true,
                 _ => false,
             },
@@ -367,20 +367,20 @@ impl Game {
                 // -> Must be from a pile that has >= 4
                 // -> Cannot take a wild token with this action
                 debug_assert!(self.bank[color] >= 4);
-                debug_assert!(!matches!(color, GemType::Gold));
+                debug_assert!(!matches!(color, Gem::Gold));
 
                 // TODO: this is a little weird but we can change later
                 // right now it's using debug asserts on the
                 // Sub operations to check preconditions
-                self.bank -= Tokens::one(color);
-                self.bank -= Tokens::one(color);
+                self.bank -= Gems::one(color);
+                self.bank -= Gems::one(color);
 
                 let player = &mut self.players[self.current_player];
-                player.add_gems(Tokens::one(color));
-                player.add_gems(Tokens::one(color));
+                player.add_gems(Gems::one(color));
+                player.add_gems(Gems::one(color));
 
                 if player.gems().total() > 10 {
-                    Phase::PlayerTokenCapExceeded
+                    Phase::PlayerGemCapExceeded
                 } else {
                     Phase::NobleAction
                 }
@@ -400,17 +400,17 @@ impl Game {
                     true
                 });
                 // -> Cannot take a wild token with this action
-                debug_assert!(colors.iter().all(|c| !matches!(c, GemType::Gold)));
+                debug_assert!(colors.iter().all(|c| !matches!(c, Gem::Gold)));
 
                 let player = &mut self.players[self.current_player];
-                player.add_gems(Tokens::from_set(&colors));
+                player.add_gems(Gems::from_set(&colors));
 
                 for color in colors {
-                    self.bank -= Tokens::one(color);
+                    self.bank -= Gems::one(color);
                 }
 
                 if player.gems().total() > 10 {
-                    Phase::PlayerTokenCapExceeded
+                    Phase::PlayerGemCapExceeded
                 } else {
                     Phase::NobleAction
                 }
@@ -425,17 +425,17 @@ impl Game {
                 self.deal_to(tier);
 
                 // See if the player gets an wild/gold gem
-                let gets_gold = self.bank[GemType::Gold] > 0;
+                let gets_gold = self.bank[Gem::Gold] > 0;
                 let player = &mut self.players[self.current_player];
                 player.reserve_card(card_id);
 
                 if gets_gold {
-                    player.add_gems(Tokens::one(GemType::Gold));
-                    self.bank -= Tokens::one(GemType::Gold);
+                    player.add_gems(Gems::one(Gem::Gold));
+                    self.bank -= Gems::one(Gem::Gold);
                 }
 
                 if player.gems().total() > 10 {
-                    Phase::PlayerTokenCapExceeded
+                    Phase::PlayerGemCapExceeded
                 } else {
                     Phase::NobleAction
                 }
@@ -445,18 +445,18 @@ impl Game {
                 let new_card_id = self.deal_to(tier).expect("Cannot reserve from empty deck");
                 self.remove_card(new_card_id);
 
-                let gets_gold = self.bank[GemType::Gold] > 0;
+                let gets_gold = self.bank[Gem::Gold] > 0;
                 let player = &mut self.players[self.current_player];
 
                 if gets_gold {
-                    player.add_gems(Tokens::one(GemType::Gold));
-                    self.bank -= Tokens::one(GemType::Gold);
+                    player.add_gems(Gems::one(Gem::Gold));
+                    self.bank -= Gems::one(Gem::Gold);
                 }
 
                 player.blind_reserve_card(new_card_id);
 
                 if player.gems().total() > 10 {
-                    Phase::PlayerTokenCapExceeded
+                    Phase::PlayerGemCapExceeded
                 } else {
                     Phase::NobleAction
                 }
@@ -542,13 +542,13 @@ impl Game {
         };
 
         debug_assert!(
-            Tokens::start(self.players.len() as u8)
+            Gems::start(self.players.len() as u8)
                 == self.bank
                     + self
                         .players
                         .iter()
                         .map(|p| p.gems())
-                        .fold(Tokens::empty(), |a, b| a + *b),
+                        .fold(Gems::empty(), |a, b| a + *b),
             "Tokens should be conserved"
         );
         self.current_phase = next_phase;
@@ -616,112 +616,112 @@ impl Game {
 
 #[cfg(test)]
 pub mod test {
-    use super::GemType::*;
+    use super::Gem::*;
     pub use super::*;
     #[test]
 
     pub fn test_choose_tokens_1() {
-        let mut gems = Tokens::from_vec(&vec![
-            GemType::Ruby,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Emerald,
+        let mut gems = Gems::from_vec(&vec![
+            Gem::Ruby,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Emerald,
         ]);
-        let mut running = Tokens::empty();
-        let choices = choose_tokens(&mut gems, &mut running, 1);
+        let mut running = Gems::empty();
+        let choices = choose_gems(&mut gems, &mut running, 1);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
-                Tokens::from_vec(&vec![GemType::Ruby]),
-                Tokens::from_vec(&vec![GemType::Sapphire]),
-                Tokens::from_vec(&vec![GemType::Emerald]),
+                Gems::from_vec(&vec![Gem::Ruby]),
+                Gems::from_vec(&vec![Gem::Sapphire]),
+                Gems::from_vec(&vec![Gem::Emerald]),
             ])
         );
     }
 
     #[test]
     pub fn test_choose_tokens_2() {
-        let mut gems = Tokens::from_vec(&vec![
-            GemType::Ruby,
-            GemType::Ruby,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Emerald,
+        let mut gems = Gems::from_vec(&vec![
+            Gem::Ruby,
+            Gem::Ruby,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Emerald,
         ]);
-        let mut running = Tokens::empty();
-        let choices = choose_tokens(&mut gems, &mut running, 2);
+        let mut running = Gems::empty();
+        let choices = choose_gems(&mut gems, &mut running, 2);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Ruby]),
-                Tokens::from_vec(&vec![GemType::Sapphire, GemType::Sapphire]),
-                Tokens::from_vec(&vec![GemType::Emerald, GemType::Sapphire]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Sapphire]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Emerald]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Ruby]),
+                Gems::from_vec(&vec![Gem::Sapphire, Gem::Sapphire]),
+                Gems::from_vec(&vec![Gem::Emerald, Gem::Sapphire]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Sapphire]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Emerald]),
             ])
         );
     }
 
     #[test]
     pub fn test_choose_3_distinct_tokens() {
-        let mut gems = Tokens::start(2);
-        let mut running = Tokens::empty();
-        let choices = choose_distinct_tokens(&mut gems, &mut running, 3);
+        let mut gems = Gems::start(2);
+        let mut running = Gems::empty();
+        let choices = choose_distinct_gems(&mut gems, &mut running, 3);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Sapphire, GemType::Emerald]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Sapphire, GemType::Diamond]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Sapphire, GemType::Onyx]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Emerald, GemType::Diamond]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Emerald, GemType::Onyx]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Diamond, GemType::Onyx]),
-                Tokens::from_vec(&vec![GemType::Sapphire, GemType::Emerald, GemType::Diamond]),
-                Tokens::from_vec(&vec![GemType::Sapphire, GemType::Emerald, GemType::Onyx]),
-                Tokens::from_vec(&vec![GemType::Sapphire, GemType::Diamond, GemType::Onyx]),
-                Tokens::from_vec(&vec![GemType::Emerald, GemType::Diamond, GemType::Onyx]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Sapphire, Gem::Emerald]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Sapphire, Gem::Diamond]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Sapphire, Gem::Onyx]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Emerald, Gem::Diamond]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Emerald, Gem::Onyx]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Diamond, Gem::Onyx]),
+                Gems::from_vec(&vec![Gem::Sapphire, Gem::Emerald, Gem::Diamond]),
+                Gems::from_vec(&vec![Gem::Sapphire, Gem::Emerald, Gem::Onyx]),
+                Gems::from_vec(&vec![Gem::Sapphire, Gem::Diamond, Gem::Onyx]),
+                Gems::from_vec(&vec![Gem::Emerald, Gem::Diamond, Gem::Onyx]),
             ])
         );
     }
 
     #[test]
     pub fn test_choose_distinct_tokens() {
-        let mut gems = Tokens::from_vec(&vec![
-            GemType::Ruby,
-            GemType::Ruby,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Sapphire,
-            GemType::Emerald,
+        let mut gems = Gems::from_vec(&vec![
+            Gem::Ruby,
+            Gem::Ruby,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Sapphire,
+            Gem::Emerald,
         ]);
-        let mut running = Tokens::empty();
-        let choices = choose_distinct_tokens(&mut gems, &mut running, 2);
+        let mut running = Gems::empty();
+        let choices = choose_distinct_gems(&mut gems, &mut running, 2);
         assert_eq!(
             choices,
             HashSet::from_iter(vec![
-                Tokens::from_vec(&vec![GemType::Emerald, GemType::Sapphire]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Sapphire]),
-                Tokens::from_vec(&vec![GemType::Ruby, GemType::Emerald]),
+                Gems::from_vec(&vec![Gem::Emerald, Gem::Sapphire]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Sapphire]),
+                Gems::from_vec(&vec![Gem::Ruby, Gem::Emerald]),
             ])
         );
     }
@@ -756,27 +756,27 @@ pub mod test {
             vec![cards[43], cards[66], cards[47], cards[67]],
             vec![cards[89], cards[80], cards[86], cards[74]],
         ]);
-        game.play_action(TakeDouble(GemType::Onyx));
+        game.play_action(TakeDouble(Gem::Onyx));
         game.play_action(Pass);
         game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 29);
-        assert_eq!(!actions.contains(&TakeDouble(GemType::Onyx)), true);
+        assert_eq!(!actions.contains(&TakeDouble(Gem::Onyx)), true);
 
         game.play_action(TakeDistinct(HashSet::from_iter(vec![
-            GemType::Diamond,
-            GemType::Emerald,
-            GemType::Ruby,
+            Gem::Diamond,
+            Gem::Emerald,
+            Gem::Ruby,
         ])));
         game.play_action(Pass);
         game.play_action(Continue);
 
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 29);
-        assert_eq!(!actions.contains(&TakeDouble(GemType::Onyx)), true);
+        assert_eq!(!actions.contains(&TakeDouble(Gem::Onyx)), true);
 
-        game.play_action(TakeDouble(GemType::Diamond));
+        game.play_action(TakeDouble(Gem::Diamond));
         game.play_action(Pass);
         game.play_action(Continue);
 
@@ -784,9 +784,9 @@ pub mod test {
         assert_eq!(actions.len(), 28);
 
         game.play_action(TakeDistinct(HashSet::from_iter(vec![
-            GemType::Diamond,
-            GemType::Emerald,
-            GemType::Ruby,
+            Gem::Diamond,
+            Gem::Emerald,
+            Gem::Ruby,
         ])));
         game.play_action(Pass);
         game.play_action(Continue);
@@ -795,9 +795,9 @@ pub mod test {
         assert_eq!(actions.len(), 26);
 
         game.play_action(TakeDistinct(HashSet::from_iter(vec![
-            GemType::Diamond,
-            GemType::Emerald,
-            GemType::Ruby,
+            Gem::Diamond,
+            Gem::Emerald,
+            Gem::Ruby,
         ])));
         game.play_action(Pass);
         game.play_action(Continue);
@@ -805,7 +805,7 @@ pub mod test {
         let actions = game.get_legal_actions().unwrap();
         assert_eq!(actions.len(), 30 - 4 - 6);
 
-        game.play_action(TakeDouble(GemType::Sapphire));
+        game.play_action(TakeDouble(Gem::Sapphire));
         game.play_action(Pass);
         game.play_action(Continue);
 
@@ -814,11 +814,11 @@ pub mod test {
 
         game.play_action(Purchase((
             8,
-            Tokens::from_vec(&vec![
-                GemType::Diamond,
-                GemType::Emerald,
-                GemType::Ruby,
-                GemType::Onyx,
+            Gems::from_vec(&vec![
+                Gem::Diamond,
+                Gem::Emerald,
+                Gem::Ruby,
+                Gem::Onyx,
             ]),
         )));
         game.play_action(Pass);

@@ -15,8 +15,8 @@ pub struct PyCard {
     pub id: CardId,
     pub tier: u8,
     pub points: u8,
-    pub cost: PyGems,
-    pub gem: PyGem,
+    pub cost: PyTokens,
+    pub gem_type: PyGemType,
 }
 
 impl PyCard {
@@ -25,8 +25,8 @@ impl PyCard {
             id: card.id(),
             tier: card.tier(),
             points: card.points(),
-            cost: PyGems::from(card.cost().to_gems()),
-            gem: PyGem::from(card.gem()),
+            cost: PyTokens::from(card.cost().to_tokens()),
+            gem_type: PyGemType::from(card.gem_type()),
         }
     }
     pub fn from_id(card_id: CardId) -> Self {
@@ -79,13 +79,13 @@ impl PyCard {
     }
 
     #[getter]
-    pub fn cost(&self) -> PyGems {
+    pub fn cost(&self) -> PyTokens {
         self.cost.clone()
     }
 
     #[getter]
-    pub fn gem(&self) -> PyGem {
-        self.gem.clone()
+    pub fn gem_type(&self) -> PyGemType {
+        self.gem_type.clone()
     }
 
     pub fn __eq__(&self, other: &PyCard) -> bool {
@@ -93,10 +93,10 @@ impl PyCard {
     }
 }
 
-/// A Python wrapper for the `Gem` enum
+/// A Python wrapper for the `GemType` enum
 #[pyclass]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PyGem {
+pub enum PyGemType {
     Onyx,
     Sapphire,
     Emerald,
@@ -105,29 +105,29 @@ pub enum PyGem {
     Gold,
 }
 
-impl PyGem {
-    pub fn from(gem: Gem) -> Self {
-        match gem {
-            Gem::Onyx => PyGem::Onyx,
-            Gem::Sapphire => PyGem::Sapphire,
-            Gem::Emerald => PyGem::Emerald,
-            Gem::Ruby => PyGem::Ruby,
-            Gem::Diamond => PyGem::Diamond,
-            Gem::Gold => PyGem::Gold,
+impl PyGemType {
+    pub fn from(gem_type: GemType) -> Self {
+        match gem_type {
+            GemType::Onyx => PyGemType::Onyx,
+            GemType::Sapphire => PyGemType::Sapphire,
+            GemType::Emerald => PyGemType::Emerald,
+            GemType::Ruby => PyGemType::Ruby,
+            GemType::Diamond => PyGemType::Diamond,
+            GemType::Gold => PyGemType::Gold,
         }
     }
 }
 
 #[pymethods]
-impl PyGem {
+impl PyGemType {
     pub fn __str__(&self) -> String {
         match self {
-            PyGem::Onyx => "Onyx".to_string(),
-            PyGem::Sapphire => "Sapphire".to_string(),
-            PyGem::Emerald => "Emerald".to_string(),
-            PyGem::Ruby => "Ruby".to_string(),
-            PyGem::Diamond => "Diamond".to_string(),
-            PyGem::Gold => "Gold".to_string(),
+            PyGemType::Onyx => "Onyx".to_string(),
+            PyGemType::Sapphire => "Sapphire".to_string(),
+            PyGemType::Emerald => "Emerald".to_string(),
+            PyGemType::Ruby => "Ruby".to_string(),
+            PyGemType::Diamond => "Diamond".to_string(),
+            PyGemType::Gold => "Gold".to_string(),
         }
     }
 
@@ -136,10 +136,10 @@ impl PyGem {
     }
 }
 
-/// A python wrapper for the `Gems` struct
+/// A python wrapper for the `Tokens` struct
 #[pyclass]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PyGems {
+pub struct PyTokens {
     #[pyo3(get)]
     pub onyx: i8,
     #[pyo3(get)]
@@ -154,31 +154,31 @@ pub struct PyGems {
     pub gold: i8,
 }
 
-impl PyGems {
+impl PyTokens {
     pub fn from_cost(cost: Cost) -> Self {
-        let gems = cost.to_gems();
-        PyGems {
-            onyx: gems.onyx,
-            sapphire: gems.sapphire,
-            emerald: gems.emerald,
-            ruby: gems.ruby,
-            diamond: gems.diamond,
-            gold: gems.gold,
+        let tokens = cost.to_tokens();
+        PyTokens {
+            onyx: tokens.onyx,
+            sapphire: tokens.sapphire,
+            emerald: tokens.emerald,
+            ruby: tokens.ruby,
+            diamond: tokens.diamond,
+            gold: tokens.gold,
         }
     }
-    pub fn from(gems: Gems) -> Self {
-        PyGems {
-            onyx: gems.onyx,
-            sapphire: gems.sapphire,
-            emerald: gems.emerald,
-            ruby: gems.ruby,
-            diamond: gems.diamond,
-            gold: gems.gold,
+    pub fn from(tokens: Tokens) -> Self {
+        PyTokens {
+            onyx: tokens.onyx,
+            sapphire: tokens.sapphire,
+            emerald: tokens.emerald,
+            ruby: tokens.ruby,
+            diamond: tokens.diamond,
+            gold: tokens.gold,
         }
     }
 
-    pub fn into_gems(self) -> Gems {
-        Gems {
+    pub fn into_tokens(self) -> Tokens {
+        Tokens {
             onyx: self.onyx,
             sapphire: self.sapphire,
             emerald: self.emerald,
@@ -190,7 +190,7 @@ impl PyGems {
 }
 
 #[pymethods]
-impl PyGems {
+impl PyTokens {
     #[new]
     pub fn new(
         onyx: Option<i8>,
@@ -200,7 +200,7 @@ impl PyGems {
         diamond: Option<i8>,
         gold: Option<i8>,
     ) -> Self {
-        PyGems {
+        PyTokens {
             onyx: onyx.unwrap_or(0),
             sapphire: sapphire.unwrap_or(0),
             emerald: emerald.unwrap_or(0),
@@ -242,7 +242,7 @@ pub struct PyAction {
     action_type: PyActionType,
     card_id: Option<CardId>,
     noble_id: Option<NobleId>,
-    gems: Option<PyGems>,
+    tokens: Option<PyTokens>,
     tier: Option<usize>,
 }
 
@@ -271,17 +271,17 @@ impl PyAction {
             _ => None,
         };
 
-        let gems = match &action {
+        let tokens = match &action {
             Action::TakeDouble(color) => {
                 let color = *color;
-                let mut gems = Gems::empty();
-                gems += Gems::one(color.clone());
-                gems += Gems::one(color.clone());
-                Some(PyGems::from(gems))
+                let mut tokens = Tokens::empty();
+                tokens += Tokens::one(color.clone());
+                tokens += Tokens::one(color.clone());
+                Some(PyTokens::from(tokens))
             }
-            Action::TakeDistinct(color_set) => Some(PyGems::from(Gems::from_set(color_set))),
-            Action::Discard(gems) => Some(PyGems::from(*gems)),
-            Action::Purchase((_, gems)) => Some(PyGems::from(*gems)),
+            Action::TakeDistinct(color_set) => Some(PyTokens::from(Tokens::from_set(color_set))),
+            Action::Discard(tokens) => Some(PyTokens::from(*tokens)),
+            Action::Purchase((_, tokens)) => Some(PyTokens::from(*tokens)),
             _ => None,
         };
 
@@ -294,7 +294,7 @@ impl PyAction {
             action_type,
             card_id,
             noble_id,
-            gems,
+            tokens,
             tier,
         }
     }
@@ -302,26 +302,26 @@ impl PyAction {
     pub fn into_action(self) -> Action {
         match self.action_type {
             PyActionType::TakeGems => {
-                let py_gems = self.gems();
-                let gems = py_gems.into_gems();
-                let is_double = gems.total() == 2 && gems.to_set().len() == 1;
+                let py_tokens = self.tokens();
+                let tokens = py_tokens.into_tokens();
+                let is_double = tokens.total() == 2 && tokens.to_set().len() == 1;
 
                 match is_double {
                     true => {
-                        let mut color = Gem::Gold;
-                        for c in gems.to_set() {
+                        let mut color = GemType::Gold;
+                        for c in tokens.to_set() {
                             color = c
                         }
                         Action::TakeDouble(color)
                     }
-                    false => Action::TakeDistinct(gems.to_set()),
+                    false => Action::TakeDistinct(tokens.to_set()),
                 }
             }
             PyActionType::ReserveFaceUp => Action::Reserve(self.card_id()),
             PyActionType::ReserveFaceDown => Action::ReserveHidden(self.tier()),
-            PyActionType::Discard => Action::Discard(self.gems().into_gems()),
+            PyActionType::Discard => Action::Discard(self.tokens().into_tokens()),
             PyActionType::Purchase => {
-                Action::Purchase((self.card_id(), self.gems().into_gems()))
+                Action::Purchase((self.card_id(), self.tokens().into_tokens()))
             }
             PyActionType::AttractNoble => Action::AttractNoble(self.noble_id()),
             PyActionType::Pass => Action::Pass,
@@ -337,8 +337,8 @@ impl PyAction {
     pub fn __str__(&self) -> String {
         match self.action_type.clone() {
             PyActionType::TakeGems => {
-                let gems = self.gems();
-                format!("TakeGems({})", gems.__str__())
+                let tokens = self.tokens();
+                format!("TakeGems({})", tokens.__str__())
             }
             PyActionType::ReserveFaceUp => {
                 let card_id = self.card_id();
@@ -349,13 +349,13 @@ impl PyAction {
                 format!("ReserveFaceDown(tier : {})", tier)
             }
             PyActionType::Discard => {
-                let gems = self.gems();
-                format!("Discard({})", gems.__str__())
+                let tokens = self.tokens();
+                format!("Discard({})", tokens.__str__())
             }
             PyActionType::Purchase => {
                 let card_id = self.card_id();
-                let gems = self.gems();
-                format!("Purchase({}, {})", card_id, gems.__str__())
+                let tokens = self.tokens();
+                format!("Purchase({}, {})", card_id, tokens.__str__())
             }
             PyActionType::AttractNoble => {
                 let noble_id = self.noble_id();
@@ -403,13 +403,13 @@ impl PyAction {
     }
 
     #[getter]
-    pub fn gems(&self) -> PyGems {
-        match self.gems.clone() {
+    pub fn tokens(&self) -> PyTokens {
+        match self.tokens.clone() {
             None => panic!(
-                "This action type ({:?}) does not have gems",
+                "This action type ({:?}) does not have tokens",
                 self.action_type
             ),
-            Some(gems) => gems,
+            Some(tokens) => tokens,
         }
     }
 
@@ -417,7 +417,7 @@ impl PyAction {
     pub fn tier(&self) -> usize {
         match self.tier {
             None => panic!(
-                "This action type ({:?}) does not have gems",
+                "This action type ({:?}) does not have tokens",
                 self.action_type
             ),
             Some(tier) => tier,
@@ -428,7 +428,7 @@ impl PyAction {
         self.action_type == other.action_type
             && self.card_id == other.card_id
             && self.noble_id == other.noble_id
-            && self.gems == other.gems
+            && self.tokens == other.tokens
             && self.tier == other.tier
     }
 
@@ -458,7 +458,7 @@ impl PyAction {
             action_type: PyActionType::Purchase,
             card_id,
             noble_id: None,
-            gems: Some(PyGems::new(onyx, sapphire, emerald, ruby, diamond, gold)),
+            tokens: Some(PyTokens::new(onyx, sapphire, emerald, ruby, diamond, gold)),
             tier: None,
         }
     }
@@ -469,7 +469,7 @@ impl PyAction {
             action_type: PyActionType::ReserveFaceDown,
             card_id: None,
             noble_id: None,
-            gems: None,
+            tokens: None,
             tier,
         }
     }
@@ -491,7 +491,7 @@ impl PyAction {
             action_type: PyActionType::ReserveFaceUp,
             card_id,
             noble_id: None,
-            gems: None,
+            tokens: None,
             tier: None,
         }
     }
@@ -511,7 +511,7 @@ impl PyAction {
             action_type: PyActionType::TakeGems,
             card_id: None,
             noble_id: None,
-            gems: Some(PyGems::new(onyx, sapphire, emerald, ruby, diamond, None)),
+            tokens: Some(PyTokens::new(onyx, sapphire, emerald, ruby, diamond, None)),
             tier: None,
         }
     }
@@ -528,7 +528,7 @@ impl PyAction {
             action_type: PyActionType::Discard,
             card_id: None,
             noble_id: None,
-            gems: Some(PyGems::new(onyx, sapphire, emerald, ruby, diamond, None)),
+            tokens: Some(PyTokens::new(onyx, sapphire, emerald, ruby, diamond, None)),
             tier: None,
         }
     }
@@ -539,7 +539,7 @@ impl PyAction {
             action_type: PyActionType::AttractNoble,
             card_id: None,
             noble_id,
-            gems: None,
+            tokens: None,
             tier: None,
         }
     }
@@ -624,9 +624,9 @@ pub struct PyPlayer {
     #[pyo3(get)]
     num_reserved_cards: usize,
     #[pyo3(get)]
-    gems: PyGems,
+    gems: PyTokens,
     #[pyo3(get)]
-    developments: PyGems,
+    developments: PyTokens,
     reserved_cards: Option<Vec<PyCard>>,
 }
 
@@ -643,8 +643,8 @@ impl PyPlayer {
                     .collect(),
             ),
             num_reserved_cards: player.num_reserved(),
-            gems: PyGems::from(*player.gems()),
-            developments: PyGems::from(*player.developments()),
+            gems: PyTokens::from(*player.gems()),
+            developments: PyTokens::from(*player.developments()),
         }
     }
 
@@ -654,8 +654,8 @@ impl PyPlayer {
             total_points: player.points,
             reserved_cards: None,
             num_reserved_cards: player.num_reserved,
-            gems: PyGems::from(player.gems),
-            developments: PyGems::from(player.developments.to_gems()),
+            gems: PyTokens::from(player.gems),
+            developments: PyTokens::from(player.developments.to_tokens()),
         }
     }
 }
@@ -679,7 +679,7 @@ pub struct PyNoble {
     #[pyo3(get)]
     pub points: u8,
     #[pyo3(get)]
-    pub cost: PyGems,
+    pub cost: PyTokens,
     #[pyo3(get)]
     pub id: NobleId,
 }
@@ -688,7 +688,7 @@ impl PyNoble {
     pub fn from(noble: &Noble) -> Self {
         PyNoble {
             points: noble.points(),
-            cost: PyGems::from(*noble.requirements()),
+            cost: PyTokens::from(*noble.requirements()),
             id: noble.id(),
         }
     }
@@ -716,7 +716,7 @@ pub struct PyBoard {
     #[pyo3(get)]
     pub nobles: Vec<PyNoble>,
     #[pyo3(get)]
-    pub gems: PyGems,
+    pub gems: PyTokens,
 }
 
 impl PyBoard {
@@ -726,7 +726,7 @@ impl PyBoard {
             deck_counts: board.deck_counts,
             available_cards: board.available_cards.clone(),
             nobles: board_nobles,
-            gems: PyGems::from(board.gems),
+            gems: PyTokens::from(board.tokens),
         }
     }
 }
@@ -817,11 +817,11 @@ fn ffi(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<PyClientInfo>()?;
     m.add_class::<PyPlayer>()?;
     m.add_class::<PyActionType>()?;
-    m.add_class::<PyGems>()?;
+    m.add_class::<PyTokens>()?;
     m.add_class::<PyAction>()?;
     m.add_class::<PyCard>()?;
     m.add_class::<PyNoble>()?;
-    m.add_class::<PyGem>()?;
+    m.add_class::<PyGemType>()?;
     Ok(())
 }
 

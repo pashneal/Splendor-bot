@@ -1,5 +1,5 @@
 use crate::card::Cost;
-use crate::token::Tokens;
+use crate::gems::Gems;
 
 pub type NobleId = u8;
 
@@ -7,7 +7,7 @@ pub type NobleId = u8;
 pub struct Noble {
     points: u8,
     id: NobleId,
-    requirements: Tokens,
+    requirements: Gems,
 }
 
 impl Noble {
@@ -16,7 +16,7 @@ impl Noble {
             Noble::new(
                 3,
                 0,
-                Tokens {
+                Gems {
                     onyx: 0,
                     sapphire: 0,
                     emerald: 4,
@@ -28,7 +28,7 @@ impl Noble {
             Noble::new(
                 3,
                 1,
-                Tokens {
+                Gems {
                     onyx: 3,
                     sapphire: 0,
                     emerald: 0,
@@ -40,7 +40,7 @@ impl Noble {
             Noble::new(
                 3,
                 2,
-                Tokens {
+                Gems {
                     onyx: 3,
                     sapphire: 0,
                     emerald: 3,
@@ -52,7 +52,7 @@ impl Noble {
             Noble::new(
                 3,
                 3,
-                Tokens {
+                Gems {
                     onyx: 0,
                     sapphire: 4,
                     emerald: 0,
@@ -64,7 +64,7 @@ impl Noble {
             Noble::new(
                 3,
                 4,
-                Tokens {
+                Gems {
                     onyx: 4,
                     sapphire: 0,
                     emerald: 0,
@@ -76,7 +76,7 @@ impl Noble {
             Noble::new(
                 3,
                 5,
-                Tokens {
+                Gems {
                     onyx: 0,
                     sapphire: 4,
                     emerald: 4,
@@ -88,7 +88,7 @@ impl Noble {
             Noble::new(
                 3,
                 6,
-                Tokens {
+                Gems {
                     onyx: 0,
                     sapphire: 3,
                     emerald: 3,
@@ -100,7 +100,7 @@ impl Noble {
             Noble::new(
                 3,
                 7,
-                Tokens {
+                Gems {
                     onyx: 0,
                     sapphire: 3,
                     emerald: 3,
@@ -112,7 +112,7 @@ impl Noble {
             Noble::new(
                 3,
                 8,
-                Tokens {
+                Gems {
                     onyx: 4,
                     sapphire: 0,
                     emerald: 4,
@@ -124,7 +124,7 @@ impl Noble {
             Noble::new(
                 3,
                 9,
-                Tokens {
+                Gems {
                     onyx: 3,
                     sapphire: 3,
                     emerald: 0,
@@ -135,14 +135,14 @@ impl Noble {
             ),
         ]
     }
-    fn new(points: u8, id: NobleId, requirements: Tokens) -> Noble {
+    fn new(points: u8, id: NobleId, requirements: Gems) -> Noble {
         Noble {
             points,
             id,
             requirements,
         }
     }
-    pub fn is_attracted_to(&self, developments: &Tokens) -> bool {
+    pub fn is_attracted_to(&self, developments: &Gems) -> bool {
         let can_attract = (developments.onyx >= self.requirements.onyx)
             && (developments.sapphire >= self.requirements.sapphire)
             && (developments.emerald >= self.requirements.emerald)
@@ -157,7 +157,7 @@ impl Noble {
     pub fn points(&self) -> u8 {
         self.points
     }
-    pub fn requirements(&self) -> &Tokens {
+    pub fn requirements(&self) -> &Gems {
         &self.requirements
     }
 }

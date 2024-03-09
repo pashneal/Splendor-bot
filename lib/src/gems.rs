@@ -1,11 +1,11 @@
-use crate::gem_type::GemType;
+use crate::gem::Gem;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash, Serialize, Deserialize)]
-pub struct Tokens {
+pub struct Gems {
     pub onyx: i8,
     pub sapphire: i8,
     pub emerald: i8,
@@ -14,41 +14,50 @@ pub struct Tokens {
     pub gold: i8,
 }
 
-impl Tokens {
-    pub fn to_set(&self) -> HashSet<GemType> {
+impl Gems {
+
+    pub fn all() -> Vec<Gem> {
+        Gem::all()
+    }
+
+    pub fn all_expect_gold() -> Vec<Gem> {
+        Gem::all_expect_gold()
+    }
+
+    pub fn to_set(&self) -> HashSet<Gem> {
         let mut set = HashSet::new();
         if self.onyx > 0 {
-            set.insert(GemType::Onyx);
+            set.insert(Gem::Onyx);
         }
         if self.sapphire > 0 {
-            set.insert(GemType::Sapphire);
+            set.insert(Gem::Sapphire);
         }
         if self.emerald > 0 {
-            set.insert(GemType::Emerald);
+            set.insert(Gem::Emerald);
         }
         if self.ruby > 0 {
-            set.insert(GemType::Ruby);
+            set.insert(Gem::Ruby);
         }
         if self.diamond > 0 {
-            set.insert(GemType::Diamond);
+            set.insert(Gem::Diamond);
         }
         set
     }
 
-    pub fn from_vec(vec: &Vec<GemType>) -> Tokens {
-        let mut tokens = Tokens::empty();
+    pub fn from_vec(vec: &Vec<Gem>) -> Gems {
+        let mut gems = Gems::empty();
         for &color in vec {
-            tokens[color] += 1;
+            gems[color] += 1;
         }
-        tokens
+        gems
     }
 
-    pub fn from_set(set: &HashSet<GemType>) -> Tokens {
-        let mut tokens = Tokens::empty();
+    pub fn from_set(set: &HashSet<Gem>) -> Gems {
+        let mut gems = Gems::empty();
         for color in set {
-            tokens[*color] += 1;
+            gems[*color] += 1;
         }
-        tokens
+        gems
     }
 
     pub fn total(&self) -> u32 {
@@ -69,8 +78,8 @@ impl Tokens {
             && self.gold >= 0
     }
 
-    pub fn empty() -> Tokens {
-        Tokens {
+    pub fn empty() -> Gems {
+        Gems {
             onyx: 0,
             sapphire: 0,
             emerald: 0,
@@ -80,9 +89,9 @@ impl Tokens {
         }
     }
 
-    pub fn start(players: u8) -> Tokens {
+    pub fn start(players: u8) -> Gems {
         match players {
-            2 => Tokens {
+            2 => Gems {
                 onyx: 4,
                 sapphire: 4,
                 emerald: 4,
@@ -90,7 +99,7 @@ impl Tokens {
                 diamond: 4,
                 gold: 5,
             },
-            3 => Tokens {
+            3 => Gems {
                 onyx: 5,
                 sapphire: 5,
                 emerald: 5,
@@ -98,7 +107,7 @@ impl Tokens {
                 diamond: 5,
                 gold: 5,
             },
-            4 => Tokens {
+            4 => Gems {
                 onyx: 7,
                 sapphire: 7,
                 emerald: 7,
@@ -110,8 +119,8 @@ impl Tokens {
         }
     }
 
-    pub fn max(&self, other: &Tokens) -> Tokens {
-        Tokens {
+    pub fn max(&self, other: &Gems) -> Gems {
+        Gems {
             onyx: max(self.onyx, other.onyx),
             sapphire: max(self.sapphire, other.sapphire),
             emerald: max(self.emerald, other.emerald),
@@ -121,10 +130,10 @@ impl Tokens {
         }
     }
 
-    pub fn one(color: GemType) -> Tokens {
-        let mut tokens = Tokens::empty();
-        tokens[color] = 1;
-        tokens
+    pub fn one(color: Gem) -> Gems {
+        let mut gems = Gems::empty();
+        gems[color] = 1;
+        gems
     }
 
     pub fn distinct(&self) -> usize {
@@ -146,41 +155,41 @@ impl Tokens {
         }
         count
     }
-    pub fn can_buy(&self, other: &Tokens) -> bool {
+    pub fn can_buy(&self, other: &Gems) -> bool {
         unimplemented!()
     }
 }
 
-impl Index<GemType> for Tokens {
+impl Index<Gem> for Gems {
     type Output = i8;
 
-    fn index<'a>(&'a self, color: GemType) -> &'a i8 {
+    fn index<'a>(&'a self, color: Gem) -> &'a i8 {
         match color {
-            GemType::Onyx => &self.onyx,
-            GemType::Sapphire => &self.sapphire,
-            GemType::Emerald => &self.emerald,
-            GemType::Ruby => &self.ruby,
-            GemType::Diamond => &self.diamond,
-            GemType::Gold => &self.gold,
+            Gem::Onyx => &self.onyx,
+            Gem::Sapphire => &self.sapphire,
+            Gem::Emerald => &self.emerald,
+            Gem::Ruby => &self.ruby,
+            Gem::Diamond => &self.diamond,
+            Gem::Gold => &self.gold,
         }
     }
 }
 
-impl IndexMut<GemType> for Tokens {
-    fn index_mut<'a>(&'a mut self, color: GemType) -> &'a mut i8 {
+impl IndexMut<Gem> for Gems {
+    fn index_mut<'a>(&'a mut self, color: Gem) -> &'a mut i8 {
         match color {
-            GemType::Onyx => &mut self.onyx,
-            GemType::Sapphire => &mut self.sapphire,
-            GemType::Emerald => &mut self.emerald,
-            GemType::Ruby => &mut self.ruby,
-            GemType::Diamond => &mut self.diamond,
-            GemType::Gold => &mut self.gold,
+            Gem::Onyx => &mut self.onyx,
+            Gem::Sapphire => &mut self.sapphire,
+            Gem::Emerald => &mut self.emerald,
+            Gem::Ruby => &mut self.ruby,
+            Gem::Diamond => &mut self.diamond,
+            Gem::Gold => &mut self.gold,
         }
     }
 }
 
-impl AddAssign for Tokens {
-    fn add_assign(&mut self, other: Tokens) {
+impl AddAssign for Gems {
+    fn add_assign(&mut self, other: Gems) {
         self.onyx += other.onyx;
         self.sapphire += other.sapphire;
         self.emerald += other.emerald;
@@ -191,8 +200,8 @@ impl AddAssign for Tokens {
     }
 }
 
-impl SubAssign for Tokens {
-    fn sub_assign(&mut self, other: Tokens) {
+impl SubAssign for Gems {
+    fn sub_assign(&mut self, other: Gems) {
         self.onyx -= other.onyx;
         self.sapphire -= other.sapphire;
         self.emerald -= other.emerald;
@@ -203,11 +212,11 @@ impl SubAssign for Tokens {
     }
 }
 
-impl Add for Tokens {
-    type Output = Tokens;
+impl Add for Gems {
+    type Output = Gems;
 
-    fn add(self, other: Tokens) -> Tokens {
-        let tokens = Tokens {
+    fn add(self, other: Gems) -> Gems {
+        let gems = Gems {
             onyx: self.onyx + other.onyx,
             sapphire: self.sapphire + other.sapphire,
             emerald: self.emerald + other.emerald,
@@ -216,15 +225,15 @@ impl Add for Tokens {
             gold: self.gold + other.gold,
         };
         debug_assert!(self.legal());
-        tokens
+        gems
     }
 }
 
-impl Sub for Tokens {
-    type Output = Tokens;
+impl Sub for Gems {
+    type Output = Gems;
 
-    fn sub(self, other: Tokens) -> Tokens {
-        let tokens = Tokens {
+    fn sub(self, other: Gems) -> Gems {
+        let gems = Gems {
             onyx: self.onyx - other.onyx,
             sapphire: self.sapphire - other.sapphire,
             emerald: self.emerald - other.emerald,
@@ -233,6 +242,6 @@ impl Sub for Tokens {
             gold: self.gold - other.gold,
         };
         debug_assert!(self.legal());
-        tokens
+        gems
     }
 }

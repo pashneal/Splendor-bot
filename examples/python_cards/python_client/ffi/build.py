@@ -28,10 +28,11 @@ def install_windows():
     wheel = glob.glob(r".\target\wheels\ffi-*")[0]
     os.system(f"python3 -m pip install --force-reinstall {wheel}")
 
-def install_posix(target_loc):
+def install_posix():
     subprocess.run(("python3",  "-m" , "maturin","build","--release"), check=True)
     dylib = "./target/release/maturin/libffi.dylib"
     so = "./target/release/maturin/libffi.so"
+    target_loc = "../ffi.so"
 
     if os.path.isfile(dylib):
         subprocess.run(("cp", dylib, target_loc), check=True)
@@ -44,16 +45,13 @@ def install_posix(target_loc):
 os_name = os.name.lower() 
 
 if __name__ == "__main__":
-    LAUNCHED_FROM = os.getcwd()
-    print("LAUNCHED_FROM", LAUNCHED_FROM)
-
     os.chdir(CWD)
     check_cargo_install()
     install_maturin()
     if os_name == "windows" or os_name == "nt":
         install_windows()
     elif os_name == "posix":
-        install_posix(os.path.join(LAUNCHED_FROM, "ffi.so"))
+        install_posix()
     else:
         print(f"ERROR: UNSURE HOW TO INSTALL ON THIS SYSTEM! {os_name}")
         exit()

@@ -1,8 +1,8 @@
 use crate::card::CardId;
-use crate::gem_type::GemType;
+use crate::gem::Gem;
 use crate::nobles::*;
 use crate::player::Player;
-use crate::token::Tokens;
+use crate::gems::Gems;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -17,20 +17,20 @@ pub use self::history::*;
 #[derive(Debug, Clone)]
 enum Phase {
     PlayerStart,            // Take some player action
-    PlayerTokenCapExceeded, // [Optional] Player has > 10 tokens
+    PlayerGemCapExceeded,   // [Optional] Player has > 10 gems
     NobleAction,            // See if any nobles get attracted (multiple may be attracted)
     PlayerActionEnd,        // Finish the turn and see if the round should continue
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Action {
-    TakeDouble(GemType),
-    TakeDistinct(HashSet<GemType>),
+    TakeDouble(Gem),
+    TakeDistinct(HashSet<Gem>),
     Reserve(CardId),
     ReserveHidden(usize),
-    Purchase((CardId, Tokens)),
+    Purchase((CardId, Gems)),
 
-    Discard(Tokens),
+    Discard(Gems),
 
     AttractNoble(NobleId),
 
@@ -43,18 +43,18 @@ pub enum Action {
     Continue,
 }
 
-pub fn choose_distinct_tokens(
-    gems: &mut Tokens,
-    running: &mut Tokens,
+pub fn choose_distinct_gems(
+    gems: &mut Gems,
+    running: &mut Gems,
     num_chosen: u32,
-) -> HashSet<Tokens> {
+) -> HashSet<Gems> {
     let mut total_choices = HashSet::new();
     if num_chosen == 0 {
         total_choices.insert(running.clone());
         return total_choices;
     }
     // Pick one to discard and recurse
-    for color in GemType::all_expect_gold() {
+    for color in Gem::all_expect_gold() {
         if gems[color] > 0 {
             if running[color] > 0 {
                 continue;
@@ -63,7 +63,7 @@ pub fn choose_distinct_tokens(
             gems[color] -= 1;
             running[color] += 1;
 
-            let choices = choose_distinct_tokens(gems, running, num_chosen - 1);
+            let choices = choose_distinct_gems(gems, running, num_chosen - 1);
             total_choices.extend(choices);
 
             running[color] -= 1;
@@ -74,19 +74,19 @@ pub fn choose_distinct_tokens(
     total_choices
 }
 
-pub fn choose_tokens(gems: &mut Tokens, running: &mut Tokens, num_chosen: u32) -> HashSet<Tokens> {
+pub fn choose_gems(gems: &mut Gems, running: &mut Gems, num_chosen: u32) -> HashSet<Gems> {
     let mut total_choices = HashSet::new();
     if num_chosen == 0 {
         total_choices.insert(running.clone());
         return total_choices;
     }
     // Pick one to discard and recurse
-    for color in GemType::all() {
+    for color in Gem::all() {
         if gems[color] > 0 {
             gems[color] -= 1;
             running[color] += 1;
 
-            let choices = choose_tokens(gems, running, num_chosen - 1);
+            let choices = choose_gems(gems, running, num_chosen - 1);
             total_choices.extend(choices);
 
             running[color] -= 1;
