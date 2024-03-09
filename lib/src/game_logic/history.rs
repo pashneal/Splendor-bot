@@ -56,6 +56,9 @@ impl GameHistory {
         moves
     }
 
+    /// Group all items in history by each player such that
+    /// all actions taken by a single player (from PlayerStart through
+    /// to Continue) are grouped together
     pub fn group_by_player(&self) -> Vec<PlayerActions> {
         let mut turn_sequences = vec![];
         let mut current_turn = vec![];

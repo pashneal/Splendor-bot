@@ -5,11 +5,11 @@ use std::ops::{Index, IndexMut};
 
 #[derive(PartialEq, Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Cost {
-    onyx: i8,
-    sapphire: i8,
-    emerald: i8,
-    ruby: i8,
-    diamond: i8,
+    pub onyx: i8,
+    pub sapphire: i8,
+    pub emerald: i8,
+    pub ruby: i8,
+    pub diamond: i8,
 }
 
 impl Index<Gem> for Cost {
@@ -40,6 +40,10 @@ impl IndexMut<Gem> for Cost {
 }
 
 impl Cost {
+
+    /// Create a new cost object that removes all gems
+    /// passed in from the cost, if that would result in
+    /// a negative cost, the cost is instead set to 0
     pub fn discounted_with(&self, gems: &Gems) -> Cost {
         Cost {
             onyx: 0.max(self.onyx - gems.onyx),
@@ -49,6 +53,7 @@ impl Cost {
             diamond: 0.max(self.diamond - gems.diamond),
         }
     }
+    /// Convert to raw gems (granting ability to access gold)
     pub fn to_gems(&self) -> Gems {
         Gems {
             onyx: self.onyx,
@@ -59,6 +64,7 @@ impl Cost {
             gold: 0,
         }
     }
+    /// Convert from raw gems (removing ability to access gold)
     pub fn from_gems(gems: &Gems) -> Cost {
         debug_assert!(gems.gold == 0, "Cannot convert gems to cost with gold");
         Cost {

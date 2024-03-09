@@ -205,9 +205,32 @@ impl Card {
     }
 }
 
+pub struct GameHistory {
+    pub turns : Vec<(usize, Vec<Action>)>
+}
+impl GameHistory {
+    fn from( game_history : splendor_tourney::GameHistory) -> Self {
+        let mut turns = Vec::new();
+        for group in game_history.group_by_player() {
+            let mut actions = Vec::new();
+            let mut player_index = 5;
+            for (p, action) in group {
+               player_index = p;
+               actions.push(Action::from(action));
+            }
+            turns.push((player_index, actions));
+        }
+
+        GameHistory {
+            turns
+        }
+
+    }
+}
 
 pub struct ClientInfo {
     board : Board,
+    history : GameHistory,
 }
 
 

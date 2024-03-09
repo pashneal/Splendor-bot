@@ -1,4 +1,4 @@
-mod models;
+mod stubs;
 
 use splendor_tourney::*;
 use rand::{thread_rng, seq::SliceRandom};
@@ -12,6 +12,7 @@ pub struct Bot {
 }
 
 impl Runnable for Bot {
+
     /// Initialize your bot here!
     /// feel free to change around the items in your Bot struct
     /// This is called *once* at the start of a new game
