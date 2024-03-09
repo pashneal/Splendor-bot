@@ -3,7 +3,7 @@ use crate::gems::Gems;
 use serde::{Deserialize, Serialize};
 use std::ops::{Index, IndexMut};
 
-#[derive(PartialEq, Copy, Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Cost {
     pub onyx: i8,
     pub sapphire: i8,

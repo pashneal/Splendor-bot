@@ -2,31 +2,19 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 /// This module repackages the splendor_tourney module into a
-/// more convenient form 
+/// more convenient form
 ///
-/// While users can certainly use the splendor_tourney module directly, it is 
+/// While users can certainly use the splendor_tourney module directly, it is
 /// discouraged. The splendor_tourney module is designed API-first, and is not
 /// designed to be user-friendly.
 ///
-/// This module is also an attempt to have a consistent feel 
+/// This module is also an attempt to have a consistent feel
 /// for the user interface across all supported languages.
-
-
 use derive_more::{Display, Error};
 
-pub use splendor_tourney::{
-    Gems,
-    Gem,
-    Cost,
-    CardId,
-    NobleId,
-    GameResults,
-    Runnable,
-    Log,
-    run_bot,
-};
+pub use splendor_tourney::{run_bot, CardId, Cost, GameResults, Gem, Gems, Log, NobleId, Runnable};
 
-const CARD_LOOKUP : [splendor_tourney::Card; 90] = splendor_tourney::Card::all_const();
+const CARD_LOOKUP: [splendor_tourney::Card; 90] = splendor_tourney::Card::all_const();
 
 pub type Tier = usize;
 
@@ -38,13 +26,13 @@ pub enum ModelError {
 
 /// Re-export the splendor_tourney module Action
 /// into one that has a more user-friendly interface
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
-    /// Take gem tokens from the bank 
+    /// Take gem tokens from the bank
     TakeGems(Gems),
     /// Reserve a card from the board (face up)
     ReserveFaceUp(CardId),
-    /// Reserve a card from the board from tier 0 - 2 (face down) 
+    /// Reserve a card from the board from tier 0 - 2 (face down)
     ReserveFaceDown(Tier),
     /// Purchase a card from the board (face up) or from reserved cards
     PurchaseCard(CardId, Gems),
@@ -55,35 +43,23 @@ pub enum Action {
     /// Pass your turn (no action available)
     Pass,
     /// Continue play to the next player
-    Continue
+    Continue,
 }
 
 impl Action {
     fn from(action: splendor_tourney::Action) -> Self {
         match action {
-            splendor_tourney::Action::TakeDouble(gem) => {
-                Action::TakeGems(Gems::one(gem))
-            },
-            splendor_tourney::Action::TakeDistinct(gems) => {
-                Action::TakeGems(Gems::from_set(&gems))
-            },
-            splendor_tourney::Action::Reserve(card_id) => {
-                Action::ReserveFaceUp(card_id)
-            },
-            splendor_tourney::Action::ReserveHidden(tier) => {
-                Action::ReserveFaceDown(tier)
-            },
+            splendor_tourney::Action::TakeDouble(gem) => Action::TakeGems(Gems::one(gem)),
+            splendor_tourney::Action::TakeDistinct(gems) => Action::TakeGems(Gems::from_set(&gems)),
+            splendor_tourney::Action::Reserve(card_id) => Action::ReserveFaceUp(card_id),
+            splendor_tourney::Action::ReserveHidden(tier) => Action::ReserveFaceDown(tier),
             splendor_tourney::Action::Purchase((card_id, gems)) => {
                 Action::PurchaseCard(card_id, gems)
-            },
-            splendor_tourney::Action::Discard(gems) => {
-                Action::DiscardGems(gems)
-            },
-            splendor_tourney::Action::AttractNoble(noble_id) => {
-                Action::AttractNoble(noble_id)
-            },
+            }
+            splendor_tourney::Action::Discard(gems) => Action::DiscardGems(gems),
+            splendor_tourney::Action::AttractNoble(noble_id) => Action::AttractNoble(noble_id),
             splendor_tourney::Action::Pass => Action::Pass,
-            splendor_tourney::Action::Continue => Action::Continue
+            splendor_tourney::Action::Continue => Action::Continue,
         }
     }
 
@@ -105,29 +81,29 @@ impl Action {
                     let set = gems.to_set();
                     Ok(splendor_tourney::Action::TakeDistinct(set))
                 }
-            },
+            }
             Action::ReserveFaceUp(card_id) => {
                 let reserve = splendor_tourney::Action::Reserve(*card_id);
                 Ok(reserve)
-            },
+            }
             Action::ReserveFaceDown(tier) => {
                 let reserve_hidden = splendor_tourney::Action::ReserveHidden(*tier);
                 Ok(reserve_hidden)
-            },
+            }
             Action::PurchaseCard(card_id, gems) => {
                 let purchase = splendor_tourney::Action::Purchase((*card_id, *gems));
                 Ok(purchase)
-            },
+            }
             Action::DiscardGems(gems) => {
                 let discard = splendor_tourney::Action::Discard(*gems);
                 Ok(discard)
-            },
+            }
             Action::AttractNoble(noble_id) => {
                 let attract_noble = splendor_tourney::Action::AttractNoble(*noble_id);
                 Ok(attract_noble)
-            },
+            }
             Action::Pass => {
-                let pass  = splendor_tourney::Action::Pass;
+                let pass = splendor_tourney::Action::Pass;
                 Ok(pass)
             }
             Action::Continue => {
@@ -146,21 +122,21 @@ impl Into<splendor_tourney::Action> for Action {
 
 /// Re-export the splendor_tourney module Board
 /// into one that has a more user-friendly interface
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Board {
-   pub deck_counts: [usize; 3], 
-   pub nobles: Vec<NobleId>,
-   pub gems: Gems,
-   available_cards: Vec<Vec<CardId>>,
+    pub deck_counts: [usize; 3],
+    pub nobles: Vec<NobleId>,
+    pub gems: Gems,
+    available_cards: Vec<Vec<CardId>>,
 }
 
 impl Board {
-    fn from (board: splendor_tourney::Board) -> Self {
+    fn from(board: splendor_tourney::Board) -> Self {
         Board {
             deck_counts: board.deck_counts,
             nobles: board.nobles,
             gems: board.gems,
-            available_cards : board.available_cards,
+            available_cards: board.available_cards,
         }
     }
 
@@ -187,7 +163,7 @@ impl Board {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Card {
     pub points: u8,
     pub cost: Cost,
@@ -222,32 +198,30 @@ impl Card {
 
 /// Re-export the splendor_tourney module GameHistory
 /// into one that has a more user-friendly interface
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameHistory {
-    pub turns : Vec<(usize, Vec<Action>)>
+    pub turns: Vec<(usize, Vec<Action>)>,
 }
 impl GameHistory {
-    fn from( game_history : splendor_tourney::GameHistory) -> Self {
+    fn from(game_history: splendor_tourney::GameHistory) -> Self {
         let mut turns = Vec::new();
         for group in game_history.group_by_player() {
             let mut actions = Vec::new();
             let mut player_index = 5;
             for (p, action) in group {
-               player_index = p;
-               actions.push(Action::from(action));
+                player_index = p;
+                actions.push(Action::from(action));
             }
             turns.push((player_index, actions));
         }
 
-        GameHistory {
-            turns
-        }
+        GameHistory { turns }
     }
 }
 
 /// Re-export the splendor_tourney module Player
 /// into one that has a more user-friendly interface
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Player {
     pub index: usize,
     pub total_points: u8,
@@ -291,13 +265,13 @@ impl Player {
 /// into one that has a more user-friendly interface
 #[derive(Debug, Clone)]
 pub struct GameInfo {
-    pub board : Board,
-    pub history : GameHistory,
-    pub players : Vec<Player>,
-    pub current_player : Player,
-    pub player_index : usize,
-    pub legal_actions : Vec<Action>,
-    pub num_players : usize,
+    pub board: Board,
+    pub history: GameHistory,
+    pub players: Vec<Player>,
+    pub current_player: Player,
+    pub player_index: usize,
+    pub legal_actions: Vec<Action>,
+    pub num_players: usize,
 }
 
 impl From<splendor_tourney::ClientInfo> for GameInfo {
@@ -323,7 +297,6 @@ impl GameInfo {
 
         players[current_player.index] = current_player.clone();
         let num_players = players.len();
-
 
         GameInfo {
             board,

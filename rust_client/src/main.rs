@@ -1,18 +1,17 @@
 mod stubs;
 
+use rand::{seq::SliceRandom, thread_rng};
 use stubs::*;
-use rand::{thread_rng, seq::SliceRandom};
 
 /// Your bot struct, which will live for the duration of the game
 /// Feel free to add any fields you need, but they must implement Default!
 #[derive(Debug, Default)]
 pub struct Bot {
-    pub name : String,
-    pub turn_counter : usize,
+    pub name: String,
+    pub turn_counter: usize,
 }
 
 impl Runnable<GameInfo, Action> for Bot {
-
     /// Initialize your bot here!
     /// feel free to change around the items in your Bot struct
     /// This is called *once* at the start of a new game
@@ -37,7 +36,7 @@ impl Runnable<GameInfo, Action> for Bot {
     ///
     /// If you have <= 1 legal action, the server will decide for you
     /// and skip this function. This includes attracting a single noble.
-    fn take_action(&mut self, info: GameInfo, log : &mut Log) -> Action {
+    fn take_action(&mut self, info: GameInfo, log: &mut Log) -> Action {
         let legal_actions = info.legal_actions;
 
         // Just choose a random action (this bot is not very smart)
@@ -45,9 +44,12 @@ impl Runnable<GameInfo, Action> for Bot {
         let action = legal_actions.choose(&mut rng).unwrap();
 
         self.turn_counter += 1;
-        let message = format!("I chose to {:?} and I have seen {} turns! Take that!", action, self.turn_counter);
+        let message = format!(
+            "I chose to {:?} and I have seen {} turns! Take that!",
+            action, self.turn_counter
+        );
 
-        // Note: nothing will print to the console, 
+        // Note: nothing will print to the console,
         println!("This does not print out!!");
         // use the log instead so that the server prints it for you
         log.send(&message);
@@ -63,5 +65,5 @@ impl Runnable<GameInfo, Action> for Bot {
 }
 
 fn main() {
-    run_bot::<_,_,Bot>()
+    run_bot::<_, _, Bot>()
 }
