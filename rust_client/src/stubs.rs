@@ -290,7 +290,7 @@ impl Player {
 /// Re-export the splendor_tourney module ClientInfo
 /// into one that has a more user-friendly interface
 #[derive(Debug, Clone)]
-pub struct ClientInfo {
+pub struct GameInfo {
     pub board : Board,
     pub history : GameHistory,
     pub players : Vec<Player>,
@@ -300,13 +300,13 @@ pub struct ClientInfo {
     pub num_players : usize,
 }
 
-impl From<splendor_tourney::ClientInfo> for ClientInfo {
+impl From<splendor_tourney::ClientInfo> for GameInfo {
     fn from(client_info: splendor_tourney::ClientInfo) -> Self {
-        ClientInfo::from_splendor_tourney(client_info)
+        GameInfo::from_splendor_tourney(client_info)
     }
 }
 
-impl ClientInfo {
+impl GameInfo {
     pub fn from_splendor_tourney(client_info: splendor_tourney::ClientInfo) -> Self {
         let legal_actions = client_info.legal_actions;
         let legal_actions = legal_actions.into_iter().map(Action::from).collect();
@@ -325,7 +325,7 @@ impl ClientInfo {
         let num_players = players.len();
 
 
-        ClientInfo {
+        GameInfo {
             board,
             history: game_history,
             players,

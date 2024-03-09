@@ -11,7 +11,7 @@ pub struct Bot {
     pub turn_counter : usize,
 }
 
-impl Runnable<ClientInfo, Action> for Bot {
+impl Runnable<GameInfo, Action> for Bot {
 
     /// Initialize your bot here!
     /// feel free to change around the items in your Bot struct
@@ -37,7 +37,7 @@ impl Runnable<ClientInfo, Action> for Bot {
     ///
     /// If you have <= 1 legal action, the server will decide for you
     /// and skip this function. This includes attracting a single noble.
-    fn take_action(&mut self, info: ClientInfo, log : &mut Log) -> Action {
+    fn take_action(&mut self, info: GameInfo, log : &mut Log) -> Action {
         let legal_actions = info.legal_actions;
 
         // Just choose a random action (this bot is not very smart)
@@ -57,7 +57,7 @@ impl Runnable<ClientInfo, Action> for Bot {
 
     /// This is called at the end of the game, and you can use it to clean up
     /// TODO: Actually call this from the server when the game is over
-    fn game_over(&self, _info: ClientInfo, _results: GameResults) {
+    fn game_over(&self, _info: GameInfo, _results: GameResults) {
         todo!()
     }
 }
