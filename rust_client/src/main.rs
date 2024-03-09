@@ -28,7 +28,7 @@ impl Runnable<GameInfo, Action> for Bot {
     /// The main bread and butter of your bot!
     ///
     /// This is called whenever the game needs to take an action from your bot,
-    /// the actions that you can take are given in the ClientInfo.legal_actions field
+    /// the actions that you can take are given in the GameInfo.legal_actions field
     ///
     /// Generally, you'll have different types of actions you can take
     ///     -> Reserve or Purchase cards or Take gems
