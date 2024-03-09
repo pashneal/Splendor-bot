@@ -8,7 +8,7 @@ use rand::{thread_rng, seq::SliceRandom};
 #[derive(Debug, Default)]
 pub struct Bot {
     pub name : String,
-    pub turns : usize,
+    pub turn_counter : usize,
 }
 
 impl Runnable<ClientInfo, Action> for Bot {
@@ -19,7 +19,7 @@ impl Runnable<ClientInfo, Action> for Bot {
     fn initialize(&mut self, log: &mut Log) {
         // The stuff in bot carries over from turn to turn!
         self.name = "Cool bot name".to_string();
-        self.turns = 0;
+        self.turn_counter = 0;
 
         // Send a message from this bot to the server for debugging!
         log.send("Hello from a new bot!");
@@ -44,8 +44,8 @@ impl Runnable<ClientInfo, Action> for Bot {
         let mut rng = thread_rng();
         let action = legal_actions.choose(&mut rng).unwrap();
 
-        self.turns += 1;
-        let message = format!("I chose to {:?} and I have seen {} turns! Take that!", action, self.turns);
+        self.turn_counter += 1;
+        let message = format!("I chose to {:?} and I have seen {} turns! Take that!", action, self.turn_counter);
 
         // Note: nothing will print to the console, 
         println!("This does not print out!!");
