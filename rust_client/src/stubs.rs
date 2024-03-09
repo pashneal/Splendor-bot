@@ -14,7 +14,9 @@
 /// Changing this may break compatibility with the engine!
 use derive_more::{Display, Error};
 
-pub use splendor_tourney::{run_bot, CardId, Cost, GameResults, Gem, Gems, Log, NobleId, Runnable, Noble};
+pub use splendor_tourney::{
+    run_bot, CardId, Cost, GameResults, Gem, Gems, Log, Noble, NobleId, Runnable,
+};
 
 const CARD_LOOKUP: [splendor_tourney::Card; 90] = splendor_tourney::Card::all_const();
 
@@ -41,7 +43,7 @@ pub enum Action {
     /// Discard gems from your hand if > 10
     DiscardGems(Gems),
     /// Attract an available noble from the board
-    AttractNoble(NobleId),
+    AttractNoble(Noble),
     /// Pass your turn (no action available)
     Pass,
     /// Continue play to the next player
@@ -55,11 +57,9 @@ impl Action {
             splendor_tourney::Action::TakeDistinct(gems) => Action::TakeGems(Gems::from_set(&gems)),
             splendor_tourney::Action::Reserve(card_id) => Action::ReserveFaceUp(card_id),
             splendor_tourney::Action::ReserveHidden(tier) => Action::ReserveFaceDown(tier),
-            splendor_tourney::Action::Purchase((card_id, gems)) => {
-                Action::Purchase(card_id, gems)
-            }
+            splendor_tourney::Action::Purchase((card_id, gems)) => Action::Purchase(card_id, gems),
             splendor_tourney::Action::Discard(gems) => Action::DiscardGems(gems),
-            splendor_tourney::Action::AttractNoble(noble_id) => Action::AttractNoble(noble_id),
+            splendor_tourney::Action::AttractNoble(noble_id) => Action::AttractNoble(Noble::from_id(noble_id)),
             splendor_tourney::Action::Pass => Action::Pass,
             splendor_tourney::Action::Continue => Action::Continue,
         }
@@ -100,8 +100,8 @@ impl Action {
                 let discard = splendor_tourney::Action::Discard(*gems);
                 Ok(discard)
             }
-            Action::AttractNoble(noble_id) => {
-                let attract_noble = splendor_tourney::Action::AttractNoble(*noble_id);
+            Action::AttractNoble(noble) => {
+                let attract_noble = splendor_tourney::Action::AttractNoble(noble.id);
                 Ok(attract_noble)
             }
             Action::Pass => {
@@ -127,16 +127,22 @@ impl Into<splendor_tourney::Action> for Action {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Board {
     pub deck_counts: [usize; 3],
-    pub nobles: Vec<NobleId>,
+    pub nobles: Vec<Noble>,
     pub gems: Gems,
     available_cards: Vec<Vec<CardId>>,
 }
 
 impl Board {
     fn from(board: splendor_tourney::Board) -> Self {
+        let mut nobles = Vec::new();
+        let all_nobles = Noble::all();
+        for &noble_id in &board.nobles {
+            let noble = all_nobles[noble_id as usize].clone();
+            nobles.push(noble);
+        }
         Board {
             deck_counts: board.deck_counts,
-            nobles: board.nobles,
+            nobles,
             gems: board.gems,
             available_cards: board.available_cards,
         }
@@ -197,9 +203,14 @@ impl Card {
         }
     }
 
-    /// Return all cards in the game 
+    /// Return all cards in the game
     pub fn all() -> [Card; 90] {
-        CARD_LOOKUP.iter().map(|&card| Card::from(card)).collect::<Vec<_>>().try_into().unwrap()
+        CARD_LOOKUP
+            .iter()
+            .map(|&card| Card::from(card))
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap()
     }
 }
 
@@ -324,5 +335,3 @@ impl GameInfo {
         self.num_players
     }
 }
-
-

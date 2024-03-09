@@ -1,5 +1,5 @@
-use rand::{seq::SliceRandom, thread_rng};
 use crate::stubs::*;
+use rand::{seq::SliceRandom, thread_rng};
 
 /// Your bot struct, which will live for the duration of the game
 /// Feel free to add any fields you need, but they must implement Default!
@@ -31,6 +31,8 @@ impl Runnable<GameInfo, Action> for Bot {
     /// and skip this function. This includes attracting a single noble.
     fn take_action(&mut self, info: GameInfo, log: &mut Log) -> Action {
         let legal_actions = info.legal_actions;
+
+        log.send(&format!("[simple.rs] Turn number: {}", self.turn_counter));
 
         // Just choose a random action (this bot is not very smart)
         let mut rng = thread_rng();

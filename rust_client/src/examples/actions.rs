@@ -1,8 +1,7 @@
 use crate::stubs::*;
 
 #[derive(Debug, Default)]
-pub struct Bot {
-}
+pub struct Bot {}
 
 impl Runnable<GameInfo, Action> for Bot {
     fn initialize(&mut self, log: &mut Log) {
@@ -21,7 +20,7 @@ impl Runnable<GameInfo, Action> for Bot {
                     // You can purchase any faceup card or any reserved card
                     // from your hand that you can afford
                     let _reserved_cards = &info.me().reserved_cards.clone().unwrap();
-                    
+
                     // You can see the breakdown
                     gems.onyx;
                     gems.sapphire;
@@ -29,7 +28,7 @@ impl Runnable<GameInfo, Action> for Bot {
                     gems.emerald;
                     gems.ruby;
                     gems.gold;
-                    
+
                     // Or create your own
                     let my_gems = Gems {
                         onyx: 1,
@@ -54,18 +53,27 @@ impl Runnable<GameInfo, Action> for Bot {
                     // you can take 3 different gems or 2 of the same
                     // (with some exceptions)
                 }
-
                 Action::DiscardGems(_gems) => {
                     // gems is the way you want to discard gems
                     // This is only possible if you have more than 10 gems
                     // you must discard down to 10
                 }
-                Action::AttractNoble(noble_id) => {
-                    // noble_id is the id of the noble you want to attract
-                    // You can see all possible nobles
-                    let nobles = Noble::all();
-                    // Or figure out which ones you can attract
-                    let _attracted_noble = &nobles[*noble_id as usize];
+                Action::AttractNoble(noble) => {
+                    // noble has a few interesting fields that you can use
+                    noble.id;
+                    noble.points; // Always 3 btw
+                    let gems = &noble.requirements();
+
+                    noble.is_attracted_to(&info.me().developments);
+
+                    gems.onyx;
+                    gems.sapphire;
+                    gems.emerald;
+                    gems.ruby;
+                    gems.diamond;
+
+                    let _all_nobles = Noble::all();
+                    let _board_nobles = &info.board.nobles;
                 }
                 Action::Pass => {
                     // Here for completeness, you cannot choose to pass

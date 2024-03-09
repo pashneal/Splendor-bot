@@ -21,17 +21,20 @@ impl Runnable<GameInfo, Action> for Bot {
         let card_61 = Card::from_id(61);
         let _card_42 = Card::from_id(42);
 
-        // Actions that require a card should be created using card_id instead 
-        let _purchase = Action::Purchase(card_61.id, Gems{
-            onyx: 1,
-            sapphire: 1,
-            emerald: 3,
-            ruby: 1,
-            diamond: 1,
-            gold: 0,
-        });
+        // Actions that require a card should be created using card_id instead
+        let _purchase = Action::Purchase(
+            card_61.id,
+            Gems {
+                onyx: 1,
+                sapphire: 1,
+                emerald: 3,
+                ruby: 1,
+                diamond: 1,
+                gold: 0,
+            },
+        );
 
-        let _reserve_face_up  = Action::ReserveFaceUp(46);
+        let _reserve_face_up = Action::ReserveFaceUp(46);
 
         // There are also several useful properties of a card to check out
         let card = Card::from_id(23);
@@ -63,13 +66,15 @@ impl Runnable<GameInfo, Action> for Bot {
 
         let mut total_developments = 0;
 
-
         for gem in Gem::all_expect_gold() {
             total_developments += developments[gem];
         }
 
         let message0 = format!("[cards.rs] You have {} developments", total_developments);
-        let message1 = format!("[cards.rs] You have {} reserved cards", reserved_cards.len());
+        let message1 = format!(
+            "[cards.rs] You have {} reserved cards",
+            reserved_cards.len()
+        );
         log.send(&message0);
         log.send(&message1);
 
@@ -79,7 +84,7 @@ impl Runnable<GameInfo, Action> for Bot {
 
         let my_index = info.me().index;
         let num_players = info.players.len();
-        let not_my_index = (my_index + 1) % num_players; 
+        let not_my_index = (my_index + 1) % num_players;
         let player = &info.players[not_my_index];
         match &player.reserved_cards {
             Some(_) => {

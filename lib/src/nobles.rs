@@ -3,14 +3,18 @@ use crate::gems::Gems;
 
 pub type NobleId = u8;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Noble {
-    points: u8,
-    id: NobleId,
+    pub points: u8,
+    pub id: NobleId,
     requirements: Gems,
 }
 
 impl Noble {
+    pub fn from_id(id: NobleId) -> Noble{
+        Noble::all()[id as usize].clone()
+    }
+
     pub fn all() -> Vec<Noble> {
         vec![
             Noble::new(
