@@ -10,9 +10,11 @@
 ///
 /// This module is also an attempt to have a consistent feel
 /// for the user interface across all supported languages.
+///
+/// Changing this may break compatibility with the engine!
 use derive_more::{Display, Error};
 
-pub use splendor_tourney::{run_bot, CardId, Cost, GameResults, Gem, Gems, Log, NobleId, Runnable};
+pub use splendor_tourney::{run_bot, CardId, Cost, GameResults, Gem, Gems, Log, NobleId, Runnable, Noble};
 
 const CARD_LOOKUP: [splendor_tourney::Card; 90] = splendor_tourney::Card::all_const();
 
@@ -35,7 +37,7 @@ pub enum Action {
     /// Reserve a card from the board from tier 0 - 2 (face down)
     ReserveFaceDown(Tier),
     /// Purchase a card from the board (face up) or from reserved cards
-    PurchaseCard(CardId, Gems),
+    Purchase(CardId, Gems),
     /// Discard gems from your hand if > 10
     DiscardGems(Gems),
     /// Attract an available noble from the board
@@ -54,7 +56,7 @@ impl Action {
             splendor_tourney::Action::Reserve(card_id) => Action::ReserveFaceUp(card_id),
             splendor_tourney::Action::ReserveHidden(tier) => Action::ReserveFaceDown(tier),
             splendor_tourney::Action::Purchase((card_id, gems)) => {
-                Action::PurchaseCard(card_id, gems)
+                Action::Purchase(card_id, gems)
             }
             splendor_tourney::Action::Discard(gems) => Action::DiscardGems(gems),
             splendor_tourney::Action::AttractNoble(noble_id) => Action::AttractNoble(noble_id),
@@ -90,7 +92,7 @@ impl Action {
                 let reserve_hidden = splendor_tourney::Action::ReserveHidden(*tier);
                 Ok(reserve_hidden)
             }
-            Action::PurchaseCard(card_id, gems) => {
+            Action::Purchase(card_id, gems) => {
                 let purchase = splendor_tourney::Action::Purchase((*card_id, *gems));
                 Ok(purchase)
             }
@@ -193,6 +195,11 @@ impl Card {
             id: card.id(),
             tier: card.tier(),
         }
+    }
+
+    /// Return all cards in the game 
+    pub fn all() -> [Card; 90] {
+        CARD_LOOKUP.iter().map(|&card| Card::from(card)).collect::<Vec<_>>().try_into().unwrap()
     }
 }
 
@@ -317,3 +324,5 @@ impl GameInfo {
         self.num_players
     }
 }
+
+

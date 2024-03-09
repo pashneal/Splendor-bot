@@ -30,7 +30,9 @@ impl Log {
 pub trait Runnable<C : From<ClientInfo>, A : Into<Action>> {
     fn initialize(&mut self, log: &mut Log);
     fn take_action(&mut self, info: C, log: &mut Log) -> A;
-    fn game_over(&self, info: C, results: GameResults);
+    fn game_over(&self, info: C, results: GameResults) {
+        todo!()
+    }
 }
 
 #[derive(Parser, Debug)]
