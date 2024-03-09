@@ -176,7 +176,7 @@ impl Game {
                 // there's a player with >= 15 points and we are on the last player's
                 // turn
                 if self.current_player == self.players.len() - 1
-                    && self.players.iter().any(|p| p.points() >= 15)
+                    && self.players.iter().any(|p| p.total_points() >= 15)
                 {
                     None
                 } else {
@@ -202,7 +202,7 @@ impl Game {
                 // If num reserved cards < 3:
                 // -> Can reserve a card from board
                 // -> Can reserve a card from decks that are not empty
-                if player.num_reserved() < 3 {
+                if player.num_reserved_cards() < 3 {
                     for tier in 0..3 {
                         if self.decks[tier].len() > 0 {
                             actions.push(ReserveHidden(tier));
@@ -570,7 +570,7 @@ impl Game {
         // -> Someone has at least >= 15 points or the game is deadlocked
         debug_assert!(self.get_legal_actions().is_none());
         debug_assert!(
-            self.players.iter().any(|p| p.points() >= 15)
+            self.players.iter().any(|p| p.total_points() >= 15)
                 || self.deadlock_count >= (2 * self.players.len() as u8)
         );
 
@@ -578,11 +578,11 @@ impl Game {
         let mut min_developments = u32::MAX;
         let mut winner = None;
         for (i, player) in self.players.iter().enumerate() {
-            if player.points() > max_points {
-                max_points = player.points();
+            if player.total_points() > max_points {
+                max_points = player.total_points();
                 min_developments = player.developments().total();
                 winner = Some(i);
-            } else if player.points() == max_points {
+            } else if player.total_points() == max_points {
                 if player.developments().total() < min_developments as u32 {
                     min_developments = player.developments().total();
                     winner = Some(i);

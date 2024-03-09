@@ -443,7 +443,7 @@ pub fn to_js_players(players: &Vec<Player>, card_lookup: Arc<Vec<Card>>) -> Vec<
         }
 
         let total_gems = player.gems().total();
-        let total_points = player.points();
+        let total_points = player.total_points();
         let noble_points = player.noble_points();
 
         js_players.push(JSPlayer { 

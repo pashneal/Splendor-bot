@@ -1,5 +1,4 @@
-use lazy_static::lazy_static;
-use pyo3::prelude::*;
+use lazy_static::lazy_static; use pyo3::prelude::*;
 use splendor_tourney::*;
 use tungstenite::{connect, Message};
 use url::Url;
@@ -634,7 +633,7 @@ impl PyPlayer {
     pub fn from(player: &Player, index: usize) -> Self {
         PyPlayer {
             index,
-            total_points: player.points(),
+            total_points: player.total_points(),
             reserved_cards: Some(
                 player
                     .all_reserved()
@@ -642,7 +641,7 @@ impl PyPlayer {
                     .map(PyCard::from_id)
                     .collect(),
             ),
-            num_reserved_cards: player.num_reserved(),
+            num_reserved_cards: player.num_reserved_cards(),
             gems: PyGems::from(*player.gems()),
             developments: PyGems::from(*player.developments()),
         }
@@ -666,7 +665,7 @@ impl PyPlayer {
     pub fn reserved_cards(&self) -> PyResult<Vec<PyCard>> {
         if self.reserved_cards.is_none() {
             return Err(PyErr::new::<pyo3::exceptions::PyAttributeError, _>(
-                "Attempeted to peek at the reserved_cards of an opponent!",
+                "Attempted to peek at the reserved_cards of an opponent!",
             ));
         }
         Ok(self.reserved_cards.clone().unwrap())

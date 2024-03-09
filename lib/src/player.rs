@@ -83,7 +83,7 @@ impl Player {
         }
     }
 
-    pub fn points(&self) -> u8 {
+    pub fn total_points(&self) -> u8 {
         self.points
     }
 
@@ -100,7 +100,7 @@ impl Player {
     }
 
     /// Return the number of reserved cards in total
-    pub fn num_reserved(&self) -> usize {
+    pub fn num_reserved_cards(&self) -> usize {
         self.reserved.len()
     }
 
