@@ -224,7 +224,6 @@ impl GameHistory {
         GameHistory {
             turns
         }
-
     }
 }
 
@@ -233,4 +232,41 @@ pub struct ClientInfo {
     history : GameHistory,
 }
 
+pub struct Player {
+    pub index: usize,
+    pub total_points: u8,
+    pub num_reserved_cards: usize,
+    pub gems: Gems,
+    pub developments: Gems,
+    pub reserved_cards: Option<Vec<Card>>,
+}
 
+impl Player {
+    pub fn from(player: &splendor_tourney::Player, index: usize) -> Self {
+        Player {
+            index,
+            total_points: player.total_points(),
+            reserved_cards: Some(
+                player
+                    .all_reserved()
+                    .into_iter()
+                    .map(Card::from_id)
+                    .collect(),
+            ),
+            num_reserved_cards: player.num_reserved_cards(),
+            gems: Gems::from(*player.gems()),
+            developments: Gems::from(*player.developments()),
+        }
+    }
+
+    pub fn from_public(player: &splendor_tourney::PlayerPublicInfo, index: usize) -> Self {
+        Player {
+            index,
+            total_points: player.points,
+            reserved_cards: None,
+            num_reserved_cards: player.num_reserved,
+            gems: Gems::from(player.gems),
+            developments: Gems::from(player.developments.to_gems()),
+        }
+    }
+}
