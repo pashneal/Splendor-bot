@@ -287,6 +287,7 @@ pub struct ClientInfo {
     pub current_player : Player,
     pub player_index : usize,
     pub legal_actions : Vec<Action>,
+    pub num_players : usize,
 }
 
 impl ClientInfo {
@@ -295,6 +296,8 @@ impl ClientInfo {
         let legal_actions = legal_actions.into_iter().map(Action::from).collect();
         let current_player =
             Player::from(&client_info.current_player, client_info.current_player_num);
+        let board = Board::from(client_info.board);
+        let game_history = GameHistory::from(client_info.history);
         let mut players: Vec<Player> = client_info
             .players
             .iter()
@@ -303,9 +306,8 @@ impl ClientInfo {
             .collect();
 
         players[current_player.index] = current_player.clone();
+        let num_players = players.len();
 
-        let board = Board::from(client_info.board);
-        let game_history = GameHistory::from(client_info.history);
 
         ClientInfo {
             board,
@@ -314,6 +316,15 @@ impl ClientInfo {
             current_player,
             player_index: client_info.current_player_num,
             legal_actions,
+            num_players,
         }
+    }
+
+    pub fn me(&self) -> &Player {
+        &self.players[self.player_index]
+    }
+
+    pub fn num_players(&self) -> usize {
+        self.num_players
     }
 }
