@@ -1,6 +1,6 @@
 mod stubs;
 
-use splendor_tourney::*;
+use stubs::*;
 use rand::{thread_rng, seq::SliceRandom};
 
 /// Your bot struct, which will live for the duration of the game
@@ -11,7 +11,7 @@ pub struct Bot {
     pub turns : usize,
 }
 
-impl Runnable for Bot {
+impl Runnable<ClientInfo, Action> for Bot {
 
     /// Initialize your bot here!
     /// feel free to change around the items in your Bot struct
@@ -63,5 +63,5 @@ impl Runnable for Bot {
 }
 
 fn main() {
-    run_bot::<Bot>()
+    run_bot::<_,_,Bot>()
 }

@@ -20,6 +20,10 @@ pub use splendor_tourney::{
     Cost,
     CardId,
     NobleId,
+    GameResults,
+    Runnable,
+    Log,
+    run_bot,
 };
 
 const CARD_LOOKUP : [splendor_tourney::Card; 90] = splendor_tourney::Card::all_const();
@@ -131,6 +135,12 @@ impl Action {
                 Ok(continue_action)
             }
         }
+    }
+}
+
+impl Into<splendor_tourney::Action> for Action {
+    fn into(self) -> splendor_tourney::Action {
+        self.to_splendor_tourney().expect("Invalid action")
     }
 }
 
@@ -288,6 +298,12 @@ pub struct ClientInfo {
     pub player_index : usize,
     pub legal_actions : Vec<Action>,
     pub num_players : usize,
+}
+
+impl From<splendor_tourney::ClientInfo> for ClientInfo {
+    fn from(client_info: splendor_tourney::ClientInfo) -> Self {
+        ClientInfo::from_splendor_tourney(client_info)
+    }
 }
 
 impl ClientInfo {

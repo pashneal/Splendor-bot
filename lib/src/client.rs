@@ -1,5 +1,6 @@
 use crate::*;
 use clap::Parser;
+use std::ops::Deref;
 use tungstenite::{connect, stream::MaybeTlsStream, Message};
 use url::Url;
 
@@ -26,10 +27,10 @@ impl Log {
     }
 }
 
-pub trait Runnable {
+pub trait Runnable<C : From<ClientInfo>, A : Into<Action>> {
     fn initialize(&mut self, log: &mut Log);
-    fn take_action(&mut self, info: ClientInfo, log: &mut Log) -> Action;
-    fn game_over(&self, info: ClientInfo, results: GameResults);
+    fn take_action(&mut self, info: C, log: &mut Log) -> A;
+    fn game_over(&self, info: C, results: GameResults);
 }
 
 #[derive(Parser, Debug)]
@@ -41,7 +42,7 @@ pub struct Args {
 
 /// The protocol for communication and running the bot between the client and
 /// the server. Sends logs and actions to the server when appropriate.
-pub fn run_bot<B: Runnable + Default>() {
+pub fn run_bot<C : From<ClientInfo>, A : Into<Action>, B: Runnable<C, A> + Default>() {
     let args = Args::parse();
     let port = args.port;
 
@@ -62,7 +63,9 @@ pub fn run_bot<B: Runnable + Default>() {
         let msg = game_socket.read().expect("Error reading message");
         let msg = msg.to_text().expect("Error converting message to text");
         let info: ClientInfo = serde_json::from_str(msg).expect("Error parsing message");
+        let info : C = C::from(info);
         let action = bot.take_action(info, &mut log);
+        let action = action.into();
         let msg = ClientMessage::Action(action);
 
         let msg_str = serde_json::to_string(&msg).expect("Error converting action to string");
