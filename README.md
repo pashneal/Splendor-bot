@@ -20,7 +20,7 @@ cargo 1.76.0 (xxxxxx 2024-xxxx)
 
 ### Installing Rust
 
-Navigate to the Rust website and download the exe
+Navigate to the Rust https://rust-lang.org/tools/install website and download the exe
 
 ![image](https://github.com/pashneal/splendor-tournament/assets/36735795/8eebc16a-faa4-4907-b5d4-a9dce6e4b7ab)
 
