@@ -46,6 +46,9 @@ You may already have Python installed, but the installation scripts require a bi
 
 To install, you can type `python3` in a new Powershell instance, which will launch Microsoft Store on Windows 11
 
+![image](https://github.com/pashneal/splendor-tournament/assets/42392859/52dd47fd-8c3d-4fbe-8a83-bf52af2cf211)
+
+
 ## Running a Tournament 
 
 To run a tournament is simple, navigate to the splendor-tournament directory and execute 
