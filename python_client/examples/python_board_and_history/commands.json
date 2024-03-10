@@ -1,6 +1,6 @@
 {
   "build" : [
-    "python3 ../../python_client/ffi/build.py"
+    "python3 ../../ffi/build.py"
   ],
   "binary" : "./board_and_history.py"
 }
