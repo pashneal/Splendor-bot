@@ -8,9 +8,8 @@ PLAYER_DIRECTORIES = ["python_client/",  "./examples/python_cards", "./examples/
 # If set to false, only report logs from clients
 DEBUG_LOGGING = False
 
-# TODO: Doesn't do anything YET
 # Uses Fischer time control conventions, that is, 
-# all players start with some INITIAL_TIME given in seconds but before 
+# all players start with some INITIAL_TIME given in milliseconds but before 
 # each players next move, INCREMENT seconds is added to that player's total time
-INITIAL_TIME = 10
-INCREMENT = 5
+INITIAL_TIME = 10_000
+INCREMENT = 1_000

@@ -52,6 +52,7 @@ pub fn run_bot<C : From<ClientInfo>, A : Into<Action>, B: Runnable<C, A> + Defau
     let url = Url::parse(&url).unwrap();
     let (mut game_socket, _) = connect(url).expect("Can't connect to the game server");
 
+
     // Give the server a chance to start up
     std::thread::sleep(std::time::Duration::from_millis(100));
 

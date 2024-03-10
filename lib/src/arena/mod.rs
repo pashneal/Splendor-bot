@@ -19,7 +19,8 @@ use replay::*;
 pub struct Arena {
     pub game: Game,
     pub clients: Vec<String>,
-    pub timeout: Duration,
+    pub initial_time : Duration,
+    pub increment : Duration,
     replay: Either<Replay<Initialized>, FinalizedReplay>,
 }
 
@@ -38,17 +39,17 @@ pub struct ClientInfo {
 impl JSONable for ClientInfo {}
 
 impl Arena {
-    pub fn new(players: u8, binaries: Vec<String>) -> Arena {
+    pub fn new(players: u8, binaries: Vec<String>, initial_time: Duration, increment: Duration) -> Arena {
         let card_lookup = Arc::new(Card::all());
         let game = Game::new(players, card_lookup);
         let clients = binaries;
-        let timeout = Duration::from_secs(10);
 
         Arena {
             game: game.clone(),
             replay: Either::Initialized(Replay::new(game)),
             clients,
-            timeout,
+            initial_time,
+            increment,
         }
     }
 

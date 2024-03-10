@@ -86,9 +86,9 @@ def run_game(binaries):
 
     paths = " ".join(paths)
     if is_windows:
-        os.system(f".\\arena\\target\\release\\arena -b {paths}")
+        os.system(f".\\arena\\target\\release\\arena -b {paths} --initial-time {INITIAL_TIME} --increment {INCREMENT}")
     else:
-        os.system(f"./arena/target/release/arena -b {paths}")
+        os.system(f"./arena/target/release/arena -b {paths} --initial-time {INITIAL_TIME} --increment {INCREMENT}")
 
 if __name__ == "__main__":
     # Set the current directory to this one to allow for arbitrary execution

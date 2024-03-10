@@ -27,9 +27,9 @@ static TURN_COUNTER: AtomicUsize = AtomicUsize::new(0);
 static LAST_PLAYER: AtomicUsize = AtomicUsize::new(5);
 
 impl Arena {
-    pub async fn launch(port: u16, binaries: Vec<String>, num_players: u8) {
+    pub async fn launch(port: u16, binaries: Vec<String>, num_players: u8, initial_time: Duration, increment: Duration) {
         let init_binaries = binaries.clone();
-        let arena = Arena::new(num_players, binaries);
+        let arena = Arena::new(num_players, binaries, initial_time, increment);
         // Keep track of the game state
         let arena = Arc::new(RwLock::new(arena));
         // Turn our arena state into a new Filter
@@ -155,6 +155,8 @@ pub enum ParseError {
     CannotConvertToString,
     #[display(fmt = "Cannot convert string to client message")]
     CannotConvertToClientMessage,
+    #[display(fmt = "Message too long to display")]
+    MessageTooLong,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
