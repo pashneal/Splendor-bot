@@ -95,7 +95,7 @@ impl Replay<Finalized> {
 pub type FinalizedReplay = Arc<RwLock<Replay<Finalized>>>;
 
 // (color/gem, amount)
-type JSGems = Vec<(usize, i8)>;
+type JSTokens = Vec<(usize, i8)>;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct JSCard {
@@ -103,7 +103,7 @@ pub struct JSCard {
     points: usize,
     #[serde(rename = "colorIndex")]
     color_index: usize,
-    gems: JSGems,
+    tokens: JSTokens,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -116,8 +116,8 @@ pub struct JSDeck {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct JSPlayer {
-    developments: JSGems,
-    gems : JSGems,
+    developments: JSTokens,
+    gems : JSTokens,
     #[serde(rename = "totalGems")]
     total_gems: u32,
     #[serde(rename = "reservedCards")]
@@ -133,13 +133,13 @@ enum Success {
     #[serde(rename = "move_index")]
     Move(usize),
     #[serde(rename = "nobles")]
-    Nobles(Vec<JSGems>),
+    Nobles(Vec<JSTokens>),
     #[serde(rename = "cards")]
     Cards(Vec<Vec<JSCard>>),
     #[serde(rename = "decks")]
     Decks(Vec<JSDeck>),
     #[serde(rename = "bank")]
-    Bank(JSGems),
+    Bank(JSTokens),
     #[serde(rename = "players")]
     Players(Vec<JSPlayer>),
 }
@@ -234,7 +234,7 @@ fn js_gems_map() -> HashMap<Gem, usize> {
 
 // Converts a noble to a vector representing the color distribution
 // of the cost of the noble as a list of (color_index, number_needed)
-fn to_js_noble(noble: &Noble) -> JSGems {
+fn to_js_noble(noble: &Noble) -> JSTokens {
     let mut map = js_gems_map();
     let mut js_noble = Vec::new();
 
@@ -301,7 +301,7 @@ fn to_js_cards(card_ids: Vec<Vec<CardId>>, card_lookup: Arc<Vec<Card>>) -> Vec<V
                 tier,
                 points,
                 color_index: *color_index,
-                gems: js_cost,
+                tokens: js_cost,
             }
         })
         .collect();
@@ -362,7 +362,7 @@ pub async fn board_decks(arena: GlobalArena) -> Result<impl Reply, Rejection> {
 
 // Converts a list of gems from the public board area to a list of JSGems
 // using the conventions laid out in the frontend
-pub fn to_js_bank(gems: &Gems) -> JSGems {
+pub fn to_js_bank(gems: &Gems) -> JSTokens {
     let map = js_gems_map();
     let mut js_bank = Vec::new();
     for gem in Gem::all() {
@@ -438,7 +438,7 @@ pub fn to_js_players(players: &Vec<Player>, card_lookup: Arc<Vec<Card>>) -> Vec<
                 tier,
                 points,
                 color_index,
-                gems: js_cost,
+                tokens: js_cost,
             });
         }
 
