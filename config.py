@@ -3,7 +3,7 @@ PLAYER_DIRECTORIES = [
     "python_client/",  
     "python_client/examples/python_cards", 
     "python_client/examples/python_actions/", 
-    "python_client/examples/python_board_and_history/"
+    "python_client/examples/python_timeout/",
 ]
 # For example: to run with four players:
 # PLAYER_DIRECTORIES = ["python_client/",  "rust_client/", "python_client/", "rust_client/"]

@@ -179,18 +179,24 @@ async fn validate_action(action: &Action, player_id: usize, arena: GlobalArena) 
     if actions.is_none() {
         return false;
     }
+
     let actions = actions.unwrap();
     if !actions.contains(action) {
         return false;
     }
 
     // -> Is the correct player's turn
-    if arena.read().await.current_player_num() != player_id {
+    if arena.read().await.current_player_num() != Some(player_id) {
         return false;
     }
 
-    // -> Is not timed out TODO
-    true
+    // -> The current player is not timed out  
+    if arena.read().await.is_timed_out(){
+        return false;
+    }
+
+    return true;
+
 }
 
 async fn log_stream_connected(socket: WebSocket) {
@@ -237,12 +243,24 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
 
     let init_clients = clients.clone();
     let init_arena = arena.clone();
+    let num_players = init_arena.read().await.players().len();
 
     // Convert messages from the client into a stream of actions
     // So we play them in the game as soon as they come in
     tokio::spawn(async move {
         loop {
-            match timeout(Duration::from_millis(1000), client_rx.next()).await {
+            // Wait until all players are connected
+            // and it is the current player's turn
+            while (
+                arena.read().await.current_player_num() != Some(my_id)
+            ) {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+            // Give a little extra time to account for network + server latency
+            let time_remaining = arena.read().await.time_remaining();
+            let time_remaining = time_remaining + Duration::from_millis(10);
+
+            match timeout(time_remaining, client_rx.next()).await {
                 Ok(Some(msg)) => {
                     trace!("Received message: {:?}", msg);
                     if let Err(e) = msg {
@@ -278,9 +296,6 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
                 }
             }
 
-            while (arena.read().await.current_player_num() != my_id) {
-                tokio::time::sleep(Duration::from_millis(100)).await;
-            }
         }
         info!("{} disconnected", my_id);
         user_disconnected(my_id, clients, arena).await;
@@ -297,6 +312,7 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
 
 async fn game_initialized(clients: Clients, arena: GlobalArena) {
     info!("All users locked and loaded! Game starting!");
+    arena.write().await.start_game();
     action_played(clients, arena).await;
 }
 
@@ -336,7 +352,7 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
         trace!("Auto played action: {:?}", action);
         arena.write().await.play_action(action);
     }
-    let last_player = arena.read().await.current_player_num();
+    let last_player = arena.read().await.current_player_num().expect("No current player, is the game started?");
 
     if LAST_PLAYER.load(Ordering::SeqCst) != last_player {
         TURN_COUNTER.fetch_add(1, Ordering::SeqCst);

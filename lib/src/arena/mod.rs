@@ -10,8 +10,11 @@ use tokio::sync::RwLock;
 pub mod protocol;
 pub mod replay;
 pub mod arena;
+pub mod clock;
 
 pub use protocol::*;
 pub use arena::*;
 use replay::*;
+use clock::*;
+
 

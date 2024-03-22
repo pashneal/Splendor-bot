@@ -9,6 +9,7 @@ use tokio::sync::RwLock;
 
 use crate::arena::protocol::*;
 use crate::arena::replay::*;
+use crate::arena::clock::*;
 
 /// A module for running games across multiple clients. Can be fed binaries
 /// and run them in a tournament style. The protocol for communication is
@@ -16,8 +17,8 @@ use crate::arena::replay::*;
 pub struct Arena {
     game: Game,
     pub clients: Vec<String>,
-    pub initial_time : Duration,
-    pub increment : Duration,
+    clock: Clock,
+    game_started: bool,
     replay: Either<Replay<Initialized>, FinalizedReplay>,
 }
 
@@ -40,13 +41,14 @@ impl Arena {
         let card_lookup = Arc::new(Card::all());
         let game = Game::new(players, card_lookup);
         let clients = binaries;
+        let num_players = players as usize;
 
         Arena {
             game: game.clone(),
             replay: Either::Initialized(Replay::new(game)),
             clients,
-            initial_time,
-            increment,
+            game_started: false,
+            clock: Clock::new(num_players, initial_time, increment),
         }
     }
 
@@ -91,17 +93,30 @@ impl Arena {
         }
     }
 
+    /// Play an action in the game. If the action is to continue, the clock will
+    /// be updated to the next player
     pub fn play_action(&mut self, action : Action) {
-        // TODO: adjust times for players based on increment
-        self.game.play_action(action);
+        self.game.play_action(action.clone());
+        match action {
+            Action::Continue => {
+                self.clock.end();
+                self.clock.next_player();
+                self.clock.start();
+            }
+            _ => {}
+        }
     }
 
     pub fn get_legal_actions(&self) -> Option<Vec<Action>> {
         self.game.get_legal_actions()
     }
 
-    pub fn current_player_num(&self) -> usize {
-        self.game.current_player_num()
+    pub fn current_player_num(&self) -> Option<usize> {
+        if self.game_started {
+            Some(self.game.current_player_num())
+        } else {
+            None
+        }
     }
 
     pub fn get_winner(&self) -> Option<usize> {
@@ -114,6 +129,19 @@ impl Arena {
 
     pub fn players(&self) -> &Vec<Player> {
         self.game.players()
+    }
+
+    pub fn is_timed_out(&self) -> bool {
+        self.clock.time_remaining() <= Duration::from_secs(0)
+    }
+
+    pub fn time_remaining(&self) -> Duration {
+        self.clock.time_remaining()
+    }
+
+    pub fn start_game(&mut self) {
+        self.game_started = true;
+        self.clock.start();
     }
 }
 
