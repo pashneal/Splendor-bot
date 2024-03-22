@@ -275,7 +275,7 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
                     trace!("Received message: {:?}", msg);
                     if let Err(e) = msg {
                         play_default_action(my_id, clients.clone(), arena.clone()).await;
-                        break;
+                        continue;
                     }
                     let msg = msg.unwrap();
 
