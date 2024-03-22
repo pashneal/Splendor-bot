@@ -11,6 +11,7 @@ use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 use warp::Filter;
+use tokio::time::timeout;
 
 use log::{debug, error, info, trace};
 
@@ -174,7 +175,7 @@ fn parse_message(message_text: &Message) -> Result<ClientMessage, ParseError> {
 
 async fn validate_action(action: &Action, player_id: usize, arena: GlobalArena) -> bool {
     // -> Is a legal action
-    let actions = arena.read().await.game.get_legal_actions();
+    let actions = arena.read().await.get_legal_actions();
     if actions.is_none() {
         return false;
     }
@@ -184,7 +185,7 @@ async fn validate_action(action: &Action, player_id: usize, arena: GlobalArena) 
     }
 
     // -> Is the correct player's turn
-    if arena.read().await.game.current_player_num() != player_id {
+    if arena.read().await.current_player_num() != player_id {
         return false;
     }
 
@@ -240,40 +241,52 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
     // Convert messages from the client into a stream of actions
     // So we play them in the game as soon as they come in
     tokio::spawn(async move {
-        while let Some(msg) = client_rx.next().await {
-            trace!("Received message: {:?}", msg);
-            if let Err(e) = msg {
-                error!("error reading message: {}", e);
-                break;
-            }
-            let msg = msg.unwrap();
-
-            let client_msg = parse_message(&msg);
-            if let Err(e) = client_msg {
-                error!("error parsing message from json string! {:?}", e);
-                break;
-            }
-            match client_msg.unwrap() {
-                ClientMessage::Action(action) => {
-                    if !validate_action(&action, my_id, arena.clone()).await {
-                        error!("invalid action! {:?}", action);
+        loop {
+            match timeout(Duration::from_millis(1000), client_rx.next()).await {
+                Ok(Some(msg)) => {
+                    trace!("Received message: {:?}", msg);
+                    if let Err(e) = msg {
+                        error!("error reading message: {}", e);
                         break;
                     }
-                    trace!("{} played {:?}", my_id, action);
-                    arena.write().await.game.play_action(action);
-                    action_played(clients.clone(), arena.clone()).await;
+                    let msg = msg.unwrap();
+
+                    let client_msg = parse_message(&msg);
+                    if let Err(e) = client_msg {
+                        error!("error parsing message from json string! {:?}", e);
+                        break;
+                    }
+                    match client_msg.unwrap() {
+                        ClientMessage::Action(action) => {
+                            if !validate_action(&action, my_id, arena.clone()).await {
+                                error!("invalid action! {:?}", action);
+                                break;
+                            }
+                            trace!("{} played {:?}", my_id, action);
+                            arena.write().await.play_action(action);
+                            action_played(clients.clone(), arena.clone()).await;
+                        }
+                        ClientMessage::Log(log) => {
+                            error!("Logs sent to the wrong endpoint! {:?}", log);
+                            break;
+                        }
+                    }
                 }
-                ClientMessage::Log(log) => {
-                    error!("Logs sent to the wrong endpoint! {:?}", log);
-                    break;
+                Ok(_) => panic!("unexpected None"),
+                Err(_) => {
+                    panic!("timeout");
                 }
+            }
+
+            while (arena.read().await.current_player_num() != my_id) {
+                tokio::time::sleep(Duration::from_millis(100)).await;
             }
         }
         info!("{} disconnected", my_id);
         user_disconnected(my_id, clients, arena).await;
     });
 
-    let num_players = init_arena.read().await.game.players().len();
+    let num_players = init_arena.read().await.players().len();
     user_initialized(my_id, init_clients.clone(), init_arena.clone()).await;
 
     // All users are connected, start the game
@@ -301,8 +314,8 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
         // If the game is over, don't do anything else
         if arena.read().await.is_game_over() {
             info!("Game over!");
-            let winner = arena.read().await.game.get_winner();
-            let board = Board::from_game(&arena.read().await.game);
+            let winner = arena.read().await.get_winner();
+            let board = arena.read().await.board();
             trace!("Final board: {:?}", board);
             match winner {
                 Some(winner) => info!("Winner: Player {:?}", winner),
@@ -316,17 +329,17 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
         let actions = arena
             .read()
             .await
-            .game
             .get_legal_actions()
-            .expect("No legal actions!");
+            .expect("Cannot get legal actions");
         if actions.len() != 1 {
             break;
         }
         let action = actions[0].clone();
         trace!("Auto played action: {:?}", action);
-        arena.write().await.game.play_action(action);
+        arena.write().await.play_action(action);
     }
-    let last_player = arena.read().await.game.current_player_num();
+    let last_player = arena.read().await.current_player_num();
+
     if LAST_PLAYER.load(Ordering::SeqCst) != last_player {
         TURN_COUNTER.fetch_add(1, Ordering::SeqCst);
         LAST_PLAYER.store(last_player, Ordering::SeqCst);
