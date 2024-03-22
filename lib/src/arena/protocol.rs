@@ -177,21 +177,25 @@ async fn validate_action(action: &Action, player_id: usize, arena: GlobalArena) 
     // -> Is a legal action
     let actions = arena.read().await.get_legal_actions();
     if actions.is_none() {
+        error!("No legal actions found!");
         return false;
     }
 
     let actions = actions.unwrap();
     if !actions.contains(action) {
+        error!("Illegal action: {:?}", action);
         return false;
     }
 
     // -> Is the correct player's turn
     if arena.read().await.current_player_num() != Some(player_id) {
+        error!("Not player {}'s turn!", player_id);
         return false;
     }
 
     // -> The current player is not timed out  
     if arena.read().await.is_timed_out(){
+        error!("Player {} is timed out!", player_id);
         return false;
     }
 
@@ -208,7 +212,7 @@ async fn log_stream_connected(socket: WebSocket) {
     let (_tx, mut rx) = socket.split();
     while let Some(msg) = rx.next().await {
         if let Err(e) = msg {
-            error!("error reading message: {}", e);
+            trace!("error receiving message! breaking {:?}", e);
             break;
         }
         let msg = msg.unwrap();
@@ -253,19 +257,24 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
             // and it is the current player's turn
             while (
                 arena.read().await.current_player_num() != Some(my_id)
+                && !arena.read().await.is_game_over()
             ) {
                 tokio::time::sleep(Duration::from_millis(10)).await;
             }
+
+            if arena.read().await.is_game_over() {
+                break;
+            }
+
             // Give a little extra time to account for network + server latency
             let time_remaining = arena.read().await.time_remaining();
             let time_remaining = time_remaining + Duration::from_millis(10);
-            println!("Time remaining: {:?}", time_remaining);
 
             match timeout(time_remaining, client_rx.next()).await {
                 Ok(Some(msg)) => {
                     trace!("Received message: {:?}", msg);
                     if let Err(e) = msg {
-                        error!("error reading message: {}", e);
+                        play_default_action(my_id, clients.clone(), arena.clone()).await;
                         break;
                     }
                     let msg = msg.unwrap();
@@ -273,30 +282,31 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
                     let client_msg = parse_message(&msg);
                     if let Err(e) = client_msg {
                         error!("error parsing message from json string! {:?}", e);
-                        break;
+                        play_default_action(my_id, clients.clone(), arena.clone()).await;
+                        continue;
                     }
                     match client_msg.unwrap() {
                         ClientMessage::Action(action) => {
                             if !validate_action(&action, my_id, arena.clone()).await {
-                                error!("invalid action! {:?}", action);
-                                break;
+                                play_default_action(my_id, clients.clone(), arena.clone()).await;
+                                continue;
                             }
+
                             trace!("{} played {:?}", my_id, action);
                             arena.write().await.play_action(action);
                             action_played(clients.clone(), arena.clone()).await;
                         }
                         ClientMessage::Log(log) => {
                             error!("Logs sent to the wrong endpoint! {:?}", log);
-                            break;
+                            continue;
                         }
                     }
                 }
                 Ok(_) => panic!("unexpected None"),
                 Err(e) => {
-                    panic!("timeout {}", e);
+                    play_default_action(my_id, clients.clone(), arena.clone()).await;
                 }
             }
-
         }
         info!("{} disconnected", my_id);
         user_disconnected(my_id, clients, arena).await;
@@ -309,6 +319,16 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
     if my_id == num_players - 1 {
         game_initialized(init_clients, init_arena).await;
     }
+}
+async fn play_default_action(my_id : usize, clients: Clients, arena: GlobalArena) {
+    if arena.read().await.is_game_over() {
+        return;
+    }
+    
+    println!("[Turn : {}] [Player {} (timed out)] Playing Random Action...", TURN_COUNTER.load(Ordering::SeqCst), my_id);
+    let action = arena.read().await.get_legal_actions().unwrap()[0].clone();
+    arena.write().await.play_action(action);
+    action_played(clients.clone(), arena.clone()).await;
 }
 
 async fn game_initialized(clients: Clients, arena: GlobalArena) {

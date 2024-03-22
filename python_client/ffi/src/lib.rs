@@ -868,7 +868,13 @@ pub fn run_python_bot(py: Python, bot_class: &PyAny) {
         .expect("Unable to launch bot, could not call __init__");
 
     loop {
-        let msg = game_socket.read().expect("Error reading message");
+        let msg = game_socket.read();
+        let msg = match msg {
+            Ok(msg) => msg,
+            Err(_) => {
+                break;
+            }
+        };
         let msg = msg.to_text().expect("Error converting message to text");
         let info: ClientInfo = serde_json::from_str(msg).expect("Error parsing message");
         let py_info = PyClientInfo::from_client_info(info);
@@ -883,9 +889,10 @@ pub fn run_python_bot(py: Python, bot_class: &PyAny) {
 
         let msg = ClientMessage::Action(action);
         let msg_str = serde_json::to_string(&msg).expect("Error converting action to string");
-        game_socket
-            .send(Message::Text(msg_str))
-            .expect("Error sending message");
+        let game_send_result = game_socket.send(Message::Text(msg_str));
+        if game_send_result.is_err() {
+            break;
+        }
     }
 }
 

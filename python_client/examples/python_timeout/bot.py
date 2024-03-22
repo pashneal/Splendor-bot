@@ -10,9 +10,8 @@ class Bot:
     # This function is called every time the server 
     # needs a move from your bot
     def take_action(self, game_info, log):
-        while True:
-            time.sleep(0.1)
-
+        time.sleep(1.2)
+        return game_info.legal_actions[0]
         
 if __name__ == "__main__":
     ffi.run_python_bot(Bot)
