@@ -72,7 +72,7 @@ impl Replay<Finalized> {
     }
 
     pub fn go_to_move(&mut self, new_move_index: i32) {
-        // Bound between 0 and the number of moves not matter the input
+        // Bound between 0 and the number of moves no matter the input
         let new_move_index = new_move_index.max(0);
         let new_move_index = new_move_index.min(self.inner.history.num_moves());
 
