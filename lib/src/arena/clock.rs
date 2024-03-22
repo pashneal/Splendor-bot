@@ -28,9 +28,10 @@ impl Clock {
             return;
         }
         let num_players = self.total_time.len();
-        self.current_player.map(|x| {
+        self.current_player = self.current_player.map(|x| {
             (x + 1) % num_players
         });
+        println!("Switching to player {:?}", self.current_player);
     }
 
     // Start the clock for the current player
@@ -41,6 +42,7 @@ impl Clock {
         }
         let current_player = self.current_player.unwrap();
         self.current_timestamp = SystemTime::now();
+        println!("Starting clock for player {}", current_player);
         self.total_time[current_player] += self.increment;
     }
 

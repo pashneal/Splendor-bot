@@ -16,5 +16,5 @@ DEBUG_LOGGING = False
 # Uses Fischer time control conventions, that is, 
 # all players start with some INITIAL_TIME given in milliseconds but before 
 # each players next move, INCREMENT seconds is added to that player's total time
-INITIAL_TIME = 10_000
+INITIAL_TIME = 1_000
 INCREMENT = 1_000

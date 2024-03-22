@@ -259,6 +259,7 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
             // Give a little extra time to account for network + server latency
             let time_remaining = arena.read().await.time_remaining();
             let time_remaining = time_remaining + Duration::from_millis(10);
+            println!("Time remaining: {:?}", time_remaining);
 
             match timeout(time_remaining, client_rx.next()).await {
                 Ok(Some(msg)) => {
@@ -291,8 +292,8 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
                     }
                 }
                 Ok(_) => panic!("unexpected None"),
-                Err(_) => {
-                    panic!("timeout");
+                Err(e) => {
+                    panic!("timeout {}", e);
                 }
             }
 
