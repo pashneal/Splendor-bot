@@ -40,51 +40,49 @@ impl Arena {
         // Turn our "clients" state into a new Filter...
         let clients = warp::any().map(move || clients.clone());
 
-        let replay_next = warp::post()
-            .and(warp::path("replay"))
+        let replay_post = warp::post()
+            .and(warp::path("replay"));
+
+        let replay_get = warp::get()
+            .and(warp::path("replay"));
+
+        let replay_next = replay_post
             .and(warp::path("next"))
             .and(arena.clone())
             .and_then(replay::next_move);
 
-        let replay_prev = warp::post()
-            .and(warp::path("replay"))
+        let replay_prev = replay_post 
             .and(warp::path("previous"))
             .and(arena.clone())
             .and_then(replay::previous_move);
 
-        let replay_goto = warp::post()
-            .and(warp::path("replay"))
+        let replay_goto = replay_post 
             .and(warp::path("goto"))
             .and(replay::json_body())
             .and(arena.clone())
             .and_then(replay::go_to_move);
 
-        let replay_board_nobles = warp::get()
-            .and(warp::path("replay"))
+        let replay_board_nobles = replay_get 
             .and(warp::path("nobles"))
             .and(arena.clone())
             .and_then(replay::board_nobles);
 
-        let replay_board_cards = warp::get()
-            .and(warp::path("replay"))
+        let replay_board_cards = replay_get 
             .and(warp::path("cards"))
             .and(arena.clone())
             .and_then(replay::board_cards);
 
-        let replay_board_decks = warp::get()
-            .and(warp::path("replay"))
+        let replay_board_decks = replay_get 
             .and(warp::path("decks"))
             .and(arena.clone())
             .and_then(replay::board_decks);
 
-        let replay_board_bank = warp::get()
-            .and(warp::path("replay"))
+        let replay_board_bank = replay_get 
             .and(warp::path("bank"))
             .and(arena.clone())
             .and_then(replay::board_bank);
 
-        let replay_board_players = warp::get()
-            .and(warp::path("replay"))
+        let replay_board_players = replay_get
             .and(warp::path("players"))
             .and(arena.clone())
             .and_then(replay::board_players);
