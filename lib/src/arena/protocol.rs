@@ -315,8 +315,6 @@ async fn action_played(clients: Clients, arena: GlobalArena) {
         if arena.read().await.is_game_over() {
             info!("Game over!");
             let winner = arena.read().await.get_winner();
-            let board = arena.read().await.board();
-            trace!("Final board: {:?}", board);
             match winner {
                 Some(winner) => info!("Winner: Player {:?}", winner),
                 None => info!("No winner! Draw!"),
