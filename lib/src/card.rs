@@ -109,6 +109,9 @@ impl Card {
         self.tier
     }
 
+    /// Create a static card array 
+    /// which maps indices to Card objects
+    /// Represents all cards in a game of Splendor
     pub const fn all_const() -> [Card; 90] {
         [
             Card {

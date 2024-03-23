@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
+
 /// This module repackages the splendor_tourney module into a
 /// more convenient form
 ///
@@ -12,6 +13,7 @@
 /// for the user interface across all supported languages.
 ///
 /// Changing this may break compatibility with the engine!
+
 use derive_more::{Display, Error};
 use std::time::Duration;
 use serde::Deserialize;
@@ -53,6 +55,7 @@ pub enum Action {
 }
 
 impl Action {
+    /// Convert a splendor_tourney::Action into an Action
     fn from(action: splendor_tourney::Action) -> Self {
         match action {
             splendor_tourney::Action::TakeDouble(gem) => Action::TakeGems(Gems::one(gem) + Gems::one(gem)),
@@ -67,6 +70,7 @@ impl Action {
         }
     }
 
+    /// Convert an Action into a splendor_tourney::Action
     fn to_splendor_tourney(&self) -> Result<splendor_tourney::Action, ModelError> {
         match self {
             Action::TakeGems(gems) => {
@@ -135,6 +139,7 @@ pub struct Board {
 }
 
 impl Board {
+    /// Convert a splendor_tourney::Board into a Board
     fn from(board: splendor_tourney::Board) -> Self {
         let mut nobles = Vec::new();
         let all_nobles = Noble::all();
@@ -183,6 +188,7 @@ pub struct Card {
 }
 
 impl Card {
+    /// Convert a splendor_tourney::Card into a Card
     fn from(card: splendor_tourney::Card) -> Self {
         Card {
             points: card.points(),

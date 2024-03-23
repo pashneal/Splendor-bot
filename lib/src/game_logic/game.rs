@@ -31,6 +31,7 @@ pub struct Game {
 }
 
 impl Game {
+    /// Initialize the game with given nobles
     fn with_nobles(&mut self, nobles: Vec<NobleId>) {
         let noble_lookup = Noble::all();
         self.nobles = nobles
@@ -39,6 +40,7 @@ impl Game {
             .collect();
     }
 
+    /// Initialize the game with given cards
     fn with_initial_cards(&mut self, initial_cards: Vec<Vec<Card>>) {
         // Undeal the initial cards
         self.decks[0].extend(
@@ -66,6 +68,7 @@ impl Game {
         self.dealt_cards[2] = initial_cards[2].iter().map(|card| card.id()).collect();
     }
 
+    /// Get the number of cards in each deck from tier 1 to 3
     pub fn deck_counts(&self) -> [usize; 3] {
         self.decks
             .iter()
@@ -75,29 +78,38 @@ impl Game {
             .expect("Deck size is != 3")
     }
 
+    /// Get the array that maps card ids to cards
     pub fn card_lookup(&self) -> Arc<Vec<Card>> {
         self.card_lookup.clone()
     }
 
+    /// Get the cards that have been dealt to the board
+    /// and are face up
     pub fn cards(&self) -> Vec<Vec<CardId>> {
         self.dealt_cards.clone()
     }
 
+    /// Get the gems that are currently available for taking
     pub fn bank(&self) -> &Gems {
         &self.bank
     }
 
+    /// Get the nobles that are currently available
     pub fn nobles(&self) -> &Vec<Noble> {
         &self.nobles
     }
 
+    /// Get the players in the game
     pub fn players(&self) -> &Vec<Player> {
         &self.players
     }
+
+    /// Get the index of the current player
     pub fn current_player_num(&self) -> usize {
         self.current_player
     }
 
+    /// Get the Player object of the current player
     pub fn current_player(&self) -> Player {
         self.players[self.current_player].clone()
     }
@@ -106,6 +118,8 @@ impl Game {
         self.history.clone()
     }
 
+    /// Initialize a new game with the given number of players 
+    /// and a global array of cards where indices are card ids
     pub fn new(players: u8, card_lookup: Arc<Vec<Card>>) -> Game {
         let mut decks = Vec::new();
         for tier in 1..=3 {
@@ -147,6 +161,10 @@ impl Game {
         }
     }
 
+    /// Given a game state return all 
+    /// legal actions that can be taken
+    ///
+    /// returns None if the game is deadlocked or over 
     pub fn get_legal_actions(&self) -> Option<Vec<Action>> {
         if self.deadlock_count == 2 * self.players.len() as u8 {
             return None;
@@ -264,6 +282,7 @@ impl Game {
         }
     }
 
+    /// Given an action and the current phase, determine if the action is legal
     fn is_phase_correct_for(&self, action: Action) -> bool {
         match self.current_phase {
             Phase::PlayerStart => match action {
@@ -593,6 +612,9 @@ impl Game {
         winner
     }
 
+    /// Given a game state, play random legal moves until the game is over
+    /// Returns the winner of the game
+    /// Returns None if there is no clear winner 
     pub fn rollout(&mut self) -> Option<usize> {
         loop {
             let actions = self.get_legal_actions();
