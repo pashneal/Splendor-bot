@@ -13,6 +13,7 @@ def check_cargo_install():
         exit()
 
 def install_maturin():
+    subprocess.run(("python3", "-m", "pip", "install", "maturin[patchelf]"), check=False)
     subprocess.run(("python3", "-m", "pip", "install", "maturin"), check=True)
 
 def install_windows():
@@ -30,8 +31,8 @@ def install_windows():
 
 def install_posix(target_loc):
     subprocess.run(("python3",  "-m" , "maturin","build","--release"), check=True)
-    dylib = "./target/release/maturin/libffi.dylib"
-    so = "./target/release/maturin/libffi.so"
+    dylib = "./target/release/libffi.dylib"
+    so = "./target/release/libffi.so"
 
     if os.path.isfile(dylib):
         subprocess.run(("cp", dylib, target_loc), check=True)
