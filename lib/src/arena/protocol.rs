@@ -97,6 +97,11 @@ impl Arena {
             .or(replay_board_bank)
             .or(replay_board_players);
 
+        let time = warp::get()
+            .and(warp::path("time"))
+            .and(arena.clone())
+            .and_then(clock::current_time_remaining);
+
         let game = warp::path("game")
             .and(warp::ws())
             .and(clients)
@@ -111,7 +116,7 @@ impl Arena {
 
         let static_files = warp::path("splendor").and(warp::fs::dir("frontend"));
 
-        let routes = game.or(log).or(replay).or(static_files);
+        let routes = game.or(log).or(replay).or(time).or(static_files);
 
         tokio::spawn(async move {
             // TODO: use a handshake protocol instead of timing
@@ -174,6 +179,12 @@ fn parse_message(message_text: &Message) -> Result<ClientMessage, ParseError> {
 }
 
 async fn validate_action(action: &Action, player_id: usize, arena: GlobalArena) -> bool {
+    // -> The current player is not timed out  
+    if arena.read().await.is_timed_out(){
+        error!("Player {} is timed out!", player_id);
+        return false;
+    }
+
     // -> Is a legal action
     let actions = arena.read().await.get_legal_actions();
     if actions.is_none() {
@@ -193,11 +204,6 @@ async fn validate_action(action: &Action, player_id: usize, arena: GlobalArena) 
         return false;
     }
 
-    // -> The current player is not timed out  
-    if arena.read().await.is_timed_out(){
-        error!("Player {} is timed out!", player_id);
-        return false;
-    }
 
     return true;
 
@@ -308,7 +314,7 @@ async fn user_connected(ws: WebSocket, clients: Clients, arena: GlobalArena) {
                 }
             }
         }
-        info!("{} disconnected", my_id);
+        info!("Player {} disconnected", my_id);
         user_disconnected(my_id, clients, arena).await;
     });
 
@@ -325,7 +331,7 @@ async fn play_default_action(my_id : usize, clients: Clients, arena: GlobalArena
         return;
     }
     
-    println!("[Turn : {}] [Player {} (timed out)] Playing Random Action...", TURN_COUNTER.load(Ordering::SeqCst), my_id);
+    println!("[Turn : {}] [Player {} (crashed/timed out)] Playing a random move...", TURN_COUNTER.load(Ordering::SeqCst), my_id);
     let action = arena.read().await.get_legal_actions().unwrap()[0].clone();
     arena.write().await.play_action(action);
     action_played(clients.clone(), arena.clone()).await;

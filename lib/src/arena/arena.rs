@@ -32,6 +32,7 @@ pub struct ClientInfo {
     pub current_player: Player,
     pub current_player_num: usize,
     pub legal_actions: Vec<Action>,
+    pub time_endpoint_url: String,
 }
 
 impl JSONable for ClientInfo {}
@@ -70,6 +71,7 @@ impl Arena {
             current_player: self.game.current_player(),
             current_player_num: self.game.current_player_num(),
             legal_actions,
+            time_endpoint_url: "http://127.0.0.1:3030/time".to_string(), // TODO: not hardcoded
         }
     }
 

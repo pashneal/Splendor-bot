@@ -2,6 +2,8 @@ use lazy_static::lazy_static; use pyo3::prelude::*;
 use splendor_tourney::*;
 use tungstenite::{connect, Message};
 use url::Url;
+use serde::Deserialize;
+use std::time::Duration;
 
 lazy_static! {
     static ref CARD_LOOKUP: [Card; 90] = Card::all_const();
@@ -557,6 +559,7 @@ pub struct PyClientInfo {
     pub player_index: usize,
     #[pyo3(get)]
     pub legal_actions: Vec<PyAction>,
+    time_endpoint_url: String,
 }
 
 impl PyClientInfo {
@@ -588,8 +591,14 @@ impl PyClientInfo {
             current_player: py_current_player,
             player_index: client_info.current_player_num,
             legal_actions: py_legal_actions,
+            time_endpoint_url: client_info.time_endpoint_url,
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TimeRemaining {
+    pub time_remaining: Duration,
 }
 
 /// TODO: would an opponents() method be useful??
@@ -610,6 +619,12 @@ impl PyClientInfo {
     #[getter]
     pub fn num_players(&self) -> usize {
         self.players.len()
+    }
+
+    pub fn time_remaining(&self) -> f64 {
+        let response = reqwest::blocking::get(&self.time_endpoint_url).expect("Server did not response with time remaining");
+        let response: TimeRemaining = response.json().expect("Could not parse time remaining response");
+        response.time_remaining.as_millis() as f64
     }
 }
 

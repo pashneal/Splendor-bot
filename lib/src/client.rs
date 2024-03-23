@@ -63,7 +63,13 @@ pub fn run_bot<C : From<ClientInfo>, A : Into<Action>, B: Runnable<C, A> + Defau
     println!("Connected to the game server...");
 
     loop {
-        let msg = game_socket.read().expect("Error reading message");
+        let msg = game_socket.read();
+        let msg = match msg {
+            Ok(msg) => msg,
+            Err(e) => {
+                break;
+            }
+        };
         let msg = msg.to_text().expect("Error converting message to text");
         let info: ClientInfo = serde_json::from_str(msg).expect("Error parsing message");
         let info : C = C::from(info);
@@ -72,8 +78,9 @@ pub fn run_bot<C : From<ClientInfo>, A : Into<Action>, B: Runnable<C, A> + Defau
         let msg = ClientMessage::Action(action);
 
         let msg_str = serde_json::to_string(&msg).expect("Error converting action to string");
-        game_socket
-            .send(Message::Text(msg_str))
-            .expect("Error sending message");
+        let game_socket_result = game_socket.send(Message::Text(msg_str));
+        if let Err(_) = game_socket_result {
+            break;
+        }
     }
 }

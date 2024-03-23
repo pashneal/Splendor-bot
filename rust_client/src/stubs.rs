@@ -13,6 +13,8 @@
 ///
 /// Changing this may break compatibility with the engine!
 use derive_more::{Display, Error};
+use std::time::Duration;
+use serde::Deserialize;
 
 pub use splendor_tourney::{
     run_bot, CardId, Cost, GameResults, Gem, Gems, Log, Noble, NobleId, Runnable,
@@ -53,7 +55,7 @@ pub enum Action {
 impl Action {
     fn from(action: splendor_tourney::Action) -> Self {
         match action {
-            splendor_tourney::Action::TakeDouble(gem) => Action::TakeGems(Gems::one(gem)),
+            splendor_tourney::Action::TakeDouble(gem) => Action::TakeGems(Gems::one(gem) + Gems::one(gem)),
             splendor_tourney::Action::TakeDistinct(gems) => Action::TakeGems(Gems::from_set(&gems)),
             splendor_tourney::Action::Reserve(card_id) => Action::ReserveFaceUp(card_id),
             splendor_tourney::Action::ReserveHidden(tier) => Action::ReserveFaceDown(tier),
@@ -290,12 +292,18 @@ pub struct GameInfo {
     pub player_index: usize,
     pub legal_actions: Vec<Action>,
     pub num_players: usize,
+    time_endpoint_url: String,
 }
 
 impl From<splendor_tourney::ClientInfo> for GameInfo {
     fn from(client_info: splendor_tourney::ClientInfo) -> Self {
         GameInfo::from_splendor_tourney(client_info)
     }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct TimeResponse {
+    pub time_remaining: Duration,
 }
 
 impl GameInfo {
@@ -324,6 +332,7 @@ impl GameInfo {
             player_index: client_info.current_player_num,
             legal_actions,
             num_players,
+            time_endpoint_url: client_info.time_endpoint_url,
         }
     }
 
@@ -333,5 +342,12 @@ impl GameInfo {
 
     pub fn num_players(&self) -> usize {
         self.num_players
+    }
+
+    pub fn time_remaining(&self) -> Duration {
+        let url = &self.time_endpoint_url;
+        let response = reqwest::blocking::get(url).expect("Could not contact game server");
+        let response: TimeResponse = response.json().expect("Could not parse time response");
+        response.time_remaining
     }
 }

@@ -30,9 +30,10 @@ impl Runnable<GameInfo, Action> for Bot {
     /// If you have <= 1 legal action, the server will decide for you
     /// and skip this function. This includes attracting a single noble.
     fn take_action(&mut self, info: GameInfo, log: &mut Log) -> Action {
-        let legal_actions = info.legal_actions;
-
+        log.send(&format!("[simple.rs] Time remaining {:?}", info.time_remaining()));
         log.send(&format!("[simple.rs] Turn number: {}", self.turn_counter));
+
+        let legal_actions = info.legal_actions;
 
         // Just choose a random action (this bot is not very smart)
         let mut rng = thread_rng();

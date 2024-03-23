@@ -1,5 +1,7 @@
 use std::time::Duration;
 use std::time::SystemTime;
+use super::*;
+use warp::{Filter, Rejection, Reply};
 
 /// Keeps track of the amount of time each player has left
 pub struct Clock {
@@ -77,4 +79,17 @@ impl Clock {
             self.total_time[current_player] -= elapsed;
         }
     }
+}
+
+#[derive(Debug, Serialize)]
+struct Response {
+    time_remaining: Duration,
+}
+
+
+pub async fn current_time_remaining(arena: GlobalArena) -> Result<impl Reply, Rejection> {
+    let time_remaining = arena.read().await.time_remaining();
+    Ok(warp::reply::json(&Response {
+        time_remaining,
+    }))
 }
