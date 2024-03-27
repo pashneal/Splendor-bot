@@ -228,6 +228,7 @@ impl Card {
 pub struct GameHistory {
     pub turns: Vec<(usize, Vec<Action>)>,
 }
+
 impl GameHistory {
     fn from(game_history: splendor_tourney::GameHistory) -> Self {
         let mut turns = Vec::new();

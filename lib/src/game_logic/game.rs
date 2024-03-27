@@ -877,7 +877,7 @@ pub mod test {
     #[test]
     pub fn test_randomized_rollout() {
         let card_lookup = Arc::new(Card::all());
-        for _ in 0..200 {
+        for _ in 0..20000 {
             let mut game = Game::new(4, card_lookup.clone());
             game.rollout();
         }
