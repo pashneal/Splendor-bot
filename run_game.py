@@ -80,9 +80,9 @@ def run_game(binaries):
     build_arena()
     
     if DEBUG_LOGGING:
-        os.environ["RUST_LOG"] = "splendor_tourney=trace"
+        os.environ["RUST_LOG"] = "splendor_arena=trace"
     else:
-        os.environ["RUST_LOG"] = "splendor_tourney=info"
+        os.environ["RUST_LOG"] = "splendor_arena=info"
 
     paths = " ".join(paths)
     if is_windows:
