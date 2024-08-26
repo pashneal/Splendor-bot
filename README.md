@@ -51,7 +51,7 @@ To install, you can type `python3` in a new Powershell instance, which will laun
 
 ## Running a Tournament 
 
-To run a tournament is simple, navigate to the splendor-tournament directory and execute 
+To run a tournament is simple, navigate to the `splendor-tournament/scaffolding` directory and execute 
 ```
 python3 run_game.py
 ```
