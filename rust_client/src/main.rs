@@ -1,5 +1,5 @@
 mod examples;
-mod stubs;
+pub use splendor_tourney::stubs::rust as stubs;
 
 use examples::*;
 use stubs::run_bot;
