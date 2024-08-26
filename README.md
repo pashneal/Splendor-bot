@@ -2,7 +2,7 @@
 Compete against friends to build the best AI that can beat the board-game Splendor!! Current supports Rust and Python bots!
 
 
-# Installing 
+## Installing 
 
 All instructions for installation can be found in the [INSTALLING.md](./INSTALLING.md) file
 in the root of this repository.
