@@ -1,10 +1,19 @@
 # If you'd like to run a different set of directories, change here!!
 PLAYER_DIRECTORIES = [
-    "../rust_client/",  
-    "../python_client/examples/python_cards", 
-    "../python_client/examples/python_actions/", 
-    "../python_client/examples/python_timeout/",
+    "../examples/python/actions/",  
+    "../examples/python/cards/", 
+    "../examples/python/board_and_history", 
+    "../examples/python/timeout/",
 ]
+
+# Rust only examples
+# PLAYER_DIRECTORIES = [
+    # "../examples/rust/actions/",
+    # "../examples/rust/board_and_history/", 
+    # "../examples/rust/cards/",
+    # "../examples/rust/simple/",
+# ]
+
 # For example: to run with four players:
 # PLAYER_DIRECTORIES = ["../python_client/",  "../rust_client/", "../python_client/", "../rust_client/"]
 

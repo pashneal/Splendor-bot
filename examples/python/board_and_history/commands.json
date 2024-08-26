@@ -1,0 +1,6 @@
+{
+  "build" : [
+    "python3 ../../../scaffolding/python_ffi/build.py"
+  ],
+  "binary" : "bot.py"
+}
