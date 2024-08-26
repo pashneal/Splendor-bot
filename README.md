@@ -1,4 +1,4 @@
-# splendor-tournament
+# Splendor Tournament
 Compete against friends to build the best AI that can beat the board-game Splendor!! Current supports Rust and Python bots!
 
 
