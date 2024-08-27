@@ -1,6 +1,14 @@
-## MacOS or Linux Installation 
 
-Install python3 and Rust
+## Prerequisites
+
+The Prerequisites for this project are:
+  - Rust (cargo)
+  - Git
+  - Python 3.8 or higher
+  - Python Pip 
+  - Python Venv
+
+## Installing Rust
 
 For installing Rust:
   - visit the official website https://rust-lang.org/tools/install
@@ -12,37 +20,47 @@ You can check to see if Rust is installed by running `cargo --version` which sho
 cargo 1.76.0 (xxxxxx 2024-xxxx)
 ```
 
+## MacOS or Linux Installation 
+
+Once you have Rust cargo installed, you can install the project by running the following commands:
+
+```
+cargo install stourney
+```
+
+This will install the stourney binary in your `~/.cargo/bin` directory. You can add this to your path by running the following command:
+
+```
+export PATH=$PATH:~/.cargo/bin
+```
 
 ## Windows Installation
 
-### Installing Rust
+Once you have Rust cargo installed, you can install the project by running the following commands:
 
-Navigate to the Rust https://rust-lang.org/tools/install website and download the exe
+```
+cargo install stourney
+```
 
-![image](https://github.com/pashneal/splendor-tournament/assets/36735795/8eebc16a-faa4-4907-b5d4-a9dce6e4b7ab)
+This will install the stourney binary in your `~/.cargo/bin` directory. You can add this to your path by running the following command:
 
-When you run it, it may ask you to install Visual Studio Community and Windows SDK. Allow them and click Continue/Install
+```
+set PATH=%PATH%;~/.cargo/bin
+```
 
-![image](https://github.com/pashneal/splendor-tournament/assets/36735795/cd0e3d88-1de2-4993-8e30-4a4b9e221f32)
+## Creating a new project
 
-You may get a screen like this, type y and press Enter to continue
+Execute the following command to create a new project:
 
-![image](https://github.com/pashneal/splendor-tournament/assets/36735795/1b7a726e-1b3d-4be7-bc62-e8ba5f22a100)
+```
+stourney new <project_name>
+```
 
-After you've installed the SDKs, you'll see a screen like the following, press 1 to install default options and then Enter to continue
-
-![image](https://github.com/pashneal/splendor-tournament/assets/36735795/c33feb93-09da-43a3-b86a-f67a2884d3d2)
-
-If all goes well you should see the following screen 
-
-![image](https://github.com/pashneal/splendor-tournament/assets/36735795/64196d22-f480-42f7-9914-cbe8c6ef3268)
-
-### Python 3 Installation
-
-You may already have Python installed, but the installation scripts require a binary named `python3` to work properly.
-
-To install, you can type `python3` in a new Powershell instance, which will launch Microsoft Store on Windows 11
-
-![image](https://github.com/pashneal/splendor-tournament/assets/42392859/52dd47fd-8c3d-4fbe-8a83-bf52af2cf211)
+And follow the instructions on the screen.
 
 
+## Coming Soon
+
+- [x] Add support for creating new projects
+- [ ] Add support for running projects against each other
+- [ ] Add support for saving configurations and editing them
