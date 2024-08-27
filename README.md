@@ -1,6 +1,7 @@
 # Splendor Tournament
 Compete against friends to build the best AI that can beat the board-game Splendor!! Current supports Rust and Python bots!
 
+This repository contains the boilerplate and scaffolding as well as a few examples for quickly getting you up to speed! It implements the Splendor game rules and exposes stubs for interfacing between Rust and Python programs.
 
 ## Installing 
 
