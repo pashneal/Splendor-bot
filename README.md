@@ -3,23 +3,17 @@ Compete against friends to build the best AI that can beat the board-game Splend
 
 This repository contains the boilerplate and scaffolding as well as a few examples for quickly getting you up to speed! It implements the Splendor game rules and exposes stubs for interfacing between Rust and Python programs.
 
-## Installing 
-
-All instructions for installation can be found in the [INSTALLING.md](./INSTALLING.md) file
-in the root of this repository.
+If you are looking to run a tournament, you may want to refer to this [repo](https://www.github.com/pashneal/stourney) instead
 
 ## Running a Tournament 
 
-To run a tournament is simple, navigate to the `splendor-tournament/scaffolding` directory and execute 
+To run a tournament, install the stourney crate 
 
 ```
-python3 run_game.py
+cargo install stourney
 ```
 
-in your terminal
-(Note: the first build can take 3-5 minutes! It should be faster on subsequent builds) 
-
-If all goes well, you should be able to go [here](http://localhost:3030/splendor/splendor_4pl.html) and see the game that the server just played for you.
+Further isntructions can be found in [here](https://www.github.com/pashneal/stourney)
 
 ## Disclaimer
 
