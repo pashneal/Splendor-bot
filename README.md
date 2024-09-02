@@ -3,7 +3,7 @@ Compete against friends to build the best AI that can beat the board-game Splend
 
 This repository contains the boilerplate and scaffolding as well as a few examples for quickly getting you up to speed! It implements the Splendor game rules and exposes stubs for interfacing between Rust and Python programs.
 
-If you are looking to run a tournament, you may want to refer to this [repo](https://www.github.com/pashneal/stourney) instead
+If you are looking to run a tournament, you may want to refer to this [repo](https://www.github.com/pashneal/stourney_scripts) instead
 
 ## Running a Tournament 
 
@@ -13,7 +13,7 @@ To run a tournament, install the stourney crate
 cargo install stourney
 ```
 
-Further isntructions can be found in [here](https://www.github.com/pashneal/stourney)
+Further isntructions can be found in [here](https://www.github.com/pashneal/stourney_scripts)
 
 ## Disclaimer
 
