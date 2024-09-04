@@ -1,1 +1,1 @@
-pub use splendor_tourney::stubs::python::*;
+pub use splendor_arena::stubs::python::*;
