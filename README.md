@@ -13,7 +13,7 @@ To run a tournament, install the stourney crate
 cargo install stourney
 ```
 
-Further isntructions can be found in [here](https://www.github.com/pashneal/stourney_scripts)
+Further instructions can be found in [here](https://www.github.com/pashneal/stourney_scripts)
 
 ## Disclaimer
 
