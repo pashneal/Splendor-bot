@@ -1,0 +1,39 @@
+<script lang="ts">
+  import Card from "$lib/components/Card.svelte";
+</script>
+
+<svelte:head>
+	<title>Demo</title>
+	<meta name="description" content="A demonstration of the the stourney app running a splendor game" />
+</svelte:head>
+
+<div class="cards">
+  <Card card_name={"emerald"}/>
+  <Card card_name={"ruby"}/>
+  <Card card_name={"sapphire"}/>
+  <Card card_name={"onyx"}/>
+  <Card card_name={"diamond"}/>
+</div>
+<div class="cards">
+  <Card card_name={"onyx"}/>
+  <Card card_name={"diamond"}/>
+  <Card card_name={"emerald"}/>
+  <Card card_name={"sapphire"}/>
+  <Card card_name={"ruby"}/>
+</div>
+<div class="cards">
+  <Card card_name={"ruby"}/>
+  <Card card_name={"emerald"}/>
+  <Card card_name={"diamond"}/>
+  <Card card_name={"onyx"}/>
+  <Card card_name={"sapphire"}/>
+</div>
+
+<style>
+  .cards {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    row-gap: 1rem;
+  }
+</style>

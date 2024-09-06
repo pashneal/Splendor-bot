@@ -7,20 +7,14 @@
 	<h1>About this app</h1>
 
 	<p>
-		This is a <a href="https://kit.svelte.dev">SvelteKit</a> app. You can make your own by typing the
-		following into your command line and following the prompts:
-	</p>
+    This app extends the SvelteKit template for use by my web app <a href="https://www.github.com/pashneal/stourney_tournament">Stourney Tournament</a>.
 
-	<pre>npm create svelte@latest</pre>
+    Right now, I'm experimenting with features and styles to get a good look and feel
+    of the app while I start integrating it with the stourney app.
 
-	<p>
-		The page you're looking at is purely static HTML, with no client-side interactivity needed.
-		Because of that, we don't need to load any JavaScript. Try viewing the page's source, or opening
-		the devtools network panel and reloading.
 	</p>
 
 	<p>
-		The <a href="/sverdle">Sverdle</a> page illustrates SvelteKit's data loading and form handling. Try
-		using it with JavaScript disabled!
+		Check out the demo <a href="/demo">here</a> :D
 	</p>
 </div>
