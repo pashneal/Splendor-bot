@@ -17,11 +17,9 @@
 
 <div class="card">
   <img src={cards[card_name]} alt="Card" draggable="false"/>
- 200px <!--adiv class="card-details"> -->
-    <!--<p>testing testing</p>-->
-    <!--<p>testing testing</p>-->
-    <!--<p>testing testing</p>-->
-  <!--</div>-->
+  <div class="card-details"> 
+    <slot></slot>
+  </div>
 </div>
 
 <style>
@@ -33,6 +31,7 @@
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select: none;
+    position: relative;
   }
   
   img{
@@ -41,12 +40,17 @@
   }
 
   .card-details {
-    max-width: 60%;
-    bottom: 40%;
-    max-height: 60%;
-    position: relative;
-    padding: 10%;
+    top: 40%;
+    left: 0;
+    right: 0;
+    width: 90%;
+    height: 40%;
     margin-inline: auto;
+    position: absolute;
     font-size : 0.7rem;
+    display: flex; 
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
   }
 </style>
