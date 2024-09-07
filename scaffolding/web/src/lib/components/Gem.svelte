@@ -18,26 +18,34 @@
   }
 </script>
 
-<div class="gem">
-  {number}
-  <img src={gems[gem_name]} alt="Gem" draggable="false"/>
+<div class="card-detail-container">
+    <img src={gems[gem_name]} alt="Gem" draggable="false"/>
+  <div class="pip-container"> 
+  </div>
 </div>
 
 
 
 <style>
-  .gem {
-    width: 40%;
-    height: 40%;
+  .card-detail-container {
+    width: 100%;
+    height: 15%;
+    position : relative;
+    background-color: white;
+    border-radius: 1vw;
+  }
+
+  img{
+    width: 30%;
+    height: 150%;
+    position: absolute;
+    left: -5%;
+    top: -25%;
     -khtml-user-select: none;
     -o-user-select: none;
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select: none;
   }
-   
-  img{
-    width: 100%;
-    height: 100%;
-  }
+
 </style>

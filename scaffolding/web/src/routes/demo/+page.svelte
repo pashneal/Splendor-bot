@@ -19,21 +19,18 @@
   <Card card_name={"ruby"}/>
   <Card card_name={"sapphire"}/>
   <Card card_name={"onyx"}/>
-  <Card card_name={"diamond"}/>
 </div>
 <div class="cards">
   <Card card_name={"onyx"}/>
   <Card card_name={"diamond"}/>
   <Card card_name={"emerald"}/>
   <Card card_name={"sapphire"}/>
-  <Card card_name={"ruby"}/>
 </div>
 <div class="cards">
   <Card card_name={"ruby"}/>
   <Card card_name={"emerald"}/>
   <Card card_name={"diamond"}/>
   <Card card_name={"onyx"}/>
-  <Card card_name={"sapphire"}/>
 </div>
 
 <style>

@@ -23,9 +23,10 @@
 </div>
 
 <style>
+
   .card {
-    width: 13%;
-    height: 15%;
+    max-width: 20%;
+    max-height: 15%;
     -khtml-user-select: none;
     -o-user-select: none;
     -moz-user-select: none;
@@ -35,16 +36,16 @@
   }
   
   img{
-    width: 100%;
-    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
   }
 
   .card-details {
-    top: 40%;
+    top: 0%;
     left: 0;
     right: 0;
-    width: 90%;
-    height: 40%;
+    max-width: 90%;
+    height: 50%;
     margin-inline: auto;
     position: absolute;
     font-size : 0.7rem;
@@ -53,4 +54,5 @@
     justify-content: center;
     align-items: center;
   }
+
 </style>
