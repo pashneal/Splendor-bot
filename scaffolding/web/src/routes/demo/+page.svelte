@@ -1,6 +1,6 @@
 <script lang="ts">
   import Card from "$lib/components/Card.svelte";
-  import Gem from "$lib/components/Gem.svelte";
+  import Gem from "$lib/components/CardDetailGem.svelte";
 </script>
 
 <svelte:head>
@@ -11,7 +11,7 @@
 
 <div class="cards">
   <Card card_name={"emerald"}>
-    <Gem gem_name={"emerald"} number={3}/>
+    <Gem gem_name={"emerald"} number={7}/>
     <Gem gem_name={"ruby"} number={2}/>
     <Gem gem_name={"diamond"} number={1}/>
     <Gem gem_name={"ruby"} number={2}/>

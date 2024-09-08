@@ -12,8 +12,20 @@
 	--color-text: rgba(0, 0, 0, 0.7);
 	--column-width: 42rem;
 	--column-margin-top: 4rem;
+
   --color-diamond-gem: #8981c5;
-  --color-ruby-gem: 
+  --color-ruby-gem: #f7717d;
+  --color-onyx-gem: #393d3f;
+  --color-emerald-gem: #a5c882ff;
+  --color-sapphire-gem: #05b2dc;
+
+  --color-pip-container: #4e5356;
+  --color-diamond-pip: var(--color-diamond-gem);
+  --color-ruby-pip: var(--color-ruby-gem);
+  --color-onyx-pip: black;
+  --color-emerald-pip: var(--color-emerald-gem);
+  --color-sapphire-pip: var(--color-sapphire-gem);
+
 	font-family: var(--font-body);
 	color: var(--color-text);
 }
