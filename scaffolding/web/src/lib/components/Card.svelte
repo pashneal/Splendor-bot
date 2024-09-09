@@ -49,10 +49,6 @@
     margin-inline: auto;
     position: absolute;
     font-size : 0.7rem;
-    display: flex; 
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
   }
 
 </style>

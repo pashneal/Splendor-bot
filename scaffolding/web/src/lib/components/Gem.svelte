@@ -39,7 +39,6 @@
     position : relative;
     background-color: var(--color-pip-container);
     border-radius: 20px;
-    margin-bottom: 5%;
   }
 
   img{
@@ -65,7 +64,7 @@
   }
 
   .pip-buffer {
-    width: 20%;
+    width: 25%;
   }
   .pip{
     border-radius: 50%;
