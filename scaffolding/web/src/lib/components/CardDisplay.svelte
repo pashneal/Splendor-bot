@@ -16,10 +16,4 @@
     max-height: 30%;
   }
 
-  @media (max-width: 640px) {
-    .display {
-      max-width: 480px;
-      max-height: 20%;
-    }
-  }
 </style>

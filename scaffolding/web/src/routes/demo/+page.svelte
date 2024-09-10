@@ -1,6 +1,6 @@
 <script lang="ts">
   import Card from "$lib/components/Card.svelte";
-  import Gem from "$lib/components/CardDetailGem.svelte";
+  import CardDetailGem from "$lib/components/CardDetailGem.svelte";
   import CardDisplay from "$lib/components/CardDisplay.svelte";
 </script>
 
@@ -12,35 +12,35 @@
 
 <div class="cards">
   <CardDisplay>
-    <Card card_name={"emerald"}>
-      <Gem gem_name={"emerald"} number={7}/>
-      <Gem gem_name={"ruby"} number={2}/>
-      <Gem gem_name={"diamond"} number={1}/>
+    <Card card_name={"emerald"} points={5}>
+      <CardDetailGem gem_name={"emerald"} number={7}/>
+      <CardDetailGem gem_name={"ruby"} number={5}/>
+      <CardDetailGem gem_name={"diamond"} number={6}/>
     </Card>
-    <Card card_name={"ruby"}>
-      <Gem gem_name={"ruby"} number={2}/>
-      <Gem gem_name={"sapphire"} number={3}/>
-      <Gem gem_name={"diamond"} number={1}/>
+    <Card card_name={"ruby"} points={7}>
+      <CardDetailGem gem_name={"ruby"} number={2}/>
+      <CardDetailGem gem_name={"sapphire"} number={3}/>
+      <CardDetailGem gem_name={"diamond"} number={1}/>
     </Card>
-    <Card card_name={"sapphire"}>
-      <Gem gem_name={"ruby"} number={2}/>
-      <Gem gem_name={"sapphire"} number={3}/>
-      <Gem gem_name={"diamond"} number={1}/>
+    <Card card_name={"sapphire"} points={6}>
+      <CardDetailGem gem_name={"ruby"} number={2}/>
+      <CardDetailGem gem_name={"sapphire"} number={3}/>
+      <CardDetailGem gem_name={"diamond"} number={1}/>
     </Card>
-    <Card card_name={"onyx"}/>
+    <Card card_name={"onyx"} points={4}/>
   </CardDisplay>
 
   <CardDisplay>
-    <Card card_name={"onyx"}/>
-    <Card card_name={"diamond"}/>
-    <Card card_name={"emerald"}/>
-    <Card card_name={"sapphire"}/>
+    <Card card_name={"onyx"} points={2}/>
+    <Card card_name={"diamond"} points={2}/>
+    <Card card_name={"emerald"} points={3}/>
+    <Card card_name={"sapphire"} points={2}/>
   </CardDisplay>
 
   <CardDisplay>
-    <Card card_name={"ruby"}/>
-    <Card card_name={"emerald"}/>
-    <Card card_name={"diamond"}/>
+    <Card card_name={"ruby"} points={2}/>
+    <Card card_name={"emerald"} points={0}/>
+    <Card card_name={"diamond"} points={1}/>
     <Card card_name={"onyx"}/>
   </CardDisplay>
 </div>
@@ -54,16 +54,5 @@
     right: 0;
   }
 
-  @media (max-width: 640px) {
-    .cards {
-      max-width: 480px;
-    }
-  }
-
-  @media (max-height: 640px) {
-    .cards {
-      max-height: 480px;
-    }
-  }
 
 </style>

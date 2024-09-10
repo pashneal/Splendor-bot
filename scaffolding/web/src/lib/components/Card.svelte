@@ -4,6 +4,17 @@
   import diamond_card from "$lib/assets/diamond_card.svg";
   import ruby_card from "$lib/assets/ruby_card.svg";
   import onyx_card from "$lib/assets/onyx_card.svg";
+
+  import zero from "$lib/assets/0.svg";
+  import one from "$lib/assets/1.svg";
+  import two from "$lib/assets/2.svg";
+  import three from "$lib/assets/3.svg";
+  import four from "$lib/assets/4.svg";
+  import five from "$lib/assets/5.svg";
+  import six from "$lib/assets/6.svg";
+  import seven from "$lib/assets/7.svg";
+
+  export let points : number = 0;
   export let card_name : "emerald" | "sapphire" | "ruby" | "diamond"  | "onyx";
 
   let cards = {
@@ -13,12 +24,18 @@
     "ruby": ruby_card,
     "onyx": onyx_card
   }
+
+  let nums = [zero, one, two, three, four, five, six, seven];
+
 </script>
 
 <div class="card">
   <img src={cards[card_name]} alt="Card" draggable="false"/>
   <div class="card-details"> 
     <slot></slot>
+  </div>
+  <div class="points">
+    <img src={nums[points]} alt="points" draggable="false"/> 
   </div>
 </div>
 
@@ -48,7 +65,17 @@
     height: 50%;
     margin-inline: auto;
     position: absolute;
-    font-size : 0.7rem;
+  }
+
+  .points {
+    font-family: "Zero";
+    position: absolute;
+    height: 20%;
+    left: 75%;
+    bottom: 5%;
+    color: white;
+    width: 25%;
+    object-fit: scale-down;
   }
 
 </style>
