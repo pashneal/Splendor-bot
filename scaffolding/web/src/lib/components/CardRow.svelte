@@ -9,6 +9,7 @@
   .display {
     display: flex;
     justify-content: center;
+    align-items: center;
     object-fit: contain;
     gap: 1rem;
     row-gap: 1rem;
