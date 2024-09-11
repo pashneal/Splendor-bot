@@ -31,7 +31,7 @@
     left: 50%;
   }
   img {
-    width: 50%;
+    width: 40%;
     height: 100%;
   }
 </style>

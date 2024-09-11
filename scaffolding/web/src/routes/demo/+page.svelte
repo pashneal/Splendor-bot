@@ -34,6 +34,12 @@
     <Noble>
       <NobleDetail number={3} gem_name={"emerald"} />
     </Noble>
+    <Noble>
+      <NobleDetail number={3} gem_name={"emerald"} />
+    </Noble>
+    <Noble>
+      <NobleDetail number={3} gem_name={"emerald"} />
+    </Noble>
   </div>
 </div>
 
@@ -57,7 +63,6 @@
   .nobles {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: top;
     gap: 5%;
     width: 20%;
