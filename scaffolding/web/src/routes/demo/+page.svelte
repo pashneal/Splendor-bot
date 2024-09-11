@@ -2,6 +2,8 @@
   import CardDislay from "$lib/components/CardDisplay.svelte";
   import GemToken from "$lib/components/GemToken.svelte";
   import Bank from "$lib/components/Bank.svelte";
+  import Noble from "$lib/components/Noble.svelte";
+  import NobleDetail from "$lib/components/NobleDetails.svelte";
 </script>
 
 <svelte:head>
@@ -21,7 +23,20 @@
   <div>
     <CardDislay/>
   </div>
+  <div class="nobles">
+    <Noble>
+      <NobleDetail number={3} gem_name={"emerald"} />
+    </Noble>
+    <Noble>
+      <NobleDetail number={3} gem_name={"emerald"} />
+      <NobleDetail number={3} gem_name={"emerald"} />
+    </Noble>
+    <Noble>
+      <NobleDetail number={3} gem_name={"emerald"} />
+    </Noble>
+  </div>
 </div>
+
 
 <style>
   .game {
@@ -33,12 +48,20 @@
     display: flex;
     flex-direction: row;
     justify-content: center;
-    align-items: center;
-    width: 80%;
-    height: 80%;
+    align-items: top;
+    width: 1000px;
+    height: 850px;
     gap: 5%;
   }
 
-
+  .nobles {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: top;
+    gap: 5%;
+    width: 20%;
+    height: 40%;
+  }
 
 </style>
