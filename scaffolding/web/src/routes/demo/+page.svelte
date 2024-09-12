@@ -40,6 +40,9 @@
   }
 
 
+  let moveInput = 0;
+
+
   onMount(() => {
     turnNumber.set(0);
     turnNumber.subscribe(value => {
@@ -50,6 +53,7 @@
       updateGameCards();
       updateGameDeckCounts();
       console.log("turnNumber", value);
+      moveInput = value;
     });
   });
 
@@ -62,7 +66,7 @@
 
 <div class="top-bar">
   <button on:click={prevMove}>{"<"}</button>
-  <input type="number"  id="moveInput" value={$turnNumber} />
+  <input type="number"  id="moveInput" bind:value={moveInput} on:change={() => turnNumber.update(() => moveInput)}/>
   <button on:click={nextMove}>{">"}</button>
 </div>
 
