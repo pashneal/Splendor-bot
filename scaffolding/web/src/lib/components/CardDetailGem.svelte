@@ -57,7 +57,7 @@
   .pip-container{
     display: flex;
     justify-content: left;
-    gap: 5%;
+    gap: 4%;
     position: absolute;
     width: 100%;
     height: 100%;
@@ -69,8 +69,8 @@
   }
   .pip{
     border-radius: 50%;
-    width: 5%;
-    height:  calc(5% * 100 / 20);
+    width: 6px;
+    height:  6px;
   }
 
   .onyx.pip{

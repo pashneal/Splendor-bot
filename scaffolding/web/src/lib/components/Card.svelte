@@ -42,7 +42,7 @@
 <style>
 
   .card {
-    max-width: 20%;
+    max-width: 19%;
     max-height: 15%;
     -khtml-user-select: none;
     -o-user-select: none;
@@ -50,6 +50,16 @@
     -webkit-user-select: none;
     user-select: none;
     position: relative;
+  }
+
+  .card:hover {
+    transform: scale(1.1);
+    z-index: 1;
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
+  }
+
+  .card {
+    transition: transform 0.1s;
   }
   
   img{

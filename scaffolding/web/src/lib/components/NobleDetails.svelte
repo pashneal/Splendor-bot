@@ -1,9 +1,9 @@
 <script lang="ts"> 
-  import emerald from "$lib/assets/small_emerald_card.svg";
-  import sapphire from "$lib/assets/small_sapphire_card.svg";
-  import diamond from "$lib/assets/small_diamond_card.svg";
-  import ruby from "$lib/assets/small_ruby_card.svg";
-  import onyx from "$lib/assets/small_onyx_card.svg";
+  import emerald from "$lib/assets/icon1_emerald.svg";
+  import sapphire from "$lib/assets/icon1_sapphire.svg";
+  import diamond from "$lib/assets/icon1_diamond.svg";
+  import ruby from "$lib/assets/icon1_ruby.svg";
+  import onyx from "$lib/assets/icon1_onyx.svg";
 
 
   export let gem_name : "emerald" | "sapphire" | "ruby" | "diamond"  | "onyx";
@@ -47,7 +47,7 @@
     height: 150%;
     position: absolute;
     left: -5%;
-    top: -20%;
+    top: -25%;
     -khtml-user-select: none;
     -o-user-select: none;
     -moz-user-select: none;
@@ -65,12 +65,12 @@
   }
 
   .pip-buffer {
-    width: 20%;
+    width: 30%;
   }
   .pip{
     border-radius: 50%;
-    width: 10px;
-    height:  10px;
+    width: 6px;
+    height:  6px;
   }
 
   .onyx.pip{

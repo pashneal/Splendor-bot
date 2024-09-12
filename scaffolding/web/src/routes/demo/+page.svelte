@@ -4,6 +4,10 @@
   import Bank from "$lib/components/Bank.svelte";
   import Noble from "$lib/components/Noble.svelte";
   import NobleDetail from "$lib/components/NobleDetails.svelte";
+  import Avatar from "$lib/components/Avatar.svelte"; 
+  import VDivider from "$lib/components/VerticalDivider.svelte";
+  import HDivider from "$lib/components/HorizontalDivider.svelte";
+  import Player from "$lib/components/Player.svelte";
 </script>
 
 <svelte:head>
@@ -12,40 +16,72 @@
 </svelte:head>
 
 <div class="game">
-  <Bank>
-    <GemToken tokenName={"gold"} numRemaining={3} />
-    <GemToken tokenName={"emerald"} numRemaining={6} />
-    <GemToken tokenName={"diamond"} numRemaining={2} />
-    <GemToken tokenName={"onyx"} numRemaining={5} />
-    <GemToken tokenName={"ruby"} numRemaining={1} />
-    <GemToken tokenName={"sapphire"} numRemaining={2} />
-  </Bank>
-  <div>
-    <CardDislay/>
+  <div class="game-inner">
+    <VDivider/>
+    <Bank>
+      <GemToken tokenName={"gold"} numRemaining={3} />
+      <GemToken tokenName={"emerald"} numRemaining={6} />
+      <GemToken tokenName={"diamond"} numRemaining={2} />
+      <GemToken tokenName={"onyx"} numRemaining={5} />
+      <GemToken tokenName={"ruby"} numRemaining={1} />
+      <GemToken tokenName={"sapphire"} numRemaining={2} />
+    </Bank>
+    <VDivider/>
+    <div>
+      <CardDislay/>
+    </div>
+    <VDivider/>
+    <div class="nobles">
+      <Noble>
+        <NobleDetail number={3} gem_name={"emerald"} />
+        <NobleDetail number={3} gem_name={"diamond"} />
+        <NobleDetail number={3} gem_name={"ruby"} />
+      </Noble>
+      <Noble>
+        <NobleDetail number={4} gem_name={"emerald"} />
+        <NobleDetail number={4} gem_name={"ruby"} />
+      </Noble>
+      <Noble>
+        <NobleDetail number={3} gem_name={"onyx"} />
+        <NobleDetail number={3} gem_name={"sapphire"} />
+        <NobleDetail number={3} gem_name={"ruby"} />
+      </Noble>
+      <Noble>
+        <NobleDetail number={4} gem_name={"emerald"} />
+        <NobleDetail number={4} gem_name={"ruby"} />
+      </Noble>
+      <Noble>
+        <NobleDetail number={3} gem_name={"emerald"} />
+        <NobleDetail number={3} gem_name={"diamond"} />
+        <NobleDetail number={3} gem_name={"ruby"} />
+      </Noble>
+    </div>
+    <VDivider/>
+    
   </div>
-  <div class="nobles">
-    <Noble>
-      <NobleDetail number={3} gem_name={"emerald"} />
-    </Noble>
-    <Noble>
-      <NobleDetail number={3} gem_name={"emerald"} />
-      <NobleDetail number={3} gem_name={"emerald"} />
-    </Noble>
-    <Noble>
-      <NobleDetail number={3} gem_name={"emerald"} />
-    </Noble>
-    <Noble>
-      <NobleDetail number={3} gem_name={"emerald"} />
-    </Noble>
-    <Noble>
-      <NobleDetail number={3} gem_name={"emerald"} />
-    </Noble>
+
+  <HDivider/>
+
+  <div class="players">
+    <Player avatar={0} name="pashneal" />
+    <Player avatar={1} name="amos" />
+    <Player avatar={2} name="izzie" />
+    <Player avatar={3} name="kiera" />
   </div>
+
 </div>
 
 
 <style>
   .game {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+  .game-inner {
     -khtml-user-select: none;
     -o-user-select: none;
     -moz-user-select: none;
@@ -54,10 +90,9 @@
     display: flex;
     flex-direction: row;
     justify-content: center;
-    align-items: top;
-    width: 1000px;
-    height: 850px;
-    gap: 5%;
+    align-items: center;
+    width: 70rem;
+    height: 40rem;
   }
 
   .nobles {
@@ -66,7 +101,12 @@
     align-items: top;
     gap: 5%;
     width: 20%;
-    height: 40%;
+    height: 70%;
+  }
+
+  .players {
+    flex-direction : row;
+    display: flex;
   }
 
 </style>

@@ -1,6 +1,25 @@
 @import '@fontsource/fira-mono';
 
 @font-face {
+  font-family: "Quicksand Light";
+  font-style: normal;
+  src: url("/fonts/quicksand.light.otf") format("opentype");
+}
+@font-face {
+  font-family: "Quicksand Book";
+  font-style: normal;
+  font-weight: 800;
+  src: url("/fonts/quicksand.book.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Carme";
+  font-style: normal;
+  src: url("/fonts/carme.ttf") format("truetype");
+}
+
+
+@font-face {
   font-family : "Zero";
   font-weight : 400;
   font-style : normal;
@@ -43,12 +62,12 @@ body {
 	background-attachment: fixed;
 	background-color: var(--color-bg-1);
 	background-size: 100vw 100vh;
-	background-image: radial-gradient(
-			50% 50% at 50% 50%,
-			rgba(255, 255, 255, 0.75) 0%,
-			rgba(255, 255, 255, 0) 100%
-		),
-		linear-gradient(180deg, var(--color-bg-0) 0%, var(--color-bg-1) 15%, var(--color-bg-2) 50%);
+	/*background-image: radial-gradient(*/
+			/*50% 50% at 50% 50%,*/
+			/*rgba(255, 255, 255, 0.75) 0%,*/
+			/*rgba(255, 255, 255, 0) 100%*/
+		/*),*/
+		/*linear-gradient(180deg, var(--color-bg-0) 0%, var(--color-bg-1) 15%, var(--color-bg-2) 50%);*/
 }
 
 h1,

@@ -5,10 +5,10 @@
 
 <style>
   .gems {
-    width: 10%;
-    height: 50%;
     display: flex;
+    justify-content: center;
     flex-direction: column;
+    flex-wrap: wrap;
     gap: 5px;
   }
 </style>

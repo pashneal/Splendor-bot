@@ -23,14 +23,16 @@
 
 <div class="token-container">
 
-  <div class="token">
-    <img src={tokens[tokenName]} alt="Token" draggable="false"/>
-  </div>
-
   {#each Array(numRemaining) as _,i}
-    <div class="token-float-{i}">
-      <img src={tokens[tokenName]} alt="Token" draggable="false"/>
-    </div>
+    {#if i == numRemaining - 1}
+      <div class="top token-float-{i}">
+        <img src={tokens[tokenName]} alt="Token" draggable="false"/>
+      </div>
+    {:else}
+      <div class="token-float-{i}">
+        <img src={tokens[tokenName]} alt="Token" draggable="false"/>
+      </div>
+    {/if}
   {/each}
 
   <div class="num-remaining">
@@ -65,8 +67,17 @@
   .num-remaining {
     font-size: 30px;
     font-family: 'Zero';
+    padding-left: 30%;
     margin: auto;
   }
+
+  .top:hover {
+    transform: translate(-5px, -5px);
+    z-index: 1;
+    filter: drop-shadow(2px 2px 10px rgba(255,255, 255, 0.5));
+    transition: transform 0.1s;
+  }
+
 
   .token-float-0 {
     position: absolute;
@@ -100,6 +111,10 @@
     position: absolute;
     top: -12px;
     left: -12px;
+  }
+  /* animate the top token to transform up and left a bit*/
+  .top {
+    transition: transform 0.2s;
   }
 
 </style>

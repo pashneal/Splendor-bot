@@ -22,23 +22,59 @@
       <Gem gem_name={"sapphire"} number={3}/>
       <Gem gem_name={"diamond"} number={1}/>
     </Card>
-    <Card card_name={"onyx"} points={4}/>
+    <Card card_name={"onyx"} points={4}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
     <CardStack count={31}/>
   </Row>
 
   <Row>
-    <Card card_name={"onyx"} points={2}/>
-    <Card card_name={"diamond"} points={2}/>
-    <Card card_name={"emerald"} points={3}/>
-    <Card card_name={"sapphire"} points={2}/>
+    <Card card_name={"onyx"} points={2}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
+    <Card card_name={"diamond"} points={2}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
+    <Card card_name={"emerald"} points={3}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
+    <Card card_name={"sapphire"} points={2}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
     <CardStack count={0}/>
   </Row>
 
   <Row>
-    <Card card_name={"ruby"} points={2}/>
-    <Card card_name={"emerald"} points={0}/>
-    <Card card_name={"diamond"} points={1}/>
-    <Card card_name={"onyx"}/>
+    <Card card_name={"ruby"} points={2}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
+    <Card card_name={"emerald"} points={0}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
+    <Card card_name={"diamond"} points={1}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
+    <Card card_name={"onyx"}>
+      <Gem gem_name={"ruby"} number={2}/>
+      <Gem gem_name={"sapphire"} number={3}/>
+      <Gem gem_name={"diamond"} number={1}/>
+    </Card>
     <CardStack count={4}/>
   </Row>
 </div>
