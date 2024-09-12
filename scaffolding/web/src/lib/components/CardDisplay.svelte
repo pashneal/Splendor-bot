@@ -35,6 +35,7 @@
       <Gem gem_name={"ruby"} number={2}/>
       <Gem gem_name={"sapphire"} number={3}/>
       <Gem gem_name={"diamond"} number={1}/>
+      <Gem gem_name={"onyx"} number={2}/>
     </Card>
     <Card card_name={"diamond"} points={2}>
       <Gem gem_name={"ruby"} number={2}/>

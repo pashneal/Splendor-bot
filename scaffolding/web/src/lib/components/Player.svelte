@@ -1,7 +1,5 @@
 <script lang="ts">
   import Avatar from "./Avatar.svelte"; 
-  import Bank from "./Bank.svelte";
-  import GemTokenSmall from "./GemTokenSmall.svelte";
 
   export let name;
   export let avatar: number = 0;
@@ -10,12 +8,7 @@
 <div class="player-container">
   <Avatar avatar={avatar} name={name} />
   <div class="gems-container">
-      <GemTokenSmall tokenName={"gold"} numRemaining={3} />
-      <GemTokenSmall tokenName={"emerald"} numRemaining={6} />
-      <GemTokenSmall tokenName={"diamond"} numRemaining={2} />
-      <GemTokenSmall tokenName={"onyx"} numRemaining={5} />
-      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
-      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
+    <slot></slot>
   </div>
 </div>
 

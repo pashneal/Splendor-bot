@@ -4,7 +4,7 @@
   import Bank from "$lib/components/Bank.svelte";
   import Noble from "$lib/components/Noble.svelte";
   import NobleDetail from "$lib/components/NobleDetails.svelte";
-  import Avatar from "$lib/components/Avatar.svelte"; 
+  import GemTokenSmall from "$lib/components/GemTokenSmall.svelte"; 
   import VDivider from "$lib/components/VerticalDivider.svelte";
   import HDivider from "$lib/components/HorizontalDivider.svelte";
   import Player from "$lib/components/Player.svelte";
@@ -63,10 +63,38 @@
   <HDivider/>
 
   <div class="players">
-    <Player avatar={0} name="pashneal" />
-    <Player avatar={1} name="amos" />
-    <Player avatar={2} name="izzie" />
-    <Player avatar={3} name="kiera" />
+    <Player avatar={0} name="pashneal">
+      <GemTokenSmall tokenName={"gold"} numRemaining={3} />
+      <GemTokenSmall tokenName={"emerald"} numRemaining={6} cardCount={1}/>
+      <GemTokenSmall tokenName={"diamond"} numRemaining={2} cardCount={3}/>
+      <GemTokenSmall tokenName={"onyx"} numRemaining={5} cardCount={2}/>
+      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
+      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
+    </Player>
+    <Player avatar={1} name="amos">
+      <GemTokenSmall tokenName={"gold"} numRemaining={3} />
+      <GemTokenSmall tokenName={"emerald"} numRemaining={0} />
+      <GemTokenSmall tokenName={"diamond"} numRemaining={2} />
+      <GemTokenSmall tokenName={"onyx"} numRemaining={5} />
+      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
+      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
+    </Player>
+    <Player avatar={2} name="izzie">
+      <GemTokenSmall tokenName={"gold"} numRemaining={3} />
+      <GemTokenSmall tokenName={"emerald"} numRemaining={6} />
+      <GemTokenSmall tokenName={"diamond"} numRemaining={2} />
+      <GemTokenSmall tokenName={"onyx"} numRemaining={5} />
+      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
+      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
+    </Player>
+    <Player avatar={3} name="kiera">
+      <GemTokenSmall tokenName={"gold"} numRemaining={2} />
+      <GemTokenSmall tokenName={"emerald"} numRemaining={6} />
+      <GemTokenSmall tokenName={"diamond"} numRemaining={2} />
+      <GemTokenSmall tokenName={"onyx"} numRemaining={5} />
+      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
+      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
+    </Player>
   </div>
 
 </div>

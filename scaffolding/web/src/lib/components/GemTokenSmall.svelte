@@ -9,6 +9,7 @@
 
   export let tokenName : "emerald" | "sapphire" | "ruby" | "diamond"  | "onyx" | "gold";
   export let numRemaining : number;
+  export let cardCount : number = 0;
 
   let tokens = {
     "emerald": emerald,
@@ -36,7 +37,7 @@
   {/each}
 
   <div class="num-remaining">
-    {numRemaining}<span class="card-count-{tokenName}">+0</span>
+    {numRemaining}<span class="card-count-{tokenName}">+{cardCount}</span>
   </div>
 </div>
 
