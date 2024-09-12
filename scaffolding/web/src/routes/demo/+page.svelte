@@ -11,8 +11,8 @@
 
   import { onMount } from "svelte";
 
-  import { turnNumber, nobles, bank, updateGameNobles , updateGameBanks, indexToGem} from "$lib/stores/replayStore"; 
-  import type { BankDesc , NobleReq } from "$lib/stores/replayStore";
+  import { turnNumber, nobles, bank, players, updateGamePlayers, updateGameNobles , updateGameBanks, indexToGem} from "$lib/stores/replayStore"; 
+  import type { BankDesc , PlayerDesc , Gem, PlayerBackendDesc} from "$lib/stores/replayStore";
 
   function nextMove() {
     turnNumber.update(n => n + 1);
@@ -45,12 +45,10 @@
       gotoMove(value);
       updateGameNobles();
       updateGameBanks();
+      updateGamePlayers();
       console.log("turnNumber", value);
     });
   });
-
-
-
 
 </script>
 
@@ -94,38 +92,13 @@
   <HDivider/>
 
   <div class="players">
-    <Player avatar={0} name="pashneal">
-      <GemTokenSmall tokenName={"gold"} numRemaining={3} />
-      <GemTokenSmall tokenName={"emerald"} numRemaining={6} cardCount={1}/>
-      <GemTokenSmall tokenName={"diamond"} numRemaining={2} cardCount={3}/>
-      <GemTokenSmall tokenName={"onyx"} numRemaining={5} cardCount={2}/>
-      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
-      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
-    </Player>
-    <Player avatar={1} name="amos">
-      <GemTokenSmall tokenName={"gold"} numRemaining={3} />
-      <GemTokenSmall tokenName={"emerald"} numRemaining={0} />
-      <GemTokenSmall tokenName={"diamond"} numRemaining={2} />
-      <GemTokenSmall tokenName={"onyx"} numRemaining={5} />
-      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
-      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
-    </Player>
-    <Player avatar={2} name="izzie">
-      <GemTokenSmall tokenName={"gold"} numRemaining={3} />
-      <GemTokenSmall tokenName={"emerald"} numRemaining={6} />
-      <GemTokenSmall tokenName={"diamond"} numRemaining={2} />
-      <GemTokenSmall tokenName={"onyx"} numRemaining={5} />
-      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
-      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
-    </Player>
-    <Player avatar={3} name="kiera">
-      <GemTokenSmall tokenName={"gold"} numRemaining={2} />
-      <GemTokenSmall tokenName={"emerald"} numRemaining={6} />
-      <GemTokenSmall tokenName={"diamond"} numRemaining={2} />
-      <GemTokenSmall tokenName={"onyx"} numRemaining={5} />
-      <GemTokenSmall tokenName={"ruby"} numRemaining={1} />
-      <GemTokenSmall tokenName={"sapphire"} numRemaining={2} />
-    </Player>
+    {#each $players as player, index}
+      <Player avatar={index} name={player.name} points={player.totalPoints} cards={player.numReservedCards} >
+        {#each player.gems as gem}
+          <GemTokenSmall tokenName={gem.gemName} numRemaining={gem.gemCount} cardCount={player.developments.get(gem.gemName)} />
+        {/each}
+      </Player>
+    {/each}
   </div>
 
 </div>
@@ -166,6 +139,8 @@
   .players {
     flex-direction : row;
     display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
 </style>

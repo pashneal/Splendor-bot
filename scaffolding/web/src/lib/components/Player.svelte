@@ -3,10 +3,12 @@
 
   export let name;
   export let avatar: number = 0;
+  export let cards: number = 1;
+  export let points: number = 11;
 </script>
 
 <div class="player-container">
-  <Avatar avatar={avatar} name={name} />
+  <Avatar avatar={avatar} name={name} points={points} cards={cards} />
   <div class="gems-container">
     <slot></slot>
   </div>

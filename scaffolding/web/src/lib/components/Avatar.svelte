@@ -11,14 +11,19 @@
 
   export let avatar : number = 0;
   export let name : string = "Player " + avatar;
+  export let cards: number = 0;
   export let points : number = 10;
+
   let avatars = [av1, av2, av3, av4, av5, av6, av7, av8, av9];
 </script>
 
-<div>
-  <img src={avatars[avatar]} alt="avatar" draggable="false"/>
+<div class="avatar-container">
+  <div class="avatar">
+    <img src={avatars[avatar]} alt="avatar" draggable="false"/>
+  </div>
   <p class="name">{name}</p>
   <div class="points">points: {points}</div>
+  <div class="cards">cards: {cards} </div>
 </div>
 
 <style>
@@ -27,7 +32,6 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 30px;
     width: 100px;
     height: 100px;
   }
@@ -43,12 +47,22 @@
     font-family: 'Quicksand Book';
     font-weight: bold;
   }
-  img {
+  .cards {
+    height: 20px;
+    padding: 0;
+    font-family: 'Quicksand Book';
+    font-weight: bold;
+  }
+  .avatar {
     width : 100%;
+    height: 50%;
+  }
+  img {
+    width: 100%;
     height: 100%;
   }
 
-  div:hover{
+  .avatar:hover{
     background-color: #f0f0f0;
     border-radius: 10px;
   }

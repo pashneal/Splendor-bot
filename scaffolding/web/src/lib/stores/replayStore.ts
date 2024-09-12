@@ -2,6 +2,40 @@ import { writable } from 'svelte/store';
 
 export type Gem = "sapphire" | "emerald" | "ruby" | "onyx" | "diamond" | "gold";
 
+//#[derive(Debug, Clone, Serialize)]
+//pub struct JSPlayer {
+//    developments: JSTokens,
+//    gems : JSTokens,
+//    #[serde(rename = "totalGems")]
+//    total_gems: u32,
+//    #[serde(rename = "reservedCards")]
+//    reserved_cards: Vec<JSCard>,
+//    #[serde(rename = "totalPoints")]
+//    total_points: u8,
+//    #[serde(rename = "noblePoints")]
+//    noble_points: u8,
+//}
+
+//TODO: unify the types of the backend and frontend
+export type PlayerBackendDesc = {
+  developments: Array<[number, number]>,
+  gems: Array<[number, number]>,
+  totalGems: number,
+  reservedCards: Array<any>,
+  totalPoints: number,
+  noblePoints: number,
+}
+
+export type PlayerDesc = {
+  name: string,
+  developments: Map<Gem, number>,
+  gems: Array<BankDesc>,
+  totalGems: number,
+  numReservedCards: number
+  totalPoints: number,
+  noblePoints: number,
+}
+
 export type NobleReq = {
   gemName: Gem,
   gemCount: number,
@@ -20,6 +54,7 @@ export let turnNumber = writable(0);
 export let nobles = writable(Array<NobleDesc>());
 export let bank = writable(Array<BankDesc>());
 export let number_players = writable(4);
+export let players = writable(Array<PlayerDesc>());
 
 // TODO: update this to use enums or string so we don't have to look at this reference again
 // Match the conventions of the frontend gems
@@ -47,6 +82,7 @@ export function indexToGem(index) : Gem | undefined {
             return 'gold';
     }
 }
+
 
 
 export function updateGameBanks() {
@@ -102,3 +138,42 @@ export function updateGameNobles() {
       console.error('/replay/nobles/ Error:', error);
     })
 }
+  export function updateGamePlayers() {
+    fetch("/replay/players")
+      .then(response => response.json())
+      .then(response => {
+        let newPlayers = Array<PlayerDesc>();
+        response.success.players.forEach((player : PlayerBackendDesc, id :number) => {
+
+          let developments = new Map<Gem, number>();
+          let personalBank = Array<BankDesc>();
+          let totalPoints = player.totalPoints;
+          let noblePoints = player.noblePoints;
+          let totalGems = player.totalGems
+          let numReservedCards = player.reservedCards.length;
+           
+          player.developments.forEach(([gemIndex, count], _) => {
+            let gemName = indexToGem(gemIndex)!;
+            developments.set(gemName, count);
+          });
+
+          player.gems.forEach(([gemIndex, count], _) => {
+            let gemName = indexToGem(gemIndex)!;
+            let bankDesc = {gemName : gemName,  gemCount : count};
+            personalBank.push(bankDesc);
+          });
+
+          let playerDesc = {name : "Player " + id, 
+                            developments : developments, 
+                            gems : personalBank, 
+                            totalPoints : totalPoints, 
+                            noblePoints : noblePoints, 
+                            totalGems : totalGems, 
+                            numReservedCards : numReservedCards};
+
+          newPlayers.push(playerDesc);
+        });
+
+        players.update(() => newPlayers);
+      });
+  }
