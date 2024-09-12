@@ -1,8 +1,29 @@
 import { writable } from 'svelte/store';
 
 export type Gem = "sapphire" | "emerald" | "ruby" | "onyx" | "diamond" | "gold";
+export type Cost = "sapphire" | "emerald" | "ruby" | "onyx" | "diamond" ;
+
+
+export type DeckBackendDesc = { 
+  cardCount: number,
+  tier: number,
+}
 
 //TODO: unify the types of the backend and frontend
+export type CardBackendDesc = {
+  tier: number,
+  points: number,
+  colorIndex: number,
+  tokens: Array<[number, number]>,
+}
+
+export type CardDesc = {
+  tier: number,
+  points: number,
+  gem: Cost,
+  cost: Map<Cost, number>,
+}
+
 export type PlayerBackendDesc = {
   developments: Array<[number, number]>,
   gems: Array<[number, number]>,
@@ -41,8 +62,11 @@ export let nobles = writable(Array<NobleDesc>());
 export let bank = writable(Array<BankDesc>());
 export let number_players = writable(4);
 export let players = writable(Array<PlayerDesc>());
+export let cards = writable(Array<Array<CardDesc>>());
+export let deckCounts = writable([0, 0, 0]);
 
 // TODO: update this to use enums or string so we don't have to look at this reference again
+// TODO: merge into one big API call rather than multiple to reduce latency 
 // Match the conventions of the frontend gems
 //
 //          color    : index
@@ -124,42 +148,92 @@ export function updateGameNobles() {
       console.error('/replay/nobles/ Error:', error);
     })
 }
-  export function updateGamePlayers() {
-    fetch("/replay/players")
-      .then(response => response.json())
-      .then(response => {
-        let newPlayers = Array<PlayerDesc>();
-        response.success.players.forEach((player : PlayerBackendDesc, id :number) => {
 
-          let developments = new Map<Gem, number>();
-          let personalBank = Array<BankDesc>();
-          let totalPoints = player.totalPoints;
-          let noblePoints = player.noblePoints;
-          let totalGems = player.totalGems
-          let numReservedCards = player.reservedCards.length;
-           
-          player.developments.forEach(([gemIndex, count], _) => {
-            let gemName = indexToGem(gemIndex)!;
-            developments.set(gemName, count);
-          });
+export function updateGamePlayers() {
+  fetch("/replay/players")
+    .then(response => response.json())
+    .then(response => {
+      let newPlayers = Array<PlayerDesc>();
+      response.success.players.forEach((player : PlayerBackendDesc, id :number) => {
 
-          player.gems.forEach(([gemIndex, count], _) => {
-            let gemName = indexToGem(gemIndex)!;
-            let bankDesc = {gemName : gemName,  gemCount : count};
-            personalBank.push(bankDesc);
-          });
-
-          let playerDesc = {name : "Player " + id, 
-                            developments : developments, 
-                            gems : personalBank, 
-                            totalPoints : totalPoints, 
-                            noblePoints : noblePoints, 
-                            totalGems : totalGems, 
-                            numReservedCards : numReservedCards};
-
-          newPlayers.push(playerDesc);
+        let developments = new Map<Gem, number>();
+        let personalBank = Array<BankDesc>();
+        let totalPoints = player.totalPoints;
+        let noblePoints = player.noblePoints;
+        let totalGems = player.totalGems
+        let numReservedCards = player.reservedCards.length;
+         
+        player.developments.forEach(([gemIndex, count], _) => {
+          let gemName = indexToGem(gemIndex)!;
+          developments.set(gemName, count);
         });
 
-        players.update(() => newPlayers);
+        player.gems.forEach(([gemIndex, count], _) => {
+          let gemName = indexToGem(gemIndex)!;
+          let bankDesc = {gemName : gemName,  gemCount : count};
+          personalBank.push(bankDesc);
+        });
+
+        let playerDesc = {name : "Player " + id, 
+                          developments : developments, 
+                          gems : personalBank, 
+                          totalPoints : totalPoints, 
+                          noblePoints : noblePoints, 
+                          totalGems : totalGems, 
+                          numReservedCards : numReservedCards};
+
+        newPlayers.push(playerDesc);
+      });
+
+      players.update(() => newPlayers);
+    });
+}
+
+export function updateGameCards() {
+    fetch("/replay/cards")
+      .then(response => response.json())
+      .then(response => {
+        let new_cards : Array<Array<CardDesc>> = [];
+
+        response.success.cards.forEach((row : Array<CardBackendDesc>) => {
+          let cardRow : Array<CardDesc> = [];
+          row.forEach((card, _) => {
+
+            let cost = new Map<Gem, number>();
+            card.tokens.forEach(([gemIndex, count])  => {
+              cost.set(indexToGem(gemIndex)! as Cost, count);
+            });
+
+            let cardDesc : CardDesc = {
+              tier: card.tier,
+              points: card.points,
+              gem: indexToGem(card.colorIndex)!,
+              cost: cost
+            }
+            cardRow.push(cardDesc);
+          })
+          new_cards.push(cardRow);
+
+        });
+       cards.update(() => new_cards); 
       });
   }
+
+export function updateGameDeckCounts() {
+  fetch("/replay/decks")
+    .then(response => response.json())
+    .then(response => {
+      let new_decks = [0, 0, 0];
+      
+      response.success.decks.forEach((deck : DeckBackendDesc) => {
+          // Map tiers 0 to 2 to indices 2 to 0 for the frontend view
+          // TODO: this isn't that nice
+          let index = deck.tier;
+          index = 2 - index;
+          new_decks[index] = deck.cardCount;
+      });
+
+      deckCounts.update(() => new_decks);
+    });
+}
+

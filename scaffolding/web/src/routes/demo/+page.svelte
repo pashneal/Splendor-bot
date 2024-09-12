@@ -11,8 +11,9 @@
 
   import { onMount } from "svelte";
 
-  import { turnNumber, nobles, bank, players, updateGamePlayers, updateGameNobles , updateGameBanks, indexToGem} from "$lib/stores/replayStore"; 
-  import type { BankDesc , PlayerDesc , Gem, PlayerBackendDesc} from "$lib/stores/replayStore";
+  import { turnNumber, nobles, bank, players, updateGameDeckCounts, updateGamePlayers, updateGameNobles , updateGameBanks, updateGameCards} from "$lib/stores/replayStore"; 
+
+
 
   function nextMove() {
     turnNumber.update(n => n + 1);
@@ -46,6 +47,8 @@
       updateGameNobles();
       updateGameBanks();
       updateGamePlayers();
+      updateGameCards();
+      updateGameDeckCounts();
       console.log("turnNumber", value);
     });
   });
