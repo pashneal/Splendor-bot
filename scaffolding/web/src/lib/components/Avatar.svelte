@@ -11,12 +11,14 @@
 
   export let avatar : number = 0;
   export let name : string = "Player " + avatar;
+  export let points : number = 10;
   let avatars = [av1, av2, av3, av4, av5, av6, av7, av8, av9];
 </script>
 
 <div>
   <img src={avatars[avatar]} alt="avatar" draggable="false"/>
   <p class="name">{name}</p>
+  <div class="points">points: {points}</div>
 </div>
 
 <style>
@@ -32,6 +34,12 @@
 
   .name {
     border-bottom: 1px dashed black;
+    font-family: 'Quicksand Book';
+    font-weight: bold;
+  }
+  .points {
+    height: 20px;
+    padding: 0;
     font-family: 'Quicksand Book';
     font-weight: bold;
   }
