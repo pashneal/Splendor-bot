@@ -5,5 +5,16 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
-	}
+	},
+  server: {
+    proxy: {
+        '/replay': {
+             target: 'http://localhost:3030',
+             changeOrigin: true,
+             secure: false,      
+             ws: true,
+         }
+     }
+  }
 });
+

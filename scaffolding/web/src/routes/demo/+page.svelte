@@ -8,12 +8,54 @@
   import VDivider from "$lib/components/VerticalDivider.svelte";
   import HDivider from "$lib/components/HorizontalDivider.svelte";
   import Player from "$lib/components/Player.svelte";
+
+  import { onMount } from "svelte";
+
+  import { turnNumber } from "$lib/stores/replayStore"; 
+
+  function nextMove() {
+    turnNumber.update(n => n + 1);
+  }
+
+  function prevMove() {
+    turnNumber.update(n => n - 1);
+  }
+
+  function updateMoveInput(move: number) {
+    turnNumber.set(move);
+    //refreshBoard();
+  }
+  export async function gotoMove(move: number) {
+    fetch("/replay/goto", 
+      {
+        method : "POST", 
+        body : JSON.stringify({"move_index": move }),  
+        headers: {"Content-type": "application/json; charset=UTF-8"}
+      }
+    ).then((r) => r.json())
+     .then(r => {updateMoveInput(r.success.move_index)});
+  }
+
+  onMount(() => {
+    turnNumber.set(0);
+    turnNumber.subscribe(value => {
+      gotoMove(value);
+      console.log("turnNumber", value);
+    });
+  });
+
 </script>
 
 <svelte:head>
 	<title>Demo</title>
 	<meta name="description" content="A demonstration of the the stourney app running a splendor game" />
 </svelte:head>
+
+<div class="top-bar">
+  <button on:click={prevMove}>{"<"}</button>
+  <input type="number"  id="moveInput" value={$turnNumber} />
+  <button on:click={nextMove}>{">"}</button>
+</div>
 
 <div class="game">
   <div class="game-inner">
