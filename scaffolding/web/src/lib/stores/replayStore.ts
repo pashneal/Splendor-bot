@@ -2,20 +2,6 @@ import { writable } from 'svelte/store';
 
 export type Gem = "sapphire" | "emerald" | "ruby" | "onyx" | "diamond" | "gold";
 
-//#[derive(Debug, Clone, Serialize)]
-//pub struct JSPlayer {
-//    developments: JSTokens,
-//    gems : JSTokens,
-//    #[serde(rename = "totalGems")]
-//    total_gems: u32,
-//    #[serde(rename = "reservedCards")]
-//    reserved_cards: Vec<JSCard>,
-//    #[serde(rename = "totalPoints")]
-//    total_points: u8,
-//    #[serde(rename = "noblePoints")]
-//    noble_points: u8,
-//}
-
 //TODO: unify the types of the backend and frontend
 export type PlayerBackendDesc = {
   developments: Array<[number, number]>,
