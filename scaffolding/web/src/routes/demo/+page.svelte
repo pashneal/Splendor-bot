@@ -11,7 +11,8 @@
 
   import { onMount } from "svelte";
 
-  import { turnNumber } from "$lib/stores/replayStore"; 
+  import { turnNumber, nobles, bank, updateGameNobles , updateGameBanks, indexToGem} from "$lib/stores/replayStore"; 
+  import type { BankDesc , NobleReq } from "$lib/stores/replayStore";
 
   function nextMove() {
     turnNumber.update(n => n + 1);
@@ -25,6 +26,7 @@
     turnNumber.set(move);
     //refreshBoard();
   }
+
   export async function gotoMove(move: number) {
     fetch("/replay/goto", 
       {
@@ -36,13 +38,19 @@
      .then(r => {updateMoveInput(r.success.move_index)});
   }
 
+
   onMount(() => {
     turnNumber.set(0);
     turnNumber.subscribe(value => {
       gotoMove(value);
+      updateGameNobles();
+      updateGameBanks();
       console.log("turnNumber", value);
     });
   });
+
+
+
 
 </script>
 
@@ -61,12 +69,9 @@
   <div class="game-inner">
     <VDivider/>
     <Bank>
-      <GemToken tokenName={"gold"} numRemaining={3} />
-      <GemToken tokenName={"emerald"} numRemaining={6} />
-      <GemToken tokenName={"diamond"} numRemaining={2} />
-      <GemToken tokenName={"onyx"} numRemaining={5} />
-      <GemToken tokenName={"ruby"} numRemaining={1} />
-      <GemToken tokenName={"sapphire"} numRemaining={2} />
+      {#each $bank as bankDesc}
+        <GemToken tokenName={bankDesc.gemName} numRemaining={bankDesc.gemCount} />
+      {/each}
     </Bank>
     <VDivider/>
     <div>
@@ -74,29 +79,13 @@
     </div>
     <VDivider/>
     <div class="nobles">
-      <Noble>
-        <NobleDetail number={3} gem_name={"emerald"} />
-        <NobleDetail number={3} gem_name={"diamond"} />
-        <NobleDetail number={3} gem_name={"ruby"} />
-      </Noble>
-      <Noble>
-        <NobleDetail number={4} gem_name={"emerald"} />
-        <NobleDetail number={4} gem_name={"ruby"} />
-      </Noble>
-      <Noble>
-        <NobleDetail number={3} gem_name={"onyx"} />
-        <NobleDetail number={3} gem_name={"sapphire"} />
-        <NobleDetail number={3} gem_name={"ruby"} />
-      </Noble>
-      <Noble>
-        <NobleDetail number={4} gem_name={"emerald"} />
-        <NobleDetail number={4} gem_name={"ruby"} />
-      </Noble>
-      <Noble>
-        <NobleDetail number={3} gem_name={"emerald"} />
-        <NobleDetail number={3} gem_name={"diamond"} />
-        <NobleDetail number={3} gem_name={"ruby"} />
-      </Noble>
+      {#each $nobles as noble}
+        <Noble>
+          {#each noble.requirements as req}
+            <NobleDetail number={req.gemCount} gem_name={req.gemName} />
+          {/each}
+        </Noble>
+      {/each}
     </div>
     <VDivider/>
     
