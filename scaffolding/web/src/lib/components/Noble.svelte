@@ -12,7 +12,7 @@
 <style>
   .noble-container {
     width: 100%;
-    height: 70%;
+    height: 20%;
     position : relative;
     border-radius: 20px;
     flex-direction: row;
