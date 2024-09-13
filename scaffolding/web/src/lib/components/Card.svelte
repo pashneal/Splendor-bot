@@ -42,8 +42,8 @@
 <style>
 
   .card {
-    max-width: 19%;
-    max-height: 15%;
+    max-width: 20%;
+    height: 95%;
     -khtml-user-select: none;
     -o-user-select: none;
     -moz-user-select: none;

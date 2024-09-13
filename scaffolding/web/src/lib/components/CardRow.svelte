@@ -1,8 +1,15 @@
 <script>
+  import CardStack from "./CardStack.svelte"; 
+  export let stackCount = 0;
 </script>
 
 <div class="display">
-  <slot></slot>
+  <div class="cards">
+    <slot></slot>
+  </div>
+  <div class="stack">
+    <CardStack count={stackCount}/>
+  </div>
 </div>
 
 <style>
@@ -10,11 +17,22 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    object-fit: contain;
+    height: 30%;
+    width: 100%;
+    position: relative;
+  }
+  .stack {
+    width: 12%;
+    position: relative;
+  }
+
+  .cards {
+    display: flex;
     gap: 1rem;
     row-gap: 1rem;
-    max-height: 30%;
-    width: 100%;
+    width: 80%;
+    height: 100%;
+    justify-content: left;
   }
 
 </style>
