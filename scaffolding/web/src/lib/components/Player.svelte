@@ -24,7 +24,6 @@
     height: 20%;
   }
   .gems-container {
-    width: 200px;
     flex-direction: row;
     flex-wrap: wrap;
     display: flex;

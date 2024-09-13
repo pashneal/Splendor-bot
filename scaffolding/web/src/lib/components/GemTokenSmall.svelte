@@ -69,8 +69,8 @@
     font-size: 30px;
     font-family: 'Zero';
     color: black;
-    padding-left: 40%;
-    margin: auto;
+    padding-left: 45%;
+    margin-top: 8%;
   }
 
   .top:hover {
