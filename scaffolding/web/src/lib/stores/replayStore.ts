@@ -3,44 +3,72 @@ import { writable } from 'svelte/store';
 export type Gem = "sapphire" | "emerald" | "ruby" | "onyx" | "diamond" | "gold";
 export type Cost = "sapphire" | "emerald" | "ruby" | "onyx" | "diamond" ;
 
-
-export type DeckBackendDesc = { 
-  cardCount: number,
-  tier: number,
+export type Gems = {
+  sapphire: number,
+  emerald: number,
+  ruby: number,
+  onyx: number,
+  diamond: number,
+  gold: number,
 }
+
+export type Costs = {
+  sapphire: number,
+  emerald: number,
+  ruby: number,
+  onyx: number,
+  diamond: number,
+}
+
 
 //TODO: unify the types of the backend and frontend
-export type CardBackendDesc = {
-  tier: number,
-  points: number,
-  colorIndex: number,
-  tokens: Array<[number, number]>,
-}
 
 export type CardDesc = {
-  tier: number,
   points: number,
   gem: Cost,
   cost: Map<Cost, number>,
 }
 
-export type PlayerBackendDesc = {
-  developments: Array<[number, number]>,
-  gems: Array<[number, number]>,
-  totalGems: number,
-  reservedCards: Array<any>,
-  totalPoints: number,
-  noblePoints: number,
+export type PlayerNewDesc = {
+  bank : Gems,
+  developments : Costs,
+  totalPoints : number,
+  numReservedCards : number,
+}
+
+export type NobleNewDesc = {
+  cost : Costs,
+}
+
+export type CardNewDesc = {
+  id: number,
+  cost: Costs,
+  points: number,
+  color: Gem
+}
+
+export type BoardNewDesc = {
+  deckCounts: Array<number>,
+  availableCards: Array<CardNewDesc>,
+  nobles: Array<NobleNewDesc>,
+  bank: Gems,
+  currentPlayer: number
+}
+
+export type GameBackendDesc = {
+  board: BoardNewDesc, 
+  players: Array<PlayerNewDesc>,
+  turnNumber : number,
+  currentPlayer: number,
 }
 
 export type PlayerDesc = {
   name: string,
   developments: Map<Gem, number>,
-  gems: Array<BankDesc>,
-  totalGems: number,
+  gems: Map<Gem, number>,
   numReservedCards: number
   totalPoints: number,
-  noblePoints: number,
+  currentPlayer: boolean,
 }
 
 export type NobleReq = {
@@ -57,7 +85,7 @@ export type BankDesc = {
   gemCount: number,
 }
 
-export let turnNumber = writable(0);
+export let turnNumber = writable(1);
 export let nobles = writable(Array<NobleDesc>());
 export let bank = writable(Array<BankDesc>());
 export let number_players = writable(4);
@@ -95,145 +123,139 @@ export function indexToGem(index) : Gem | undefined {
 
 
 
-export function updateGameBanks() {
-  fetch("/replay/bank")
-    .then(response => response.json())
-    .then(response => {
-      let bankDescriptions : BankDesc[] = Array<BankDesc>();
+export function updateGameBanks(update : GameBackendDesc | undefined, turn : number) {
+  
+  if (update == undefined) { return; }
+  let bankDescriptions : Array<BankDesc> = Array();
+  for (let [gemName, count] of gemsToMap(update.board.bank).entries()) {
+    let bankDesc : BankDesc = {
+      gemName : gemName,
+      gemCount : count,
+    }
+    bankDescriptions.push(bankDesc);
+  }
 
-      // Fill in the bank descriptions with the default values
-      for (let i = bankDescriptions.length; i < 6; i++) {
-        bankDescriptions.push({gemName: indexToGem(i), gemCount: 0});
+   bank.update(() => bankDescriptions);
+}
+
+export function updateGameNobles(update: GameBackendDesc | undefined, turn : number) {
+
+  if (update == undefined) { return; }
+
+
+  let new_nobles : Array<NobleDesc> = Array();
+  update.board.nobles.forEach( (nobleReqs : Array<NobleNewDesc>) => {
+    let noble : NobleDesc = {
+      requirements : Array(),
+    }
+
+    let  nobleMap = costsToMap(nobleReqs.cost);
+    for (let [gemName, gemCount] of nobleMap.entries()) {
+
+      let nobleReq : NobleReq = {
+        gemName : gemName,
+        gemCount : gemCount,
       }
+      if (gemCount > 0) {
+        noble.requirements.push(nobleReq);
+      }
+    }
+    new_nobles.push(noble);
 
-      // Then update the bank descriptions from backend
-      response.success.bank.forEach(([gemIndex, gemCount] : [number, number]) => {
-          let gemName = indexToGem(gemIndex)!;
-          bankDescriptions[gemIndex] = {gemName: gemName, gemCount: gemCount};
-      });
+  });
 
-      bank.update(() => bankDescriptions);
-    }).catch(error => {
-      console.error('/replay/bank Error:', error);
+  nobles.update(() => new_nobles);
+
+}
+
+export function updateGamePlayers(update: GameBackendDesc | undefined, turn : number) {
+
+  if (update == undefined) { return; }
+  let newPlayers : Array<PlayerDesc> = Array();
+
+  update.players.forEach((player : PlayerNewDesc, id :number) => { 
+
+      let developments = costsToMap(player.developments);
+      let gems = gemsToMap(player.bank);
+      let totalPoints = player.totalPoints;
+      let numReservedCards = player.numReservedCards;
+
+      let playerDesc = {name : "Player " + id, 
+                        developments : developments, 
+                        gems : gems, 
+                        totalPoints : totalPoints, 
+                        numReservedCards : numReservedCards,
+                        currentPlayer : id == update.currentPlayer
+      };
+      newPlayers.push(playerDesc);
+
     });
+
+    players.update(() => newPlayers);
 }
 
-export function updateGameNobles() {
-  fetch("/replay/nobles")
-    .then(response => response.json())
-    .then(response => {
-
-      let new_nobles : Array<NobleDesc> = Array();
-      response.success.nobles.forEach( (nobleReqs : Array<[number, number]>) => {
-        let noble : NobleDesc = {
-          requirements : Array(),
-        }
-
-        nobleReqs.forEach( ([gemIndex, gemCount] : [number, number]) => {
-          let nobleReq : NobleReq = {
-            gemName : indexToGem(gemIndex)!,
-            gemCount : gemCount,
-          }
-
-          noble.requirements.push(nobleReq);
-        });
-
-        new_nobles.push(noble);
-
-      });
-
-      nobles.update(() => new_nobles);
-
-    }).catch(error => {
-      console.error('/replay/nobles/ Error:', error);
-    })
+export function costsToMap(costs : Costs) : Map<Cost, number> {
+  let map = new Map<Cost, number>();
+  map.set('sapphire', costs.sapphire);
+  map.set('emerald', costs.emerald);
+  map.set('ruby', costs.ruby);
+  map.set('onyx', costs.onyx);
+  map.set('diamond', costs.diamond);
+  return map;
 }
 
-export function updateGamePlayers() {
-  fetch("/replay/players")
-    .then(response => response.json())
-    .then(response => {
-      let newPlayers = Array<PlayerDesc>();
-      response.success.players.forEach((player : PlayerBackendDesc, id :number) => {
-
-        let developments = new Map<Gem, number>();
-        let personalBank = Array<BankDesc>();
-        let totalPoints = player.totalPoints;
-        let noblePoints = player.noblePoints;
-        let totalGems = player.totalGems
-        let numReservedCards = player.reservedCards.length;
-         
-        player.developments.forEach(([gemIndex, count], _) => {
-          let gemName = indexToGem(gemIndex)!;
-          developments.set(gemName, count);
-        });
-
-        player.gems.forEach(([gemIndex, count], _) => {
-          let gemName = indexToGem(gemIndex)!;
-          let bankDesc = {gemName : gemName,  gemCount : count};
-          personalBank.push(bankDesc);
-        });
-
-        let playerDesc = {name : "Player " + id, 
-                          developments : developments, 
-                          gems : personalBank, 
-                          totalPoints : totalPoints, 
-                          noblePoints : noblePoints, 
-                          totalGems : totalGems, 
-                          numReservedCards : numReservedCards};
-
-        newPlayers.push(playerDesc);
-      });
-
-      players.update(() => newPlayers);
-    });
+export function gemsToMap(gems : Gems) : Map<Gem, number> {
+  let map = new Map<Gem, number>();
+  map.set('sapphire', gems.sapphire);
+  map.set('emerald', gems.emerald);
+  map.set('ruby', gems.ruby);
+  map.set('onyx', gems.onyx);
+  map.set('diamond', gems.diamond);
+  map.set('gold', gems.gold);
+  return map;
 }
 
-export function updateGameCards() {
-    fetch("/replay/cards")
-      .then(response => response.json())
-      .then(response => {
+export function updateGameCards(update : GameBackendDesc | undefined, turn : number) {
+        if (update == undefined) { return; }
         let new_cards : Array<Array<CardDesc>> = [];
 
-        response.success.cards.forEach((row : Array<CardBackendDesc>) => {
+
+        update.board.availableCards.forEach((row : Array<CardNewDesc>) => {
           let cardRow : Array<CardDesc> = [];
           row.forEach((card, _) => {
 
-            let cost = new Map<Gem, number>();
-            card.tokens.forEach(([gemIndex, count])  => {
-              cost.set(indexToGem(gemIndex)! as Cost, count);
+            let cost = costsToMap(card.cost);
+
+            cost.forEach((value, key) => {
+              if (value == 0) {
+                cost.delete(key);
+              }
             });
 
             let cardDesc : CardDesc = {
-              tier: card.tier,
               points: card.points,
-              gem: indexToGem(card.colorIndex)!,
+              gem: card.color,
               cost: cost
             }
             cardRow.push(cardDesc);
-          })
+          });
           new_cards.push(cardRow);
 
         });
        cards.update(() => new_cards); 
-      });
   }
 
-export function updateGameDeckCounts() {
-  fetch("/replay/decks")
-    .then(response => response.json())
-    .then(response => {
+export function updateGameDeckCounts(update : GameBackendDesc | undefined, turn : number) {
+      if (update == undefined) { return; }
       let new_decks = [0, 0, 0];
       
-      response.success.decks.forEach((deck : DeckBackendDesc) => {
+      update.board.deckCounts.forEach((deck : number, index) => {
           // Map tiers 0 to 2 to indices 2 to 0 for the frontend view
           // TODO: this isn't that nice
-          let index = deck.tier;
           index = 2 - index;
-          new_decks[index] = deck.cardCount;
+          new_decks[index] = deck;
       });
 
       deckCounts.update(() => new_decks);
-    });
 }
 

@@ -13,12 +13,13 @@
   export let name : string = "Player " + avatar;
   export let cards: number = 0;
   export let points : number = 10;
+  export let currentPlayer : boolean = false;
 
   let avatars = [av1, av2, av3, av4, av5, av6, av7, av8, av9];
 </script>
 
 <div class="avatar-container">
-  <div class="avatar">
+  <div class="avatar {(currentPlayer) ? 'highlight' : ''}">
     <img src={avatars[avatar]} alt="avatar" draggable="false"/>
   </div>
   <p class="name">{name}</p>
@@ -62,7 +63,7 @@
     height: 100%;
   }
 
-  .avatar:hover{
+  .highlight{
     background-color: #f0f0f0;
     border-radius: 10px;
   }

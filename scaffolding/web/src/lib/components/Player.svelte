@@ -5,10 +5,11 @@
   export let avatar: number = 0;
   export let cards: number = 1;
   export let points: number = 11;
+  export let currentPlayer: boolean = false;
 </script>
 
 <div class="player-container">
-  <Avatar avatar={avatar} name={name} points={points} cards={cards} />
+  <Avatar currentPlayer={currentPlayer} avatar={avatar} name={name} points={points} cards={cards} />
   <div class="gems-container">
     <slot></slot>
   </div>
