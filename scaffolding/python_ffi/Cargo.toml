@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-splendor_arena = { version = "0.1.15", features = ["python_stubs"] }
+splendor_arena = { version = "0.1.16", features = ["python_stubs"] }
 
 [lib]
 name = "ffi"
